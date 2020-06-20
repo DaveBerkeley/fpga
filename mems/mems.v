@@ -1,12 +1,9 @@
 
-module top (input CLK, output LED1);
+module top (output P1A1, output P1A2, input P1A3);
 
-reg [15:0] count = 16'h0000;
+I2S_IN i2s(CLK, P1A1, P1A2, P1A3);
 
-always @(posedge CLK) begin
-   count <= count + 1;
-end
-
-assign LED1 = count[15];
+mems_tb tb(CLK, P1A1, P1A2);
 
 endmodule
+
