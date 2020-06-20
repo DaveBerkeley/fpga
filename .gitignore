@@ -1,3 +1,9 @@
 .pio
 *.swp
 *~
+# build products
+*.asc
+*.bin
+*.json
+*.log
+*.rpt

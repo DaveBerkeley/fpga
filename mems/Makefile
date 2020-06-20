@@ -1,6 +1,9 @@
 PROJ = mems
+ADD_SRC = i2s.v
+
+PACKAGE = sg48
+DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
-DEVICE = up5k
 
 include ../main.mk
