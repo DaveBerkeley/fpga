@@ -8,7 +8,7 @@ output sck, ws;
 // 64 clock counter for complete L/R frame
 output reg [5:0] bit_count = 0;
 
-// Divide the 12MHz system clock down :
+// Divide the 12MHz system clock down 
 reg [3:0] prescale = 0;
 
 always @(posedge sys_ck) begin
@@ -20,11 +20,8 @@ always @(posedge sys_ck) begin
     end
 end
 
-// parameter EOW = 17;
-parameter WORD_LEN = 32;
-
-assign sck = (prescale>=6)          ? 1 : 0;
-assign ws  = (bit_count>=WORD_LEN)  ? 1 : 0;
+assign sck = (prescale >= 6)   ? 1 : 0;
+assign ws  = (bit_count >= 32) ? 1 : 0;
 
 endmodule
 
