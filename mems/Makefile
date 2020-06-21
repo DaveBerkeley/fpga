@@ -1,5 +1,5 @@
 PROJ = mems
-ADD_SRC = i2s.v mems_tb.v
+ADD_SRC = i2s.v
 
 PACKAGE = sg48
 DEVICE = up5k

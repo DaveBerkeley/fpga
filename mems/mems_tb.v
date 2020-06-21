@@ -2,10 +2,13 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
-module mems_tb(clk, sck, ws);
+module mems_tb(clk, sck, ws, bus, left, right);
 
 output clk;
 input sck, ws;
+input [15:0] bus;
+input left;
+input right;
 
 	// Signals
 	reg clock = 1;
