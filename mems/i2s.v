@@ -10,27 +10,31 @@ input sd;
 output reg [15:0] out_l;
 output reg [15:0] out_r;
 
-parameter EOW = 17;
-parameter WORD_LEN = 32;
+// The 24-bit data from the mic, starts at t=2 (I2S spec)
+// Only use the first 16-bits, the trailing bits are noise.
 
-// 24-bit microphone data into 16-bit shift register. 
-// The trailing bits are noise.
-
-// Shift in sd on posedge of sck
-
+// shift the microphone data into 16-bit shift register. 
 reg [15:0] shift = 0;
 
 always @(posedge sck) begin
     shift <= (shift << 1) + sd;
 end
 
+// copy the shift-register state to the Left/Right latches
+// at the end of the 16 significant bits.
+
+parameter EOW = 17;
+parameter WORD_LEN = 32;
+
 always @(negedge sck) begin
 
-    if (bit_count == EOW)
-        out_l <= shift;        
+    if (bit_count == EOW) begin
+        out_l <= shift;
+    end
 
-    if (bit_count == (EOW+WORD_LEN))
-        out_r <= shift;        
+    if (bit_count == (EOW+WORD_LEN)) begin
+        out_r <= shift;
+    end
 
 end
 

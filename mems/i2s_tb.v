@@ -35,7 +35,7 @@ always @(negedge sck) begin
     sd <= audio[31];
 end
 
-reg [31:0] signal = 32'h81230000;
+reg [31:0] signal = 32'h1234ffff;
 
 always @(posedge sck) begin
     if (bit_count == 0) begin
