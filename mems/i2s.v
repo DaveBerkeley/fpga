@@ -1,5 +1,5 @@
 
-module I2S_IN(sys_ck, sck, ws, sdi, data_out, do_left, do_right);
+module I2S_IN(sys_ck, sck, ws, sdi, out_l, out_r);
 
 input sys_ck; // system clock
 
@@ -7,10 +7,9 @@ input sys_ck; // system clock
 output sck, ws;
 input sdi;
 
-// Output latch and signals
-output [15:0] data_out;
-output do_left;
-output do_right;
+// Output latch
+output reg [15:0] out_l;
+output reg [15:0] out_r;
 
 // Divide the 12MHz system clock down :
 reg [3:0] prescale = 0;
@@ -40,10 +39,13 @@ always @(posedge sck) begin
     shift <= (shift << 1) + sdi;
 end
 
-assign do_left  = sck | ((bit_count == EOW) ? 0 : 1);
-assign do_right = sck | ((bit_count == (EOW+WORD_LEN)) ? 0 : 1);
+always @(posedge sck) begin
+    if (bit_count == EOW)
+        out_l <= shift;        
 
-assign data_out = (do_left | do_right) ? 16'hzzzz : shift;
+    if (bit_count == (EOW+WORD_LEN))
+        out_r <= shift;        
+end
 
 endmodule
 

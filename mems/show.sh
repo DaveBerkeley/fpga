@@ -1,7 +1,7 @@
 #!/bin/bash
 
-iverilog -D SIMULATION -o mems.vvp mems.v i2s.v mems_tb.v
-./mems.vvp 
-gtkwave mems.vcd
+iverilog -o i2s.vvp i2s.v i2s_tb.v
+./i2s.vvp 
+gtkwave i2s.vcd 
 
 # FIN

@@ -7,3 +7,6 @@
 *.json
 *.log
 *.rpt
+# test products
+*.vcd
+*.vvp
