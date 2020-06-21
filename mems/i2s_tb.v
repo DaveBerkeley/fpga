@@ -7,9 +7,11 @@ module i2s_tb();
 wire sck;
 wire ws;
 reg sd;
+wire [5:0] bit_count;
 wire [15:0] do;
 
-I2S_IN i2s(clock, sck, ws, sd, do, do);
+I2S_CLOCK i2s_ck(clock, sck, ws, bit_count);
+I2S_IN i2s(sck, ws, bit_count, sd, do, do);
 
 // Signals
 reg clock = 1;
