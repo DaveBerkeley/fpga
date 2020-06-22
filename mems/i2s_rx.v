@@ -11,6 +11,9 @@ module I2S_RX(
 // The 24-bit data from the mic, starts at t=2 (I2S spec)
 // Only use the first 16-bits, the trailing bits are noise.
 
+initial left = 0;
+initial right = 0;
+
 // shift the microphone data into 16-bit shift register. 
 reg [15:0] shift = 0;
 
