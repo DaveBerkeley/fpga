@@ -9,10 +9,11 @@ output sck, ws;
 output reg [5:0] bit_count = 0;
 
 // Divide the 12MHz system clock down 
-reg [3:0] prescale = 0;
+// To 3MHz
+reg [1:0] prescale = 0;
 
 always @(posedge sys_ck) begin
-    if (prescale == 11) begin
+    if (prescale == 3) begin
         prescale <= 0;
         bit_count <= bit_count + 1;
     end else begin
@@ -20,7 +21,7 @@ always @(posedge sys_ck) begin
     end
 end
 
-assign sck = (prescale >= 6)   ? 1 : 0;
+assign sck = (prescale >= 2)   ? 1 : 0;
 assign ws  = (bit_count >= 32) ? 1 : 0;
 
 endmodule
