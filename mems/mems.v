@@ -9,7 +9,7 @@ wire [5:0] frame_posn;
 
 I2S_CLOCK i2s_ck(.ck(CLK), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn));
 
-// Acquire pairs of I2S streams
+// Acquire multiple I2S streams
 
 wire sd_0;
 wire [15:0] mic_0;
@@ -37,7 +37,7 @@ I2S_RX i2s_2(.sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn), .sd(sd_2), .le
 
 wire i2s_out;
 
-I2S_TX i2s_tx(.sck(i2s_sck), .ws(i2s_ws), .left(mic_0), .right(mic_1), .sd(i2s_out));
+I2S_TX i2s_tx(.sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn), .left(mic_0), .right(mic_1), .sd(i2s_out));
 
 // Assign the IO
 
