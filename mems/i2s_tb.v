@@ -8,10 +8,11 @@ wire sck;
 wire ws;
 reg sd;
 wire [5:0] bit_count;
-wire [15:0] do;
+wire [15:0] left;
+wire [15:0] right;
 
 I2S_CLOCK i2s_ck(clock, sck, ws, bit_count);
-I2S_IN i2s(sck, ws, bit_count, sd, do, do);
+I2S_RX i2s(sck, ws, bit_count, sd, left, right);
 
 // Signals
 reg clock = 1;
@@ -26,7 +27,7 @@ end
 // Clock ~= 12Mhz
 always #84 clock <= !clock;
 
-// TODO : need better input data simulation
+// input data simulation
 
 reg [31:0] audio = 0;
 
@@ -35,7 +36,7 @@ always @(negedge sck) begin
     sd <= audio[31];
 end
 
-reg [31:0] signal = 32'h1234ffff;
+reg [31:0] signal = 32'h82340000;
 
 always @(posedge sck) begin
     if (bit_count == 0) begin
@@ -48,6 +49,12 @@ always @(posedge sck) begin
         audio <= audio << 1;
     end
 end
+
+//  Test the TX stage
+
+wire i2s_out;
+
+I2S_TX i2s_tx (sck, ws, left, right, i2s_out);
 
 endmodule
 

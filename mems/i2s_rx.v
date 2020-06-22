@@ -1,5 +1,5 @@
 
-module I2S_IN(sck, ws, bit_count, sd, out_l, out_r);
+module I2S_RX(sck, ws, bit_count, sd, out_l, out_r);
 
 // I2S signals :
 input sck, ws;
