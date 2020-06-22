@@ -2,10 +2,10 @@
 module I2S_RX(
     input wire sck, // I2S sck
     input wire ws,  // I2S ws
-    input wire [5:0] bit_count, // position in frame
+    input wire [5:0] frame_posn,
     input wire sd,  // I2S data in
-    output reg [15:0] out_l, 
-    output reg [15:0] out_r
+    output reg [15:0] left, 
+    output reg [15:0] right
 );
 
 // The 24-bit data from the mic, starts at t=2 (I2S spec)
@@ -26,11 +26,11 @@ parameter WORD_LEN = 32;
 
 always @(negedge sck) begin
 
-    if (bit_count == EOW)
-        out_l <= shift;
+    if (frame_posn == EOW)
+        left <= shift;
 
-    if (bit_count == (EOW+WORD_LEN))
-        out_r <= shift;
+    if (frame_posn == (EOW+WORD_LEN))
+        right <= shift;
 
 end
 

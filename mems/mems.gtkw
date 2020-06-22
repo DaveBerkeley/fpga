@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Jun 22 18:23:25 2020
+[*] Mon Jun 22 19:04:58 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/mems/i2s.vcd"
-[dumpfile_mtime] "Mon Jun 22 18:23:10 2020"
-[dumpfile_size] 154632
+[dumpfile_mtime] "Mon Jun 22 19:04:34 2020"
+[dumpfile_size] 147059
 [savefile] "/home/dave/Desktop/git/fpga/mems/mems.gtkw"
 [timestart] 0
 [size] 1683 690
 [pos] 235 261
-*-25.181459 36300000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-25.181459 65185000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2s_tb.
 [sst_width] 196
 [signals_width] 126
@@ -18,13 +18,15 @@
 @28
 i2s_tb.i2s_tx.sck
 i2s_tb.i2s_tx.ws
-@29
 i2s_tb.i2s.sd
-@22
-i2s_tb.i2s_tx.data_l[15:0]
-i2s_tb.i2s_tx.data_r[15:0]
-@28
 i2s_tb.i2s_tx.ws_pulse
 i2s_tb.i2s_out
+@22
+i2s_tb.i2s_tx.left[15:0]
+i2s_tb.i2s_tx.right[15:0]
+i2s_tb.i2s_tx.shift[15:0]
+@28
+i2s_tb.i2s_tx.ws_delayed
+i2s_tb.i2s_tx.ws_pulse
 [pattern_trace] 1
 [pattern_trace] 0

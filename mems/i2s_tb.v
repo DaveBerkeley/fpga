@@ -7,12 +7,12 @@ module i2s_tb();
 wire sck;
 wire ws;
 reg sd;
-wire [5:0] bit_count;
+wire [5:0] frame_posn;
 wire [15:0] left;
 wire [15:0] right;
 
-I2S_CLOCK i2s_ck(clock, sck, ws, bit_count);
-I2S_RX i2s(sck, ws, bit_count, sd, left, right);
+I2S_CLOCK i2s_ck(.ck(clock), .sck(sck), .ws(ws), .frame_posn(frame_posn));
+I2S_RX i2s(.sck(sck), .ws(ws), .frame_posn(frame_posn), .sd(sd), .left(left), .right(right));
 
 // Signals
 reg clock = 1;
@@ -39,10 +39,10 @@ end
 reg [31:0] signal = 32'h82340000;
 
 always @(posedge sck) begin
-    if (bit_count == 0) begin
+    if (frame_posn == 0) begin
         audio <= signal;
         # 1 signal <= signal + 32'h10000;
-    end else if (bit_count == 32) begin
+    end else if (frame_posn == 32) begin
         audio <= signal;
         # 1 signal <= signal + 32'h10000;
     end else begin
@@ -54,7 +54,7 @@ end
 
 wire i2s_out;
 
-I2S_TX i2s_tx (sck, ws, left, right, i2s_out);
+I2S_TX i2s_tx (.sck(sck), .ws(ws), .left(left), .right(right), .sd(i2s_out));
 
 endmodule
 

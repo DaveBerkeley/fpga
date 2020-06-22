@@ -1,10 +1,10 @@
 
 module I2S_TX(
-    input wire sck,             // I2S sck
-    input wire ws,              // I2S ws
-    input wire [15:0] data_l,   // left channel data
-    input wire [15:0] data_r,   // right channel data
-    output reg data_out         // data out
+    input wire sck, // I2S sck
+    input wire ws,  // I2S ws
+    input wire [15:0] left,
+    input wire [15:0] right,
+    output reg sd   // data out
 );
 
 // Delay the ws signal by half an sck cycle
@@ -27,7 +27,7 @@ assign ws_pulse = ws ^ ws_delayed;
 reg [15:0] shift;
 
 always @(negedge sck) begin
-    data_out <= shift[15];
+    sd <= shift[15];
     shift <= shift << 1;
 end
 
@@ -35,9 +35,9 @@ end
 
 always @(negedge ws_pulse) begin
     if (ws)
-        shift <= { 1'b0, data_r };
+        shift <= { 1'b0, right };
     else
-        shift <= { 1'b0, data_l };
+        shift <= { 1'b0, left };
 end
 
 endmodule
