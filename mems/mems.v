@@ -1,5 +1,5 @@
 
-module top (input CLK, output P1A1, output P1A2, input P1A3, input P1A4);
+module top (input CLK, output P1A1, output P1A2, input P1A3, input P1A4, input P1A7);
 
 // Generate i2S clock and word select signals
 
@@ -23,6 +23,12 @@ reg [15:0] mic_3;
 
 I2S_RX i2s_1(i2s_sck, i2s_ws, i2s_bit_count, sd_1, mic_2, mic_3);
 
+wire sd_2;
+reg [15:0] mic_4;
+reg [15:0] mic_5;
+
+I2S_RX i2s_2(i2s_sck, i2s_ws, i2s_bit_count, sd_2, mic_4, mic_5);
+
 // TODO write the microphone data into RAM
 
 // TODO Read out delayed samples from RAM
@@ -39,7 +45,7 @@ assign P1A1 = i2s_sck;
 assign P1A2 = i2s_ws;
 assign P1A3 = sd_0;
 assign P1A4 = sd_1;
-assign P1A5 = i2s_out;
+assign P1A7 = i2s_out;
 
 endmodule
 
