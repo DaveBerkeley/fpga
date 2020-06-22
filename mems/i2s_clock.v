@@ -1,16 +1,17 @@
 
-module I2S_CLOCK(sys_ck, sck, ws, bit_count);
-
-input sys_ck; // 12MHz system clock
-
-// I2S signals :
-output sck, ws;
-// 64 clock counter for complete L/R frame
-output reg [5:0] bit_count = 0;
+module I2S_CLOCK(
+    input wire sys_ck,  // 12MHz system clock
+    output wire sck,    // I2S clock
+    output wire ws,     // I2S WS
+    output reg [5:0] bit_count // 64 clock counter for complete L/R frame
+);
 
 // Divide the 12MHz system clock down 
 // To 3MHz
 reg [1:0] prescale = 0;
+
+// 64 clock counter for complete L/R frame
+initial bit_count = 0;
 
 always @(posedge sys_ck) begin
     if (prescale == 3) begin
