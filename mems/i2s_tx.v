@@ -18,9 +18,14 @@ always @(posedge sck) begin
     ws_delayed <= ws;
 end
 
+// half sck pulse following a ws transition
+wire ws_pulse;
+
+assign ws_pulse = ws ^ ws_delayed;
+
 //  Shift the data out on every negedge of sck
-//  An extra MSB is added to give a zero output when the data is loaded
-//  on the posedge.
+//  An extra MSB is added to give a zero output 
+//  when the data is first loaded on the posedge.
 reg [16:0] shift;
 
 always @(negedge sck) begin
@@ -33,12 +38,11 @@ assign data_out = shift[16];
 
 // Load the shift reg a half sck after the ws transition
 
-always @(posedge ws_delayed) begin
-    shift <= { 1'b0, data_r };
-end
-
-always @(negedge ws_delayed) begin
-    shift <= { 1'b0, data_l };
+always @(negedge ws_pulse) begin
+    if (ws)
+        shift <= { 1'b0, data_r };
+    else
+        shift <= { 1'b0, data_l };
 end
 
 endmodule
