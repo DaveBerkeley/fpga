@@ -45,7 +45,7 @@ sudo-prog: $(PROJ).bin
 	sudo iceprog $<
 
 clean:
-	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin $(PROJ).json $(PROJ).log $(ADD_CLEAN)
+	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin $(PROJ).json $(PROJ).log *.vvp *.vcd $(ADD_CLEAN)
 
 .SECONDARY:
 .PHONY: all prog clean
