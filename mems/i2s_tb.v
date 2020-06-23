@@ -15,7 +15,7 @@ initial begin
 end
 
 // Clock ~= 12Mhz
-always #84 clock <= !clock;
+always #42 clock <= !clock;
 
 // Generate the I2S timing signals
 

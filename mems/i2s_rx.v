@@ -18,7 +18,7 @@ initial right = 0;
 reg [15:0] shift = 0;
 
 always @(posedge sck) begin
-    shift <= (shift << 1) + sd;
+    shift <= { shift[14:0], sd };
 end
 
 // copy the shift-register state to the Left/Right latches

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Jun 22 21:08:16 2020
+[*] Tue Jun 23 08:58:49 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/mems/i2s.vcd"
-[dumpfile_mtime] "Mon Jun 22 21:04:48 2020"
-[dumpfile_size] 118140
+[dumpfile_mtime] "Tue Jun 23 08:57:03 2020"
+[dumpfile_size] 235918
 [savefile] "/home/dave/Desktop/git/fpga/mems/mems.gtkw"
 [timestart] 0
 [size] 1683 690
-[pos] 235 261
-*-26.208054 132048000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 190 219
+*-26.208054 129024000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2s_tb.
 [sst_width] 196
 [signals_width] 150
@@ -52,7 +52,7 @@ i2s_tb.i2s.right[15:0]
 -
 @22
 i2s_tb.i2s_tx.shift[15:0]
-@28
+@23
 i2s_tb.sdo
 @200
 -
@@ -60,5 +60,7 @@ i2s_tb.sdo
 i2s_tb.i2s_rx_out.shift[15:0]
 i2s_tb.out_left[15:0]
 i2s_tb.out_right[15:0]
+@200
+-
 [pattern_trace] 1
 [pattern_trace] 0
