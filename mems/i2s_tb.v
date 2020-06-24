@@ -22,7 +22,8 @@ always #42 clock <= !clock;
 wire sck;
 wire ws;
 wire [5:0] frame_posn;
-I2S_CLOCK i2s_ck(.ck(clock), .sck(sck), .ws(ws), .frame_posn(frame_posn));
+wire [7:0] frame;
+I2S_CLOCK i2s_ck(.ck(clock), .sck(sck), .ws(ws), .frame_posn(frame_posn), .frame(frame));
 
 // input data simulation
 
@@ -68,8 +69,10 @@ wire ram_ck;
 
 assign ram_ck = clock;
 
-DPRAM ram(.wclk(ram_ck), .rclk(ram_ck), .wclke(wclke), .rclke(rclke), .we(we), .re(re),
+DPRAM ram(
+    .wclk(ram_ck), .we(we), .wclke(wclke), 
     .wdata(data_in), .rdata(data_out),
+    .rclke(rclke), .re(re), .rclk(ram_ck), 
     .waddr(waddr), .raddr(raddr));
 
 task ram_write;
@@ -107,10 +110,6 @@ end
 
 endtask
 
-// Offset for each frame's write for all signals
-reg [4:0] frame;
-initial frame = 0;
-
 task block_write;
 
 begin
@@ -118,34 +117,28 @@ begin
     @(posedge ram_ck);
 
     // Write all channels
-    ram_write(left,     { 3'd0, frame });
-    ram_write(right,    { 3'd1, frame });
-    ram_write(16'h1234, { 3'd2, frame });
-    ram_write(16'habcd, { 3'd3, frame });
-    ram_write(16'h1000, { 3'd4, frame });
-    ram_write(16'h0100, { 3'd5, frame });
-    ram_write(16'h0010, { 3'd6, frame });
-    ram_write(16'h0001, { 3'd7, frame });
+    // TODO : make a function for the offset calc?
+    ram_write(left,     { 3'd0, frame[4:0] });
+    ram_write(right,    { 3'd1, frame[4:0] });
+    ram_write(16'h1234, { 3'd2, frame[4:0] });
+    ram_write(16'habcd, { 3'd3, frame[4:0] });
+    ram_write(16'h1000, { 3'd4, frame[4:0] });
+    ram_write(16'h0100, { 3'd5, frame[4:0] });
+    ram_write(16'h0010, { 3'd6, frame[4:0] });
+    ram_write(16'h0001, { 3'd7, frame[4:0] });
 
-    ram_read({ 3'd0, frame });
-    ram_read({ 3'd1, frame });
-    ram_read({ 3'd2, frame });
-    ram_read({ 3'd3, frame });
-    ram_read({ 3'd4, frame });
-    ram_read({ 3'd5, frame });
-    ram_read({ 3'd6, frame });
-    ram_read({ 3'd7, frame });
+    ram_read({ 3'd0, frame[4:0] });
+    ram_read({ 3'd1, frame[4:0] });
+    ram_read({ 3'd2, frame[4:0] });
+    ram_read({ 3'd3, frame[4:0] });
+    ram_read({ 3'd4, frame[4:0] });
+    ram_read({ 3'd5, frame[4:0] });
+    ram_read({ 3'd6, frame[4:0] });
+    ram_read({ 3'd7, frame[4:0] });
 
 end
 
 endtask
-
-always @(posedge sck) begin
-
-    if (frame_posn == 63)
-        frame <= frame + 1;
-
-end
 
 always @(negedge ram_ck) begin
 

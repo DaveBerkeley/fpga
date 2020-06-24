@@ -6,9 +6,9 @@ module top (input CLK, output P1A1, output P1A2, input P1A3, input P1A4, input P
 wire i2s_sck, i2s_ws;
 // frame_posn tracks the position in the 64-bit L/R frame.
 wire [5:0] frame_posn;
-wire [3:0] prescale;
+wire [7:0] frame;
 
-I2S_CLOCK i2s_ck(.ck(CLK), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn), .prescale(prescale));
+I2S_CLOCK i2s_ck(.ck(CLK), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn), .frame(frame));
 
 // Acquire multiple I2S streams
 
