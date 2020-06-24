@@ -1,20 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Jun 23 08:58:49 2020
+[*] Wed Jun 24 12:53:02 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/mems/i2s.vcd"
-[dumpfile_mtime] "Tue Jun 23 08:57:03 2020"
-[dumpfile_size] 235918
+[dumpfile_mtime] "Wed Jun 24 12:52:10 2020"
+[dumpfile_size] 297185
 [savefile] "/home/dave/Desktop/git/fpga/mems/mems.gtkw"
 [timestart] 0
 [size] 1683 690
 [pos] 190 219
-*-26.208054 129024000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-26.208054 32256000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2s_tb.
 [sst_width] 196
 [signals_width] 150
 [sst_expanded] 1
 [sst_vpaned_height] 187
+@200
+-I2S clock gen
 @28
 i2s_tb.i2s.sck
 i2s_tb.i2s.ws
@@ -24,6 +26,8 @@ i2s_tb.frame_posn[5:0]
 -
 @28
 i2s_tb.sdi
+@200
+-Rx
 @c00022
 i2s_tb.i2s.shift[15:0]
 @28
@@ -50,17 +54,26 @@ i2s_tb.i2s_tx.left[15:0]
 i2s_tb.i2s.right[15:0]
 @200
 -
+-Tx
 @22
 i2s_tb.i2s_tx.shift[15:0]
-@23
 i2s_tb.sdo
 @200
 -
+-Rx
 @22
 i2s_tb.i2s_rx_out.shift[15:0]
 i2s_tb.out_left[15:0]
 i2s_tb.out_right[15:0]
 @200
 -
+@28
+i2s_tb.ram.wclk
+i2s_tb.ram.we
+i2s_tb.ram.wclke
+@23
+i2s_tb.ram.waddr[7:0]
+@22
+i2s_tb.ram.wdata[15:0]
 [pattern_trace] 1
 [pattern_trace] 0

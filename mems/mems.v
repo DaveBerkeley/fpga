@@ -6,8 +6,9 @@ module top (input CLK, output P1A1, output P1A2, input P1A3, input P1A4, input P
 wire i2s_sck, i2s_ws;
 // frame_posn tracks the position in the 64-bit L/R frame.
 wire [5:0] frame_posn;
+wire [3:0] prescale;
 
-I2S_CLOCK i2s_ck(.ck(CLK), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn));
+I2S_CLOCK i2s_ck(.ck(CLK), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn), .prescale(prescale));
 
 // Acquire multiple I2S streams
 
@@ -33,7 +34,10 @@ I2S_RX i2s_2(.sck(i2s_sck), .ws(i2s_ws), .frame_posn(frame_posn), .sd(sd_2), .le
 
 // TODO Read out delayed samples from RAM
 
-// write the data to the DAC
+
+// TODO Add the samples together, with a gain factor
+
+// write the data to the I2S DAC
 
 wire i2s_out;
 

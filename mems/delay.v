@@ -1,22 +1,38 @@
 
-module DELAY(ws, data_in, in_idx, out_offset, data_out);
 
-input ws;
-input [15:0] data_in;
-input [6:0] in_idx;
-input [6:0] out_offset;
-output [15:0] data_out;
-
-reg [15:0] audio;
+module DPRAM (   
+    input wire wclk,
+    input wire we,
+    input wire wclke,
+    input wire [7:0] waddr,
+    input wire [15:0] wdata,
+    
+    input wire rclk,
+    input wire re,
+    input wire rclke,
+    input wire [7:0] raddr,
+    output reg [15:0] rdata
+);
 
 reg [15:0] ram[0:255];
 
-always @(negedge ws) begin
-    ram[in_idx] = data_in;
-    audio <= ram[in_idx + out_offset];
+always@(posedge wclk)
+begin
+
+    if(wclke & we)
+        ram[waddr] <= waddr;
+
 end
 
-assign data_out = audio;
+always@(posedge rclk)
+begin
 
-endmodule
+    if (rclke & re)
+        rdata <= ram[raddr];
+    else
+        rdata <= 'dZ;
+
+end
+
+endmodule 
 
