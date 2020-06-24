@@ -22,8 +22,7 @@ always #42 clock <= !clock;
 wire sck;
 wire ws;
 wire [5:0] frame_posn;
-wire [3:0] prescale;
-I2S_CLOCK i2s_ck(.ck(clock), .sck(sck), .ws(ws), .frame_posn(frame_posn), .prescale(prescale));
+I2S_CLOCK i2s_ck(.ck(clock), .sck(sck), .ws(ws), .frame_posn(frame_posn));
 
 // input data simulation
 
@@ -35,15 +34,16 @@ always @(negedge sck) begin
     sdi <= audio[31];
 end
 
-reg [31:0] signal = 32'h82340000;
+reg [31:0] signal_l = 32'h82340000;
+reg [31:0] signal_r = 32'h12340000;
 
 always @(posedge sck) begin
     if (frame_posn == 0) begin
-        audio <= signal;
-        signal <= signal + 32'h10000;
+        audio <= signal_l;
+        signal_l <= signal_l + 32'h20000;
     end else if (frame_posn == 32) begin
-        audio <= signal;
-        signal <= signal + 32'h10000;
+        audio <= signal_r;
+        signal_r <= signal_r + 32'h100000;
     end else begin
         audio <= audio << 1;
     end
@@ -60,60 +60,99 @@ I2S_RX i2s(.sck(sck), .ws(ws), .frame_posn(frame_posn), .sd(sdi), .left(left), .
 
 reg [15:0] data_in = 'dZ;
 wire [15:0] data_out;
-reg wclke = 0, rclke, we = 0, re;
+reg wclke = 0, rclke = 0, we = 0, re = 0;
 reg [7:0] waddr = 'dZ;
-wire [7:0] raddr;
+reg [7:0] raddr = 'dZ;
 
 wire ram_ck;
 
-assign ram_ck = prescale[0];
+assign ram_ck = clock;
 
-DPRAM ram(.wclk(ram_ck), .rclk(clock), .wclke(wclke), .rclke(rclke), .we(we), .re(re),
+DPRAM ram(.wclk(ram_ck), .rclk(ram_ck), .wclke(wclke), .rclke(rclke), .we(we), .re(re),
     .wdata(data_in), .rdata(data_out),
     .waddr(waddr), .raddr(raddr));
 
 task ram_write;
-    input [15:0] datai;
-    input [7:0] addri;
+    input [15:0] data;
+    input [7:0] addr;
 
 begin
     @(posedge ram_ck);
-    data_in <= datai;
-    waddr <= addri;
+    data_in <= data;
+    waddr <= addr;
     @(negedge ram_ck);
     we <= 1;
     wclke <= 1;
     @(negedge ram_ck);
-    data_in <= 'dZ;
-    waddr <= 'dZ;
     we <= 0;
     wclke <= 0;
 end
 
 endtask
 
-reg [3:0] mic_idx;
+task ram_read;
+    input [7:0] addr;
 
-initial mic_idx = 0;
+begin
+    @(posedge ram_ck);
+    raddr <= addr;
+    @(negedge ram_ck);
+    re <= 1;
+    rclke <= 1;
+    @(negedge ram_ck);
+    re <= 0;
+    rclke <= 0;
+    raddr <= 'dZ;
+end
 
-wire [7:0] mic_0_addr;
-wire [7:0] mic_1_addr;
-assign mic_0_addr = { 4'd0, mic_idx };
-assign mic_1_addr = { 4'd1, mic_idx };
+endtask
 
-always @(negedge clock) begin
+// Offset for each frame's write for all signals
+reg [4:0] frame;
+initial frame = 0;
 
-    if ((frame_posn == 32) && (prescale == 0)) begin
-        mic_idx <= mic_idx + 1;
+task block_write;
+
+begin
+
+    @(posedge ram_ck);
+
+    // Write all channels
+    ram_write(left,     { 3'd0, frame });
+    ram_write(right,    { 3'd1, frame });
+    ram_write(16'h1234, { 3'd2, frame });
+    ram_write(16'habcd, { 3'd3, frame });
+    ram_write(16'h1000, { 3'd4, frame });
+    ram_write(16'h0100, { 3'd5, frame });
+    ram_write(16'h0010, { 3'd6, frame });
+    ram_write(16'h0001, { 3'd7, frame });
+
+    ram_read({ 3'd0, frame });
+    ram_read({ 3'd1, frame });
+    ram_read({ 3'd2, frame });
+    ram_read({ 3'd3, frame });
+    ram_read({ 3'd4, frame });
+    ram_read({ 3'd5, frame });
+    ram_read({ 3'd6, frame });
+    ram_read({ 3'd7, frame });
+
+end
+
+endtask
+
+always @(posedge sck) begin
+
+    if (frame_posn == 63)
+        frame <= frame + 1;
+
+end
+
+always @(negedge ram_ck) begin
+
+    if ((frame_posn == 0)) begin
+        block_write();
     end
 
-    if ((frame_posn == 32) && (prescale == 0)) begin
-        ram_write(left, mic_0_addr);
-    end
-
-    if ((frame_posn == 33) && (prescale == 0)) begin
-        ram_write(right, mic_1_addr);
-    end
 end
 
 //  Test the TX stage

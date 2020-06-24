@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Jun 24 12:53:02 2020
+[*] Wed Jun 24 14:57:43 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/mems/i2s.vcd"
-[dumpfile_mtime] "Wed Jun 24 12:52:10 2020"
-[dumpfile_size] 297185
+[dumpfile_mtime] "Wed Jun 24 14:57:32 2020"
+[dumpfile_size] 281361
 [savefile] "/home/dave/Desktop/git/fpga/mems/mems.gtkw"
-[timestart] 0
-[size] 1683 690
-[pos] 190 219
-*-26.208054 32256000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 64238000
+[size] 1683 736
+[pos] 190 173
+*-19.208054 64577000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2s_tb.
 [sst_width] 196
 [signals_width] 150
 [sst_expanded] 1
-[sst_vpaned_height] 187
+[sst_vpaned_height] 201
 @200
 -I2S clock gen
 @28
@@ -22,8 +22,6 @@ i2s_tb.i2s.sck
 i2s_tb.i2s.ws
 @22
 i2s_tb.frame_posn[5:0]
-@200
--
 @28
 i2s_tb.sdi
 @200
@@ -71,9 +69,14 @@ i2s_tb.out_right[15:0]
 i2s_tb.ram.wclk
 i2s_tb.ram.we
 i2s_tb.ram.wclke
-@23
-i2s_tb.ram.waddr[7:0]
 @22
+i2s_tb.ram.waddr[7:0]
 i2s_tb.ram.wdata[15:0]
+@28
+i2s_tb.re
+i2s_tb.rclke
+@22
+i2s_tb.raddr[7:0]
+i2s_tb.data_out[15:0]
 [pattern_trace] 1
 [pattern_trace] 0

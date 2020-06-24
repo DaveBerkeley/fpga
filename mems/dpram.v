@@ -20,7 +20,7 @@ always@(posedge wclk)
 begin
 
     if(wclke & we)
-        ram[waddr] <= waddr;
+        ram[waddr] <= wdata;
 
 end
 
@@ -29,8 +29,6 @@ begin
 
     if (rclke & re)
         rdata <= ram[raddr];
-    else
-        rdata <= 'dZ;
 
 end
 

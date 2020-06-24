@@ -1,5 +1,5 @@
 PROJ = mems
-ADD_SRC = delay.v i2s_rx.v i2s_tx.v i2s_clock.v
+ADD_SRC = dpram.v i2s_rx.v i2s_tx.v i2s_clock.v
 
 PACKAGE = sg48
 DEVICE = up5k
