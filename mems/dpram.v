@@ -34,3 +34,39 @@ end
 
 endmodule 
 
+   /*
+    *
+    */
+
+module writer(
+    input wire ck,
+    input wire start,
+    input wire [15:0] data,
+    input wire [7:0] addr,
+    output reg [15:0] odata,
+    output reg [7:0] oaddr,
+    output reg we
+);
+
+initial we = 0;
+
+always @(negedge ck) begin
+
+    if (we)
+    begin
+        // End the write cycle
+        we <= 0;
+    end
+    else if (start)
+    begin
+        // Start the write cycle
+        odata <= data;
+        oaddr <= addr;
+        we <= 1;
+    end
+
+end
+
+endmodule
+
+

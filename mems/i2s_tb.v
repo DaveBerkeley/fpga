@@ -2,6 +2,10 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
+   /*
+    *
+    */
+
 module i2s_tb();
 
 // Signals
@@ -59,10 +63,11 @@ I2S_RX i2s(.sck(sck), .frame_posn(frame_posn), .sd(sdi), .left(left), .right(rig
 
 //  Write into RAM
 
-reg [15:0] data_in = 'dZ;
+wire [15:0] data_in;
 wire [15:0] data_out;
-reg wclke = 0, rclke = 0, we = 0, re = 0;
-reg [7:0] waddr = 'dZ;
+wire we;
+reg re = 0;
+wire [7:0] waddr;
 reg [7:0] raddr = 'dZ;
 
 wire ram_ck;
@@ -70,80 +75,63 @@ wire ram_ck;
 assign ram_ck = clock;
 
 DPRAM ram(
-    .wclk(ram_ck), .we(we), .wclke(wclke), .waddr(waddr), .wdata(data_in), 
-    .rclke(rclke), .re(re), .rclk(ram_ck), .raddr(raddr), .rdata(data_out)
+    .wclk(ram_ck), .wclke(we), .we(we), .waddr(waddr), .wdata(data_in), 
+    .rclk(ram_ck), .rclke(re), .re(re), .raddr(raddr), .rdata(data_out)
 );
 
-task ram_write;
-    input [15:0] data;
-    input [7:0] addr;
+reg write = 0;
+reg [15:0] wr_data;
+reg [7:0] wr_addr;
+wire wr_busy;
 
-begin
-    @(posedge ram_ck);
-    data_in <= data;
-    waddr <= addr;
-    @(negedge ram_ck);
-    we <= 1;
-    wclke <= 1;
-    @(negedge ram_ck);
-    we <= 0;
-    wclke <= 0;
-end
+assign wr_busy = we;
 
-endtask
+writer writer(.ck(ram_ck), .start(write), .data(wr_data), .addr(wr_addr), 
+    .odata(data_in), .oaddr(waddr), .we(we));
 
-task ram_read;
-    input [7:0] addr;
+   /*
+    *   Write the signals to RAM
+    */
 
-begin
-    @(posedge ram_ck);
-    raddr <= addr;
-    @(negedge ram_ck);
-    re <= 1;
-    rclke <= 1;
-    @(negedge ram_ck);
-    re <= 0;
-    rclke <= 0;
-    raddr <= 'dZ;
-end
+reg [2:0] channel = 0;
 
-endtask
+task write_data(input [2:0] offset, input [15:0] data);
 
-task block_write;
-
-begin
-
-    @(posedge ram_ck);
-
-    // Write all channels
-    // TODO : make a function for the offset calc?
-    ram_write(left,     { 3'd0, frame[4:0] });
-    ram_write(right,    { 3'd1, frame[4:0] });
-    ram_write(16'h1234, { 3'd2, frame[4:0] });
-    ram_write(16'habcd, { 3'd3, frame[4:0] });
-    ram_write(16'h1000, { 3'd4, frame[4:0] });
-    ram_write(16'h0100, { 3'd5, frame[4:0] });
-    ram_write(16'h0010, { 3'd6, frame[4:0] });
-    ram_write(16'h0001, { 3'd7, frame[4:0] });
-
-    ram_read({ 3'd0, frame[4:0] });
-    ram_read({ 3'd1, frame[4:0] });
-    ram_read({ 3'd2, frame[4:0] });
-    ram_read({ 3'd3, frame[4:0] });
-    ram_read({ 3'd4, frame[4:0] });
-    ram_read({ 3'd5, frame[4:0] });
-    ram_read({ 3'd6, frame[4:0] });
-    ram_read({ 3'd7, frame[4:0] });
-
-end
-
-endtask
-
-always @(negedge ram_ck) begin
-
-    if ((frame_posn == 0)) begin
-        block_write();
+    begin
+        write <= 1;
+        wr_data <= data;
+        wr_addr <= { offset, frame[4:0] };
+        channel <= channel + 1;
     end
+
+endtask
+
+always @(posedge ram_ck) begin
+
+    if (write)
+        write <= 0;
+
+    if (frame_posn == 63)
+        channel <= 0;
+
+    if ((frame_posn == 0) && (channel == 0))
+    begin
+        write_data(channel, left);
+    end
+
+    if (!wr_busy)
+    begin
+        case (channel)
+            1 : write_data(channel, right);
+            2 : write_data(channel, 16'h1234);
+            3 : write_data(channel, 16'habcd);
+            4 : write_data(channel, 16'h1000);
+            5 : write_data(channel, 16'h0100);
+            6 : write_data(channel, 16'h0010);
+            7 : write_data(channel, 16'h0001);
+        endcase
+    end
+ 
 
 end
 

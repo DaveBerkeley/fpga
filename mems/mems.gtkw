@@ -1,25 +1,24 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jun 25 05:26:54 2020
+[*] Thu Jun 25 07:31:00 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/mems/i2s.vcd"
-[dumpfile_mtime] "Thu Jun 25 05:26:06 2020"
-[dumpfile_size] 281376
+[dumpfile_mtime] "Thu Jun 25 07:30:43 2020"
+[dumpfile_size] 485015
 [savefile] "/home/dave/Desktop/git/fpga/mems/mems.gtkw"
 [timestart] 0
-[size] 1683 764
-[pos] 190 145
-*-26.208054 322686000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1683 824
+[pos] 190 85
+*-17.208054 82800 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2s_tb.
 [sst_width] 196
-[signals_width] 150
+[signals_width] 172
 [sst_expanded] 1
-[sst_vpaned_height] 208
+[sst_vpaned_height] 227
 @200
 -I2S clock gen
 @28
 i2s_tb.i2s.sck
-@29
 i2s_tb.ws
 @22
 i2s_tb.frame_posn[5:0]
@@ -28,27 +27,6 @@ i2s_tb.frame[7:0]
 i2s_tb.sdi
 @200
 -Rx
-@c00022
-i2s_tb.i2s.shift[15:0]
-@28
-(0)i2s_tb.i2s.shift[15:0]
-(1)i2s_tb.i2s.shift[15:0]
-(2)i2s_tb.i2s.shift[15:0]
-(3)i2s_tb.i2s.shift[15:0]
-(4)i2s_tb.i2s.shift[15:0]
-(5)i2s_tb.i2s.shift[15:0]
-(6)i2s_tb.i2s.shift[15:0]
-(7)i2s_tb.i2s.shift[15:0]
-(8)i2s_tb.i2s.shift[15:0]
-(9)i2s_tb.i2s.shift[15:0]
-(10)i2s_tb.i2s.shift[15:0]
-(11)i2s_tb.i2s.shift[15:0]
-(12)i2s_tb.i2s.shift[15:0]
-(13)i2s_tb.i2s.shift[15:0]
-(14)i2s_tb.i2s.shift[15:0]
-(15)i2s_tb.i2s.shift[15:0]
-@1401200
--group_end
 @22
 i2s_tb.i2s_tx.left[15:0]
 i2s_tb.i2s.right[15:0]
@@ -56,13 +34,11 @@ i2s_tb.i2s.right[15:0]
 -
 -Tx
 @22
-i2s_tb.i2s_tx.shift[15:0]
 i2s_tb.sdo
 @200
 -
 -Rx
 @22
-i2s_tb.i2s_rx_out.shift[15:0]
 i2s_tb.out_left[15:0]
 i2s_tb.out_right[15:0]
 @200
@@ -70,15 +46,25 @@ i2s_tb.out_right[15:0]
 @28
 i2s_tb.ram.wclk
 i2s_tb.ram.we
-i2s_tb.ram.wclke
 @22
 i2s_tb.ram.waddr[7:0]
 i2s_tb.ram.wdata[15:0]
 @28
 i2s_tb.re
-i2s_tb.rclke
 @22
 i2s_tb.raddr[7:0]
 i2s_tb.data_out[15:0]
+@200
+-
+@28
+i2s_tb.write
+i2s_tb.wr_busy
+i2s_tb.writer.ck
+i2s_tb.writer.we
+@22
+i2s_tb.writer.addr[7:0]
+i2s_tb.writer.data[15:0]
+@23
+i2s_tb.channel[3:0]
 [pattern_trace] 1
 [pattern_trace] 0
