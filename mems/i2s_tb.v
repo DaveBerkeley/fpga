@@ -63,8 +63,8 @@ I2S_RX i2s(.sck(sck), .frame_posn(frame_posn), .sd(sdi), .left(left), .right(rig
 
 //  Write into RAM
 
-wire [15:0] data_in;
-wire [15:0] data_out;
+wire [15:0] wdata;
+wire [15:0] rdata;
 wire we;
 reg re = 0;
 wire [7:0] waddr;
@@ -74,66 +74,32 @@ wire ram_ck;
 
 assign ram_ck = clock;
 
-DPRAM ram(
-    .wclk(ram_ck), .wclke(we), .we(we), .waddr(waddr), .wdata(data_in), 
-    .rclk(ram_ck), .rclke(re), .re(re), .raddr(raddr), .rdata(data_out)
-);
+DPRAM ram(.clk(ram_ck), .we(we), .waddr(waddr), .wdata(wdata), .re(re), .raddr(raddr), .rdata(rdata));
 
 reg write = 0;
-reg [15:0] wr_data;
-reg [7:0] wr_addr;
+wire [15:0] wr_data;
+wire [7:0] wr_addr;
 wire wr_busy;
 
 assign wr_busy = we;
 
-writer writer(.ck(ram_ck), .start(write), .data(wr_data), .addr(wr_addr), 
-    .odata(data_in), .oaddr(waddr), .we(we));
+writer writer(.ck(ram_ck), .start(write), .data(wr_data), .addr(wr_addr), .odata(wdata), .oaddr(waddr), .we(we));
 
    /*
     *   Write the signals to RAM
     */
 
-reg [2:0] channel = 0;
-
-task write_data(input [2:0] offset, input [15:0] data);
-
-    begin
-        write <= 1;
-        wr_data <= data;
-        wr_addr <= { offset, frame[4:0] };
-        channel <= channel + 1;
-    end
-
-endtask
-
-always @(posedge ram_ck) begin
-
-    if (write)
-        write <= 0;
-
-    if (frame_posn == 63)
-        channel <= 0;
-
-    if ((frame_posn == 0) && (channel == 0))
-    begin
-        write_data(channel, left);
-    end
-
-    if (!wr_busy)
-    begin
-        case (channel)
-            1 : write_data(channel, right);
-            2 : write_data(channel, 16'h1234);
-            3 : write_data(channel, 16'habcd);
-            4 : write_data(channel, 16'h1000);
-            5 : write_data(channel, 16'h0100);
-            6 : write_data(channel, 16'h0010);
-            7 : write_data(channel, 16'h0001);
-        endcase
-    end
- 
-
-end
+save_signals ww(.ck(ram_ck), 
+    .frame_posn(frame_posn),
+    .frame(frame),
+    .d0(left),
+    .d1(right),
+    .d2(16'habcd),
+    .d3(16'h1234),
+    .d4(16'h1000),
+    .d5(16'h0100),
+    .d6(16'h0010),
+    .d7(16'h0001));
 
 //  Test the TX stage
 

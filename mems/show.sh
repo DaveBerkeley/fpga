@@ -2,7 +2,7 @@
 
 # verilator i2s_rx.v i2s_tx.v i2s_clock.v dpram.v i2s_tb.v --lint-only -Wall -Wno-DECLFILENAME
 
-iverilog -o i2s.vvp i2s_rx.v i2s_tx.v i2s_clock.v dpram.v i2s_tb.v
+iverilog -o i2s.vvp i2s_rx.v i2s_tx.v i2s_clock.v dpram.v i2s_tb.v writer.v
 
 ERR=$?
 

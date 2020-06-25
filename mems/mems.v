@@ -21,7 +21,6 @@ wire [15:0] mic_1;
 I2S_RX i2s_0(.sck(i2s_sck), .frame_posn(frame_posn), .sd(sd_0), .left(mic_0), .right(mic_1));
 
 wire sd_1;
-/* verilator lint_off UNUSED */
 wire [15:0] mic_2;
 wire [15:0] mic_3;
 
@@ -30,11 +29,24 @@ I2S_RX i2s_1(.sck(i2s_sck), .frame_posn(frame_posn), .sd(sd_1), .left(mic_2), .r
 wire sd_2;
 wire [15:0] mic_4;
 wire [15:0] mic_5;
-/* verilator lint_on UNUSED */
 
 I2S_RX i2s_2(.sck(i2s_sck), .frame_posn(frame_posn), .sd(sd_2), .left(mic_4), .right(mic_5));
 
-// TODO write the microphone data into RAM
+// write the microphone data into RAM
+
+wire ram_ck;
+assign ram_ck = CLK;
+
+save_signals writer(.ck(ram_ck), .frame_posn(frame_posn),
+    .frame(frame[4:0]),
+    .d0(mic_0),
+    .d1(mic_1),
+    .d2(mic_2),
+    .d3(mic_3),
+    .d4(mic_4),
+    .d5(mic_5),
+    .d6(16'h0000),
+    .d7(16'h0000));
 
 // TODO Read out delayed samples from RAM
 
