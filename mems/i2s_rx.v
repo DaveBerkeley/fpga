@@ -1,7 +1,6 @@
 
 module I2S_RX(
     input wire sck, // I2S sck
-    input wire ws,  // I2S ws
     input wire [5:0] frame_posn,
     input wire sd,  // I2S data in
     output reg [15:0] left, 

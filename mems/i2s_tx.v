@@ -1,7 +1,6 @@
 
 module I2S_TX(
     input wire sck, // I2S sck
-    input wire ws,  // I2S ws
     input wire [5:0] frame_posn,
     input wire [15:0] left,
     input wire [15:0] right,

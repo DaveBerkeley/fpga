@@ -55,7 +55,7 @@ end
 wire [15:0] left;
 wire [15:0] right;
 
-I2S_RX i2s(.sck(sck), .ws(ws), .frame_posn(frame_posn), .sd(sdi), .left(left), .right(right));
+I2S_RX i2s(.sck(sck), .frame_posn(frame_posn), .sd(sdi), .left(left), .right(right));
 
 //  Write into RAM
 
@@ -70,10 +70,9 @@ wire ram_ck;
 assign ram_ck = clock;
 
 DPRAM ram(
-    .wclk(ram_ck), .we(we), .wclke(wclke), 
-    .wdata(data_in), .rdata(data_out),
-    .rclke(rclke), .re(re), .rclk(ram_ck), 
-    .waddr(waddr), .raddr(raddr));
+    .wclk(ram_ck), .we(we), .wclke(wclke), .waddr(waddr), .wdata(data_in), 
+    .rclke(rclke), .re(re), .rclk(ram_ck), .raddr(raddr), .rdata(data_out)
+);
 
 task ram_write;
     input [15:0] data;
@@ -152,14 +151,14 @@ end
 
 wire sdo;
 
-I2S_TX i2s_tx (.sck(sck), .ws(ws), .frame_posn(frame_posn), .left(left), .right(right), .sd(sdo));
+I2S_TX i2s_tx (.sck(sck), .frame_posn(frame_posn), .left(left), .right(right), .sd(sdo));
 
 //  Clock the Output into an Rx to see if it works back-to-back
 
 wire [15:0] out_left;
 wire [15:0] out_right;
 
-I2S_RX i2s_rx_out(.sck(sck), .ws(ws), .frame_posn(frame_posn), .sd(sdo), .left(out_left), .right(out_right));
+I2S_RX i2s_rx_out(.sck(sck), .frame_posn(frame_posn), .sd(sdo), .left(out_left), .right(out_right));
 
 endmodule
 

@@ -5,7 +5,7 @@ all: $(PROJ).rpt $(PROJ).bin
 	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -top top -blif $@' $< $(ADD_SRC)
 
 %.json: %.v $(ADD_SRC) $(ADD_DEPS)
-	verilator --top-module top $< $(ADD_SRC) --lint-only
+	verilator --top-module top $< $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
 	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -top top -json $@' $< $(ADD_SRC)
 
 ifeq ($(USE_ARACHNEPNR),)
