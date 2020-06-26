@@ -1,4 +1,8 @@
 
+   /*
+    *   Send a frame of data to SK9822 LEDs
+    */
+
 module tx(
     input wire ck,
     input wire tx,
@@ -72,10 +76,6 @@ dpram #(.BITS(24), .SIZE(12)) ram_ (.clk(CLK),
     .re(re), .raddr(raddr), .rdata(rdata)
 );
 
-reg [3:0] word = 0;
-reg [23:0] colour = 0;
-reg [2:0] cycle = 0;
-
 task send(input [31:0] di);
 
     begin
@@ -94,6 +94,8 @@ task read_data(input [3:0] idx);
 
 endtask
 
+reg [3:0] led_idx = 0;
+
 always @(negedge CLK) begin
 
     if (re) begin
@@ -102,18 +104,14 @@ always @(negedge CLK) begin
         re <= 0;
     end
 
+    if (busy)
+        do_tx <= 0;
+
     if (! (busy || do_tx || re)) begin
 
-        word <= word + 1;
+        led_idx <= led_idx + 1;
 
-        if (word == 0) begin
-            cycle <= cycle + 1;
-
-            if (cycle == 0)
-                colour <= colour + 1;
-        end
-
-        case (word)
+        case (led_idx)
 
             0   :   begin send(32'h0); end
 
@@ -138,10 +136,37 @@ always @(negedge CLK) begin
 
     end
 
-    if (busy)
-        do_tx <= 0;
-
 end
 
+   /*
+    *   Write to LED ram
+    */
+
+reg [12:0] slower = 0;
+reg [7:0] red = 0;
+
+always @(negedge CLK) begin
+
+    slower <= slower + 1;
+
+    if (slower == 0) begin
+        red <= red + 1;
+        // write to RAM
+        if (red == 1) begin
+            if (waddr == 11) 
+                waddr <= 0;
+            else
+                waddr <= waddr + 1;
+        end
+
+        wdata <= { red, 8'h0, 8'h0 };
+        we <= 1;
+    end
+
+    if (we)
+        we <= 0;
+
+end
+   
 endmodule
 
