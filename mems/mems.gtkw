@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jun 25 10:09:55 2020
+[*] Thu Jun 25 10:28:12 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/mems/i2s.vcd"
-[dumpfile_mtime] "Thu Jun 25 10:08:27 2020"
+[dumpfile_mtime] "Thu Jun 25 10:16:11 2020"
 [dumpfile_size] 294234
 [savefile] "/home/dave/Desktop/git/fpga/mems/mems.gtkw"
-[timestart] 192596000
+[timestart] 0
 [size] 1683 824
 [pos] 190 85
-*-19.232870 193578000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-26.232870 193578000 3 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] i2s_tb.
 [treeopen] i2s_tb.ww.
 [treeopen] i2s_tb.ww.ww.

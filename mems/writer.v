@@ -76,8 +76,7 @@ always @(posedge ck) begin
     if (frame_posn == 63)
         channel <= 0;
 
-    if (!write)
-    begin
+    if (!write) begin
         case (channel)
             0 : if (frame_posn == 0)
                     write_data(channel, d0);
