@@ -41,10 +41,6 @@ endif
 prog: $(PROJ).bin
 	iceprog $<
 
-sudo-prog: $(PROJ).bin
-	@echo 'Executing prog as root!!!'
-	sudo iceprog $<
-
 clean:
 	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin $(PROJ).json $(PROJ).log *.vvp *.vcd $(ADD_CLEAN)
 

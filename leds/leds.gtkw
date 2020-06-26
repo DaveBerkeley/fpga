@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Fri Jun 26 13:56:11 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/leds/leds.vcd"
+[dumpfile_mtime] "Fri Jun 26 13:55:10 2020"
+[dumpfile_size] 261302
+[savefile] "/home/dave/Desktop/git/fpga/leds/leds.gtkw"
+[timestart] 0
+[size] 1441 750
+[pos] 323 171
+*-20.475121 1530000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] leds_tb.
+[treeopen] leds_tb.top_.
+[sst_width] 196
+[signals_width] 126
+[sst_expanded] 1
+[sst_vpaned_height] 208
+@28
+leds_tb.top_.tx_.busy
+leds_tb.top_.tx_.ck
+@22
+leds_tb.top_.tx_.counter[4:0]
+leds_tb.top_.tx_.data[31:0]
+@28
+leds_tb.top_.tx_.led_ck
+leds_tb.top_.tx_.led_out
+@22
+leds_tb.top_.tx_.shift[31:0]
+@28
+leds_tb.top_.tx_.tx
+[pattern_trace] 1
+[pattern_trace] 0
