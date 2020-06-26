@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Jun 26 13:56:11 2020
+[*] Fri Jun 26 16:53:34 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/leds/leds.vcd"
-[dumpfile_mtime] "Fri Jun 26 13:55:10 2020"
-[dumpfile_size] 261302
+[dumpfile_mtime] "Fri Jun 26 16:53:06 2020"
+[dumpfile_size] 4298926
 [savefile] "/home/dave/Desktop/git/fpga/leds/leds.gtkw"
-[timestart] 0
+[timestart] 2085000
 [size] 1441 750
 [pos] 323 171
-*-20.475121 1530000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.475121 3066000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] leds_tb.
 [treeopen] leds_tb.top_.
 [sst_width] 196
@@ -20,7 +20,6 @@
 leds_tb.top_.tx_.busy
 leds_tb.top_.tx_.ck
 @22
-leds_tb.top_.tx_.counter[4:0]
 leds_tb.top_.tx_.data[31:0]
 @28
 leds_tb.top_.tx_.led_ck
@@ -29,5 +28,19 @@ leds_tb.top_.tx_.led_out
 leds_tb.top_.tx_.shift[31:0]
 @28
 leds_tb.top_.tx_.tx
+@201
+-
+@28
+leds_tb.top_.ram_.clk
+@22
+leds_tb.top_.ram_.raddr[3:0]
+leds_tb.top_.ram_.rdata[23:0]
+@28
+leds_tb.top_.ram_.re
+@22
+leds_tb.top_.ram_.waddr[3:0]
+leds_tb.top_.ram_.wdata[23:0]
+@28
+leds_tb.top_.ram_.we
 [pattern_trace] 1
 [pattern_trace] 0

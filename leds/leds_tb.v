@@ -7,7 +7,7 @@ module leds_tb();
 initial begin
     $dumpfile("leds.vcd");
     $dumpvars(0, leds_tb);
-    #5000000 $finish;
+    #500000 $finish;
 end
 
 reg ck = 0;

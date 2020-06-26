@@ -1,5 +1,5 @@
 PROJ = leds
-ADD_SRC = 
+ADD_SRC =  dpram.v
 
 PACKAGE = sg48
 DEVICE = up5k
