@@ -51,13 +51,7 @@ reg [31:0] data;
 wire busy;
 reg do_tx = 0;
 
-reg [0:0] prescale = 0;
-
-always @(posedge clk) begin
-    prescale <= prescale + 1;
-end
-
-tx_led tx_(.ck(prescale[0]), .tx(do_tx), .data(data), .led_out(led_data), .led_ck(led_ck), .busy(busy));
+tx_led tx_(.ck(clk), .tx(do_tx), .data(data), .led_out(led_data), .led_ck(led_ck), .busy(busy));
 
 task send(input [31:0] di);
 
