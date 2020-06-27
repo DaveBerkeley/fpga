@@ -15,9 +15,11 @@ module dpram
 
 reg [BITS-1:0] ram[0:SIZE-1];
 
+/*
 initial begin
     $readmemh("led.data", ram);
 end
+*/
 
 always@(posedge clk)
 begin

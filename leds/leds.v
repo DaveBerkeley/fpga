@@ -3,7 +3,7 @@
     *   Send a frame of data to SK9822 LEDs
     */
 
-module tx(
+module tx_led(
     input wire ck,
     input wire tx,
     input wire [31:0] data,
@@ -42,15 +42,10 @@ endmodule
     *
     */
 
-module top (input CLK, output P1A1, output P1A2);
-
-wire led_data;
-wire led_ck;
-
-// Assign the IO
-
-assign P1A1 = led_data;
-assign P1A2 = led_ck;
+module led_sk9822 (input clk, output led_data, output led_ck,
+                    output reg re, output reg [3:0] raddr, 
+                    input wire [23:0] rdata
+);
 
 reg [31:0] data;
 wire busy;
@@ -58,23 +53,11 @@ reg do_tx = 0;
 
 reg [0:0] prescale = 0;
 
-always @(posedge CLK) begin
+always @(posedge clk) begin
     prescale <= prescale + 1;
 end
 
-tx tx_(.ck(prescale[0]), .tx(do_tx), .data(data), .led_out(led_data), .led_ck(led_ck), .busy(busy));
-
-reg we = 0;
-reg [3:0] waddr = 0;
-reg [23:0] wdata = 0;
-reg re = 0;
-reg [3:0] raddr = 0;
-wire [23:0] rdata;
-
-dpram #(.BITS(24), .SIZE(12)) ram_ (.clk(CLK),
-    .we(we), .waddr(waddr), .wdata(wdata),
-    .re(re), .raddr(raddr), .rdata(rdata)
-);
+tx_led tx_(.ck(prescale[0]), .tx(do_tx), .data(data), .led_out(led_data), .led_ck(led_ck), .busy(busy));
 
 task send(input [31:0] di);
 
@@ -96,10 +79,10 @@ endtask
 
 reg [3:0] led_idx = 0;
 
-always @(negedge CLK) begin
+always @(negedge clk) begin
 
     if (re) begin
-        data <= { 8'hE4, rdata };
+        data <= { 8'hF8, rdata[23:0] };
         do_tx <= 1;
         re <= 0;
     end
@@ -138,14 +121,18 @@ always @(negedge CLK) begin
 
 end
 
+endmodule
+
    /*
     *   Write to LED ram
     */
 
+module ram_write(input wire clk, output reg we, output reg [3:0] waddr, output reg [31:0] wdata);
+
 reg [12:0] slower = 0;
 reg [7:0] red = 0;
 
-always @(negedge CLK) begin
+always @(negedge clk) begin
 
     slower <= slower + 1;
 
@@ -159,7 +146,7 @@ always @(negedge CLK) begin
                 waddr <= waddr + 1;
         end
 
-        wdata <= { red, 8'h0, 8'h0 };
+        wdata <= { 8'h0, red, 8'h0, 8'h0 };
         we <= 1;
     end
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-iverilog -o leds.vvp leds.v dpram.v leds_tb.v
+iverilog -o leds.vvp top.v leds.v dpram.v leds_tb.v
 
 ERR=$?
 
