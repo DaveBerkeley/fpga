@@ -25,6 +25,8 @@ endif
 
 %_tb: %_tb.v %.v
 	iverilog -g2012 -o $@ $^
+	./$@
+	gtkwave $(PROJ).vcd $(PROJ).gtkw
 
 %_tb.vcd: %_tb
 	vvp -N $< +vcd=$@
@@ -33,6 +35,7 @@ endif
 	yosys -p 'read_blif -wideports $^; write_verilog $@'
 
 %_syntb: %_tb.v %_syn.v
+	verilator --top-module top $< $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
 	iverilog -o $@ $^ `yosys-config --datdir/ice40/cells_sim.v`
 
 %_syntb.vcd: %_syntb
