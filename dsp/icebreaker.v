@@ -43,7 +43,15 @@ module icebreaker (
 	inout  flash_io0,
 	inout  flash_io1,
 	inout  flash_io2,
-	inout  flash_io3
+	inout  flash_io3,
+
+    output i2s_sck,
+    output i2s_ws,
+    input i2s_d0,
+    input i2s_d1,
+    input i2s_d2,
+    input i2s_d3,
+    output i2s_out
 );
 	parameter integer MEM_WORDS = 32768;
 
@@ -53,6 +61,57 @@ module icebreaker (
 	always @(posedge clk) begin
 		reset_cnt <= reset_cnt + !resetn;
 	end
+
+    // RAM Test
+
+    reg ioram_we = 0;
+    wire [3:0] ioram_waddr;
+    wire [31:0] ioram_wdata;
+    wire ioram_re;
+    wire [3:0] ioram_raddr;
+    /* verilator lint_off UNUSED */
+    wire [31:0] ioram_rdata;
+    /* verilator lint_on UNUSED */
+
+    dpram #(.BITS(32), .SIZE(16)) ioram (.clk(clk),
+        .we(ioram_we), .waddr(ioram_waddr), .wdata(ioram_wdata),
+        .re(ioram_re), .raddr(ioram_raddr), .rdata(ioram_rdata)
+    );
+
+    //  Test using LEDs
+
+    wire led_data;
+    assign i2s_sck = led_data;
+    wire led_ck;
+    assign i2s_ws = led_ck;
+
+    reg we = 0;
+    wire [3:0] waddr;
+    wire [31:0] wdata;
+    wire re;
+    wire [3:0] raddr;
+    /* verilator lint_off UNUSED */
+    wire [31:0] rdata;
+    /* verilator lint_on UNUSED */
+
+    dpram #(.BITS(32), .SIZE(16)) ram_ (.clk(clk),
+        .we(we), .waddr(waddr), .wdata(wdata),
+        .re(re), .raddr(raddr), .rdata(rdata)
+    );
+
+    led_sk9822 led_array (.clk(clk), .led_data(led_data), .led_ck(led_ck), .re(re), .raddr(raddr), .rdata(rdata[23:0]));
+
+    //ram_write writer(.clk(clk), .we(we), .waddr(waddr), .wdata(wdata));
+
+    reg test = 0;
+
+    always @(posedge clk) begin
+        test <= iomem_valid;
+    end
+
+    assign i2s_out = test;
+
+    //  End Test using sk9822 LEDs
 
 	wire [7:0] leds;
 
@@ -80,6 +139,8 @@ module icebreaker (
 		.D_IN_0({flash_io3_di, flash_io2_di, flash_io1_di, flash_io0_di})
 	);
 
+    //  IO Memory interface
+
 	wire        iomem_valid;
 	reg         iomem_ready;
 	wire [3:0]  iomem_wstrb;
@@ -90,12 +151,19 @@ module icebreaker (
 	reg [31:0] gpio;
 	assign leds = gpio;
 
+    wire gpio_en;
+    wire dpram_en;
+
+    assign gpio_en  = iomem_valid && !iomem_ready && (iomem_addr[31:16] == 16'h 0300);
+    assign dpram_en = iomem_valid && !iomem_ready && (iomem_addr[31:16] == 16'h 4000);
+
 	always @(posedge clk) begin
 		if (!resetn) begin
 			gpio <= 0;
 		end else begin
-			iomem_ready <= 0;
-			if (iomem_valid && !iomem_ready && iomem_addr[31:24] == 8'h 03) begin
+            if (iomem_ready)
+    			iomem_ready <= 0;
+			if (gpio_en) begin
 				iomem_ready <= 1;
 				iomem_rdata <= gpio;
 				if (iomem_wstrb[0]) gpio[ 7: 0] <= iomem_wdata[ 7: 0];
@@ -103,8 +171,22 @@ module icebreaker (
 				if (iomem_wstrb[2]) gpio[23:16] <= iomem_wdata[23:16];
 				if (iomem_wstrb[3]) gpio[31:24] <= iomem_wdata[31:24];
 			end
+
+            // Interface to DP RAM
+			if (dpram_en) begin
+				iomem_ready <= 1;
+                we <= | iomem_wdata;
+				iomem_rdata <= 32'h12345678;
+            end else begin
+                we <= 0;
+			end
 		end
 	end
+
+    assign waddr = iomem_addr[5:2];
+    assign wdata = iomem_wdata;
+
+    //  Processor Core
 
 	picosoc #(
 		.BARREL_SHIFTER(0),
