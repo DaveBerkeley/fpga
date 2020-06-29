@@ -10,14 +10,14 @@ module addr_adder(
     parameter FRAME_W = 4;
     parameter CHAN_W = 3;
 
-    reg [(FRAME_W+CHAN_W)-1:0] hold;
+    reg [(FRAME_W+CHAN_W)-1:0] addr_0;
 
     always @(posedge ck) begin
-        hold <= { chan, frame + offset };
+        addr_0 <= { chan, frame + offset };
     end
 
     always @(negedge ck) begin
-        addr <= hold;
+        addr <= addr_0;
     end
 
 endmodule
