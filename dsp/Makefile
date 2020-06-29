@@ -1,5 +1,5 @@
 PROJ = dsp
-ADD_SRC =  
+ADD_SRC = dpram.v 
 ADD_CLEAN = dsp_tb dsp_syntb dsp_syn.v
 
 PACKAGE = sg48

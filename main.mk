@@ -6,7 +6,7 @@ all: $(PROJ).rpt $(PROJ).bin
 
 %.json: %.v $(ADD_SRC) $(ADD_DEPS)
 	verilator --top-module top $< $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
-	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -top top -json $@' $< $(ADD_SRC)
+	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -dsp -top top -json $@' $< $(ADD_SRC)
 
 ifeq ($(USE_ARACHNEPNR),)
 %.asc: $(PIN_DEF) %.json
@@ -24,7 +24,8 @@ endif
 	icetime $(if $(FREQ),-c $(FREQ)) -d $(DEVICE) -mtr $@ $<
 
 %_tb: %_tb.v %.v
-	iverilog -g2012 -o $@ $^
+	verilator -DSIMULATION --top-module top $(PROJ).v $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
+	iverilog -g2012 -o $@ $(ADD_SRC) $^
 	./$@
 	gtkwave $(PROJ).vcd $(PROJ).gtkw
 

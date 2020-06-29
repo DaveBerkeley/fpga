@@ -1,23 +1,57 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jun 28 08:15:35 2020
+[*] Mon Jun 29 10:11:41 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Sun Jun 28 08:15:20 2020"
-[dumpfile_size] 1402467
+[dumpfile_mtime] "Mon Jun 29 10:09:34 2020"
+[dumpfile_size] 2600870
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
 [timestart] 0
-[size] 1000 600
-[pos] -634 -280
-*-20.490086 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1354 799
+[pos] 0 136
+*-18.978966 1051400 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
+[treeopen] tb.top_.
+[treeopen] tb.top_.seq.
 [sst_width] 196
-[signals_width] 78
+[signals_width] 166
 [sst_expanded] 1
-[sst_vpaned_height] 155
+[sst_vpaned_height] 222
 @28
-tb.top_.CLK
-tb.top_.P1A1
-tb.top_.P1A2
+tb.top_.seq.addr_add.ck
+@22
+tb.top_.seq.addr_add.frame[4:0]
+@28
+tb.top_.seq.rst
+@200
+-
+@22
+tb.top_.audio_raddr[8:0]
+tb.top_.seq.audio_in[15:0]
+@200
+-
+@22
+tb.top_.seq.coef_addr[7:0]
+tb.top_.seq.coef_data[31:0]
+tb.top_.seq.code[31:0]
+tb.top_.seq.gain[15:0]
+tb.top_.seq.addr_add.chan[3:0]
+tb.top_.seq.addr_add.offset[4:0]
+tb.top_.seq.op_code[6:0]
+@29
+tb.top_.seq.rst_pipe[1:0]
+@22
+tb.top_.seq.gain_pipe_1[15:0]
+@28
+tb.top_.seq.done
+tb.top_.seq.error
+@200
+-
+@22
+tb.top_.seq.mul_out[31:0]
+@28
+tb.top_.seq.acc_add
+tb.top_.seq.acc_en
+tb.top_.seq.acc_rst
 [pattern_trace] 1
 [pattern_trace] 0
