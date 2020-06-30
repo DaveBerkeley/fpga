@@ -1,33 +1,31 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Jun 29 16:28:56 2020
+[*] Tue Jun 30 08:30:35 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Mon Jun 29 16:25:11 2020"
-[dumpfile_size] 2961405
+[dumpfile_mtime] "Tue Jun 30 08:30:06 2020"
+[dumpfile_size] 25334815
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
 [timestart] 0
-[size] 1918 845
-[pos] 0 90
-*-17.710260 756000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[size] 1918 861
+[pos] 0 100
+*-18.326889 1974000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.top_.
 [treeopen] tb.top_.seq.
 [sst_width] 196
 [signals_width] 190
 [sst_expanded] 1
-[sst_vpaned_height] 237
+[sst_vpaned_height] 241
 @28
 tb.top_.seq.addr_add.ck
 @22
 tb.top_.seq.addr_add.frame[4:0]
 @28
 tb.top_.seq.rst
-@200
--
-@23
-tb.top_.seq.addr_add.addr_0[8:0]
+tb.top_.seq.reset
 @22
+tb.top_.seq.addr_add.addr_0[8:0]
 tb.top_.audio_raddr[8:0]
 tb.top_.seq.audio_in[15:0]
 tb.top_.seq.audio_in_latch[15:0]
@@ -46,8 +44,8 @@ tb.top_.seq.addr_add.offset[4:0]
 tb.top_.seq.op_code[6:0]
 @28
 tb.top_.seq.done_req
-@200
--
+tb.top_.seq.error
+tb.top_.seq.noop_1
 @22
 tb.top_.seq.gain_pipe_1[15:0]
 tb.top_.seq.audio_in_latch[15:0]
