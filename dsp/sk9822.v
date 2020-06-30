@@ -1,6 +1,6 @@
 
 module sk9822_peripheral(
-    input wire clk,
+    input wire ck,
     input wire resetn,
 	input wire iomem_valid,
 	output reg iomem_ready,
@@ -23,7 +23,7 @@ module sk9822_peripheral(
 
     initial iomem_rdata = 0;
 
-    dpram #(.BITS(32), .SIZE(16)) ioram (.clk(clk),
+    dpram #(.BITS(32), .SIZE(16)) ioram (.ck(ck),
         .we(ioram_we), .waddr(ioram_waddr), .wdata(ioram_wdata),
         .re(ioram_re), .raddr(ioram_raddr), .rdata(ioram_rdata)
     );
@@ -35,19 +35,19 @@ module sk9822_peripheral(
     wire [3:0] raddr;
     wire [31:0] rdata;
 
-    dpram #(.BITS(32), .SIZE(16)) ram_ (.clk(clk),
+    dpram #(.BITS(32), .SIZE(16)) ram_ (.ck(ck),
         .we(we), .waddr(waddr), .wdata(wdata),
         .re(re), .raddr(raddr), .rdata(rdata)
     );
 
-    led_sk9822 led_array (.clk(clk), .led_data(led_data), .led_ck(led_ck), .re(re), .raddr(raddr), .rdata(rdata[23:0]));
+    led_sk9822 led_array (.clk(ck), .led_data(led_data), .led_ck(led_ck), .re(re), .raddr(raddr), .rdata(rdata[23:0]));
 
     initial iomem_ready = 0;
 
     wire dpram_en;
     assign dpram_en = iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR);
 
-	always @(posedge clk) begin
+	always @(posedge ck) begin
 		if (resetn) begin
             if (iomem_ready)
     			iomem_ready <= 0;

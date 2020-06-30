@@ -76,7 +76,7 @@ reg [3:0] led_idx = 0;
 always @(negedge clk) begin
 
     if (re) begin
-        data <= { 8'hF8, rdata[23:0] };
+        data <= { 8'hE8, rdata[23:0] };
         do_tx <= 1;
         re <= 0;
     end

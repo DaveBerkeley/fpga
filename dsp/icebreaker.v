@@ -27,53 +27,6 @@
     *
     */
 
-module gpio(
-    input wire clk,
-    input wire resetn,
-	input wire iomem_valid,
-	output reg iomem_ready,
-	input wire [3:0] iomem_wstrb,
-	input wire [31:0] iomem_addr,
-	input wire [31:0] iomem_wdata,
-	output reg [31:0] iomem_rdata,
-    output wire [7:0] leds
-);
-
-    parameter ADDR = 16'h0300;
-
-	reg [31:0] gpio_reg;
-	assign leds = gpio_reg;
-
-    wire gpio_reg_en;
-    wire dpram_en;
-
-    initial iomem_ready = 0;
-
-    assign gpio_reg_en  = iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR);
-
-	always @(posedge clk) begin
-		if (!resetn) begin
-			gpio_reg <= 0;
-		end else begin
-            if (iomem_ready)
-    			iomem_ready <= 0;
-			if (gpio_reg_en) begin
-				iomem_ready <= 1;
-				iomem_rdata <= gpio_reg;
-				if (iomem_wstrb[0]) gpio_reg[ 7: 0] <= iomem_wdata[ 7: 0];
-				if (iomem_wstrb[1]) gpio_reg[15: 8] <= iomem_wdata[15: 8];
-				if (iomem_wstrb[2]) gpio_reg[23:16] <= iomem_wdata[23:16];
-				if (iomem_wstrb[3]) gpio_reg[31:24] <= iomem_wdata[31:24];
-			end
-		end
-	end
-
-endmodule
-
-    /*
-    *
-    */
-
 module icebreaker (
 	input clk,
 
@@ -138,7 +91,7 @@ module icebreaker (
     wire iomem_led_ready;
 	wire [31:0] iomem_led_rdata;
 
-    gpio #(.ADDR(16'h0300)) lp(.clk(clk), .resetn(resetn),
+    gpio #(.ADDR(16'h0300)) lp(.ck(clk), .resetn(resetn),
         .iomem_valid(iomem_valid),
         .iomem_ready(iomem_led_ready),
         .iomem_wstrb(iomem_wstrb),
@@ -153,7 +106,7 @@ module icebreaker (
     wire iomem_sk9822_ready;
 	wire [31:0] iomem_sk9822_rdata;
 
-    sk9822_peripheral #(.ADDR(16'h4000)) sk9822(.clk(clk), .resetn(resetn),
+    sk9822_peripheral #(.ADDR(16'h4000)) sk9822(.ck(clk), .resetn(resetn),
         .iomem_valid(iomem_valid),
         .iomem_ready(iomem_sk9822_ready),
         .iomem_wstrb(iomem_wstrb),
@@ -164,10 +117,26 @@ module icebreaker (
         .led_ck(i2s_ws)
     );
 
+    //  Audio Engine
+
+    wire iomem_dsp_ready;
+	wire [31:0] iomem_dsp_rdata;
+
+    audio_engine #(.ADDR(16'h6000)) engine(.ck(clk), .rst(resetn),
+        .iomem_valid(iomem_valid),
+        .iomem_ready(iomem_dsp_ready),
+        .iomem_wstrb(iomem_wstrb),
+        .iomem_addr(iomem_addr),
+        .iomem_wdata(iomem_wdata),
+        .iomem_rdata(iomem_dsp_rdata),
+        .i2s_ck(i2s_out),
+        .i2s_ws(i2s_d0),
+    );
+
     // OR the peripheral's *_ready and *_rdata lines together
 
-    assign iomem_ready = iomem_led_ready | iomem_sk9822_ready;
-    assign iomem_rdata = iomem_led_rdata | iomem_sk9822_rdata;
+    assign iomem_ready = iomem_led_ready | iomem_dsp_ready | iomem_sk9822_ready;
+    assign iomem_rdata = iomem_led_rdata | iomem_dsp_rdata | iomem_sk9822_rdata;
 
     //  Flash Interface
 

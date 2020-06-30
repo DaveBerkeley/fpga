@@ -217,6 +217,8 @@ void print_dec(uint32_t v)
 	else putchar('0');
 }
 
+void (*idle)() = 0;
+
 char getchar_prompt(char *prompt)
 {
 	int32_t c = -1;
@@ -239,6 +241,9 @@ char getchar_prompt(char *prompt)
 			reg_leds = ~reg_leds;
 		}
 		c = reg_uart_data;
+
+        if (idle)
+            idle();
 	}
 
 	reg_leds = 0;
@@ -661,6 +666,19 @@ void cmd_echo()
 		putchar(c);
 }
 
+void idle_fn()
+{
+    uint32_t *coef = (uint32_t*) 0x60000000;
+
+    *coef++ = 0x00000000; // NOOP
+    *coef++ = 0xffffffff; // HALT
+
+    coef = (uint32_t*) 0x61000000;
+    uint32_t d;
+    d = *coef++;
+    d = *coef++;
+}
+
 void cmd_dave()
 {
 	print("Dave\n\n");
@@ -683,6 +701,7 @@ void cmd_dave()
     if (!leds)
         leds = 0x000000ff;
 
+    idle = idle_fn;
 }
 
 // --------------------------------------------------------
