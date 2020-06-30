@@ -89,7 +89,7 @@ module shifter(
 
     parameter ACC_W = 40;
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         case (shift)
             0   :   out <= acc[15:0];
             1   :   out <= acc[19:4];
@@ -109,8 +109,7 @@ endmodule
     */
 
 module pipe(
-    input wire ck_in, 
-    input wire ck_out, 
+    input wire ck, 
     input wire in, 
     output reg out
 );
@@ -121,11 +120,8 @@ module pipe(
     reg [(LEN-1):0] delay = DEF;
     initial out = DEF;
 
-    always @(posedge ck_in) begin
+    always @(posedge ck) begin
         delay <= (delay << 1) + in;
-    end
-
-    always @(posedge ck_out) begin
         out <= delay[LEN-1];
     end
 
@@ -154,7 +150,6 @@ module sequencer(
     parameter CODE_W = 8;
     parameter AUDIO_W = 9;
     parameter ACC_W = 40;
-
 
     // Align the reset to the -ve edge
     // to ensure the pipeline operates correctly
@@ -197,7 +192,7 @@ module sequencer(
     assign op_code = code[31:16+(CHAN_W+FRAME_W)];
 
     wire seq_en;
-    pipe #(.LEN(1), .DEF(0)) reset_pipe(.ck_in(ck), .ck_out(ck), .in(reset), .out(seq_en));
+    pipe #(.LEN(1), .DEF(0)) reset_pipe(.ck(ck), .in(reset), .out(seq_en));
 
     reg noop = 0;
     reg noop_0 = 0;
@@ -280,7 +275,7 @@ module sequencer(
         offset_1 <= offset_0;
     end
 
-    shifter sh (.ck(!ck), .shift(offset_1), .acc(acc_out), .out(data_out));
+    shifter sh (.ck(ck), .shift(offset_1), .acc(acc_out), .out(data_out));
 
     addr_adder #(.FRAME_W(FRAME_W), .CHAN_W(CHAN_W)) 
             addr_add (.ck(ck), .frame(frame), .offset(offset), .chan(chan), .addr(audio_addr));
@@ -317,7 +312,7 @@ endmodule
     *   Top module
     */
 
-module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3);
+module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3, output wire P1A4);
 
     wire ck;
     assign ck = CLK;
@@ -329,8 +324,8 @@ module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3
 
     reg rst = 0;
 
+    // Continuously restart the engine
     always @(negedge ck) begin
-        //rst <= 1;
         rst <= done ? 0 : 1;
     end
 
@@ -389,8 +384,9 @@ module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3
     //  Assign io signals
 
     assign P1A1 = ck;
-    assign P1A2 = | coef_rdata;
+    assign P1A2 = done;
     assign P1A3 = rst;
+    assign P1A4 = frame[0];
 
 endmodule
 
