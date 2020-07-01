@@ -51,10 +51,10 @@ module icebreaker (
 
     output i2s_sck,
     output i2s_ws,
-    input i2s_d0,
-    input i2s_d1,
-    input i2s_d2,
-    input i2s_d3,
+    output i2s_d0,
+    output i2s_d1,
+    output i2s_d2,
+    output i2s_d3,
     output i2s_out
 );
 	parameter integer MEM_WORDS = 32768;
@@ -103,6 +103,7 @@ module icebreaker (
 
     //  SK9822 LED module
 
+    /*
     wire iomem_sk9822_ready;
 	wire [31:0] iomem_sk9822_rdata;
 
@@ -116,11 +117,14 @@ module icebreaker (
         .led_data(i2s_sck),
         .led_ck(i2s_ws)
     );
+    */
 
     //  Audio Engine
 
     wire iomem_dsp_ready;
 	wire [31:0] iomem_dsp_rdata;
+
+    wire [3:0] test = { i2s_d0, i2s_out, i2s_ws, i2s_sck };
 
     audio_engine #(.ADDR(16'h6000)) engine(.ck(clk), .rst(resetn),
         .iomem_valid(iomem_valid),
@@ -129,14 +133,13 @@ module icebreaker (
         .iomem_addr(iomem_addr),
         .iomem_wdata(iomem_wdata),
         .iomem_rdata(iomem_dsp_rdata),
-        .i2s_ck(i2s_out),
-        .i2s_ws(i2s_d0),
+        .test(test)
     );
 
     // OR the peripheral's *_ready and *_rdata lines together
 
-    assign iomem_ready = iomem_led_ready | iomem_dsp_ready | iomem_sk9822_ready;
-    assign iomem_rdata = iomem_led_rdata | iomem_dsp_rdata | iomem_sk9822_rdata;
+    assign iomem_ready = iomem_led_ready | iomem_dsp_ready; // | iomem_sk9822_ready;
+    assign iomem_rdata = iomem_led_rdata | iomem_dsp_rdata; // | iomem_sk9822_rdata;
 
     //  Flash Interface
 

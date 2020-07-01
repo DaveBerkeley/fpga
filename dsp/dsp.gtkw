@@ -1,10 +1,10 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Jun 30 15:24:05 2020
+[*] Wed Jul  1 08:12:21 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Tue Jun 30 15:23:24 2020"
-[dumpfile_size] 2608003
+[dumpfile_mtime] "Wed Jul  1 08:11:39 2020"
+[dumpfile_size] 2727397
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
 [timestart] 0
 [size] 1918 861
@@ -23,7 +23,7 @@ tb.top_.engine.seq.acc.ck
 @22
 tb.top_.engine.seq.frame[4:0]
 @28
-tb.top_.rst
+tb.top_.engine.seq.rst
 @22
 tb.top_.engine.seq.coef_addr[7:0]
 tb.top_.engine.seq.coef_data[31:0]

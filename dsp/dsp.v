@@ -27,8 +27,9 @@ module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3
 	wire [31:0] iomem_rdata;
     /* verilator lint_on UNUSED */
 
-    wire i2s_ck;
-    wire i2s_ws;
+    /* verilator lint_off UNUSED */
+    wire [3:0] test;
+    /* verilator lint_on UNUSED */
 
     audio_engine engine(.ck(ck), .rst(rst),
         .iomem_valid(iomem_valid),
@@ -37,14 +38,13 @@ module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3
         .iomem_addr(iomem_addr),
         .iomem_wdata(iomem_wdata),
         .iomem_rdata(iomem_rdata),
-        .i2s_ck(i2s_ck),
-        .i2s_ws(i2s_ws)
+        .test(test)
     );
 
     assign P1A1 = ck;
     assign P1A2 = iomem_valid;
-    assign P1A3 = i2s_ws;
-    assign P1A4 = i2s_ck;
+    assign P1A3 = 0;
+    assign P1A4 = 0;
 
 endmodule
 

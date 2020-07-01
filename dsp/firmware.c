@@ -217,6 +217,8 @@ void print_dec(uint32_t v)
 	else putchar('0');
 }
 
+extern void (*idle)();
+
 char getchar_prompt(char *prompt)
 {
 	int32_t c = -1;
@@ -239,6 +241,9 @@ char getchar_prompt(char *prompt)
 			reg_leds = ~reg_leds;
 		}
 		c = reg_uart_data;
+
+        if (idle)
+            idle();
 	}
 
 	reg_leds = 0;
@@ -661,10 +666,19 @@ void cmd_echo()
 		putchar(c);
 }
 
+void idle_fn()
+{
+    // Reset the audio engine
+    uint32_t *reset = (uint32_t*) 0x63000000;
+    *reset = 0;
+}
+
+void (*idle)() = idle_fn;
+
 void cmd_dave()
 {
 	print("Dave\n\n");
-
+#if 0
     uint32_t *addr = (uint32_t*) 0x40000000;
 	print_hex((uint32_t) addr, 8);
 	print("\n");
@@ -682,7 +696,16 @@ void cmd_dave()
     leds <<= 8;
     if (!leds)
         leds = 0x000000ff;
+#endif
 
+    uint32_t *coef = (uint32_t*) 0x60000000;
+
+    *coef++ = 0xffffffff; // NOOP
+    *coef++ = 0xffffffff; // NOOP
+    *coef++ = 0xffffffff; // NOOP
+    //*coef++ = 0xffffffff; // NOOP
+    //*coef++ = 0xdeaddead; // ERROR
+    *coef++ = 0x00000000; // HALT
 }
 
 // --------------------------------------------------------

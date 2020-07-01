@@ -14,23 +14,22 @@ module audio_engine (
 	input wire [3:0] iomem_wstrb,
 	input wire [31:0] iomem_addr,
 	input wire [31:0] iomem_wdata,
-	output reg [31:0] iomem_rdata,
+	output wire [31:0] iomem_rdata,
     /* verilator lint_on UNUSED */
-    output reg i2s_ck,
-    output reg i2s_ws
+    output reg [3:0] test
 );
 
-    parameter ADDR = 16'h6000;
+    parameter                ADDR = 16'h6000;
 
     localparam ADDR_COEF   = ADDR;
     localparam ADDR_RESULT = ADDR + 16'h0100;
     localparam ADDR_STATUS = ADDR + 16'h0200;
+    localparam ADDR_RESET  = ADDR + 16'h0300;
 
     wire done;
-    reg [(FRAME_W-1):0] frame = 4;
+    reg [(FRAME_W-1):0] frame = 0;
 
     initial iomem_ready = 0;
-    initial iomem_rdata = 0;
 
     //  Drive the engine
 
@@ -77,8 +76,10 @@ module audio_engine (
     wire out_we;
     wire error;
 
+    wire reset;
+
     sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W)) seq (
-            .ck(ck), .rst(rst), .frame(frame),
+            .ck(ck), .rst(reset), .frame(frame),
             .coef_addr(coef_raddr), .coef_data(coef_rdata), 
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
@@ -102,51 +103,87 @@ module audio_engine (
 
     initial iomem_ready = 0;
 
-    wire coef_en, result_en, status_en;
+    wire coef_en, result_en, status_en, reset_en;
 
     assign coef_en   = iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_COEF);
     assign result_en = iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_RESULT);
     assign status_en = iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_STATUS);
+    assign reset_en  = iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_RESET);
+
+    wire any_en;
+    assign any_en = coef_en || result_en || status_en || reset_en;
+
+    reg reset_req = 0;
+
+    reg [31:0] rd_result = 0;
+    reg [31:0] rd_status = 0;
+
+    assign iomem_rdata = rd_result | rd_status;
 
 	always @(posedge ck) begin
 		if (rst) begin
-            if (iomem_ready)
+            if (coef_we)
+                coef_we <= 0;
+            if (result_re)
+                result_re <= 0;
+
+            if (any_en)
+				iomem_ready <= 1;
+            else
     			iomem_ready <= 0;
 
+            // Write into the coeficient RAM
             if (coef_en) begin
-				iomem_ready <= 1;
                 coef_we <= | iomem_wstrb;
-				iomem_rdata <= 32'h12345678;
-            end else begin
-                coef_we <= 0;
-				iomem_rdata <= 0;
 			end
 
+            // Read from the results RAM
             if (result_en) begin
-				iomem_ready <= 1;
-                result_re <= | iomem_wstrb;
-				iomem_rdata <= { 16'h0, result_rdata };
+                result_re <= 1;
+				rd_result <= { 16'h0, result_rdata };
             end else begin
-                result_re <= 0;
-				iomem_rdata <= 0;
+				rd_result <= 0;
 			end
 
-            if (status_en) begin
-				iomem_ready <= 1;
-				iomem_rdata <= { 30'h0, error, done };
-            end else begin
-				iomem_rdata <= 0;
-			end
+            // Read the status
+            if (status_en)
+				rd_status <= { 30'h0, error, done };
+            else
+				rd_status <= 0;
+
+            // Reset the engine
+            if (reset_en)
+                reset_req <= | iomem_wstrb;
+                //
+            else
+                reset_req <= 0;
 
 		end
 	end
 
-    initial i2s_ck = 0;
-    initial i2s_ws = 0;
+    // Send an extended reset pulse to the audio engine
+
+    reg [1:0] resetx = 0;
+
+    always @(negedge ck) begin
+        if (reset_req)
+            resetx <= 0;
+        else 
+           if (resetx != 2'b11)
+                resetx <= resetx + 1;
+    end
+
+    assign reset = rst && (resetx == 2'b11);
+
+    //  Debug traces
+
+    initial test = 0;
 
     always @(posedge ck) begin
-        i2s_ck <= ck;
-        i2s_ws <= ck;
+        test[0] <= reset_en;
+        test[1] <= error;
+        test[2] <= done;
+        test[3] <= reset;
     end
 
 endmodule
