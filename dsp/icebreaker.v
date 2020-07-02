@@ -55,7 +55,12 @@ module icebreaker (
     output i2s_d1,
     output i2s_d2,
     output i2s_d3,
-    output i2s_out
+    output i2s_out,
+
+    output test0,
+    output test1,
+    output test2,
+    output test3
 );
 	parameter integer MEM_WORDS = 32768;
 
@@ -124,9 +129,9 @@ module icebreaker (
     wire iomem_dsp_ready;
 	wire [31:0] iomem_dsp_rdata;
 
-    wire [3:0] test = { i2s_d0, i2s_out, i2s_ws, i2s_sck };
+    wire [7:0] test = { test3, test2, test1, test0, i2s_d0, i2s_out, i2s_ws, i2s_sck };
 
-    audio_engine #(.ADDR(16'h6000)) engine(.ck(clk), .rst(resetn),
+    audio_engine #(.ADDR(16'h6000)) engine(.ck(!clk), .rst(resetn),
         .iomem_valid(iomem_valid),
         .iomem_ready(iomem_dsp_ready),
         .iomem_wstrb(iomem_wstrb),

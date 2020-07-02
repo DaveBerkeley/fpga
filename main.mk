@@ -27,7 +27,7 @@ endif
 	verilator -DSIMULATION --top-module top $(PROJ).v $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
 	iverilog -DSIMULATION -g2012 -o $@ $(ADD_SRC) $^
 	./$@
-	gtkwave $(PROJ).vcd $(PROJ).gtkw &
+	#gtkwave $(PROJ).vcd $(PROJ).gtkw &
 
 %_tb.vcd: %_tb
 	vvp -N $< +vcd=$@

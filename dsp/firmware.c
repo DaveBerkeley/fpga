@@ -666,6 +666,35 @@ void cmd_echo()
 		putchar(c);
 }
 
+void set_coef()
+{
+    uint32_t *coef = (uint32_t*) 0x60000000;
+
+    //*coef++ = 0xffffffff; // NOOP
+    //*coef++ = 0xdeaddead; // ERROR
+
+    *coef++ = 0x82000001; // 
+    *coef++ = 0x80100001; // 
+    *coef++ = 0x80200001; // 
+    *coef++ = 0x80300001; // 
+    *coef++ = 0x840a0000; // 
+    *coef++ = 0x82010001; // 
+    *coef++ = 0x8011ffff; // 
+    *coef++ = 0x80210001; // 
+    *coef++ = 0x8031ffff; // 
+    *coef++ = 0x840b0000; // 
+    *coef++ = 0x82020002; // 
+    *coef++ = 0x80120002; // 
+    *coef++ = 0x80220002; // 
+    *coef++ = 0x80320002; // 
+    *coef++ = 0x80020002; // 
+    *coef++ = 0x80120002; // 
+    *coef++ = 0x80220002; // 
+    *coef++ = 0x80320002; // 
+    *coef++ = 0x84150000; // 
+    *coef++ = 0x00000000; // HALT
+}
+
 void idle_fn()
 {
     // Reset the audio engine
@@ -673,7 +702,7 @@ void idle_fn()
     *reset = 0;
 }
 
-void (*idle)() = idle_fn;
+void (*idle)() = 0;
 
 void cmd_dave()
 {
@@ -698,14 +727,9 @@ void cmd_dave()
         leds = 0x000000ff;
 #endif
 
-    uint32_t *coef = (uint32_t*) 0x60000000;
+    set_coef();
 
-    *coef++ = 0xffffffff; // NOOP
-    *coef++ = 0xffffffff; // NOOP
-    *coef++ = 0xffffffff; // NOOP
-    //*coef++ = 0xffffffff; // NOOP
-    //*coef++ = 0xdeaddead; // ERROR
-    *coef++ = 0x00000000; // HALT
+    idle = idle_fn;
 }
 
 // --------------------------------------------------------

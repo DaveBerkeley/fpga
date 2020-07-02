@@ -13,24 +13,24 @@ module dpram
     output reg [BITS-1:0] rdata
 );
 
-reg [BITS-1:0] ram[0:SIZE-1];
+    reg [BITS-1:0] ram[0:SIZE-1];
 
-`ifdef SIMULATION
-initial begin
-    $readmemh(FNAME, ram);
-end
-`endif
+    `ifdef SIMULATION
+    initial begin
+        $readmemh(FNAME, ram);
+    end
+    `endif
 
-always@(posedge ck)
-begin
+    always@(posedge ck)
+    begin
 
-    if(we)
-        ram[waddr] <= wdata;
+        if(we)
+            ram[waddr] <= wdata;
 
-    if (re)
-        rdata <= ram[raddr];
+        if (re)
+            rdata <= ram[raddr];
 
-end
+    end
 
 endmodule 
 

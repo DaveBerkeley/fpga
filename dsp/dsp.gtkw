@@ -1,60 +1,83 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Jul  1 08:12:21 2020
+[*] Thu Jul  2 08:17:23 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Wed Jul  1 08:11:39 2020"
-[dumpfile_size] 2727397
+[dumpfile_mtime] "Thu Jul  2 08:14:30 2020"
+[dumpfile_size] 4283102
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
-[timestart] 0
-[size] 1918 861
-[pos] 0 100
-*-18.326889 1344000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 5499000
+[size] 1918 791
+[pos] -1 109
+*-18.326889 7434000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
-[treeopen] tb.top_.
-[treeopen] tb.top_.engine.
-[treeopen] tb.top_.engine.seq.
+[treeopen] tb.engine.
 [sst_width] 196
 [signals_width] 190
 [sst_expanded] 1
-[sst_vpaned_height] 241
+[sst_vpaned_height] 217
 @28
-tb.top_.engine.seq.acc.ck
+tb.engine.coef.ck
+tb.engine.seq.rst
 @22
-tb.top_.engine.seq.frame[4:0]
+tb.write.addr[31:0]
+tb.write.data[31:0]
 @28
-tb.top_.engine.seq.rst
+tb.engine.iomem_valid
 @22
-tb.top_.engine.seq.coef_addr[7:0]
-tb.top_.engine.seq.coef_data[31:0]
-tb.top_.engine.seq.code[31:0]
-tb.top_.engine.seq.chan[3:0]
-tb.top_.engine.seq.op_code[6:0]
-tb.top_.engine.seq.offset[4:0]
+tb.engine.iomem_wstrb[3:0]
+@28
+tb.engine.coef_en
+tb.engine.coef_ready
+tb.engine.iomem_ready
+tb.engine.coef_we
 @200
 -
+@28
+tb.engine.coef.ck
 @22
-tb.top_.engine.seq.audio_raddr[8:0]
-tb.top_.engine.seq.audio_in[15:0]
+tb.engine.coef.waddr[7:0]
+tb.engine.coef.wdata[31:0]
+@28
+tb.engine.coef.we
 @200
 -
-@22
-tb.top_.engine.seq.audio_in_latch[15:0]
-tb.top_.engine.seq.gain_pipe_1[15:0]
-tb.top_.engine.seq.mul_out[31:0]
-@200
--
-@22
-tb.top_.engine.seq.acc_out[39:0]
 @28
-tb.top_.engine.seq.offset_1[2:0]
+tb.engine.seq.reset
 @22
-tb.top_.engine.seq.data_out[15:0]
-tb.top_.engine.seq.out_audio[15:0]
+tb.engine.seq.frame[4:0]
+tb.engine.seq.audio_addr[8:0]
+tb.engine.seq.audio_in[15:0]
+tb.engine.seq.audio_in_latch[15:0]
+tb.engine.seq.coef_addr[7:0]
+tb.engine.seq.coef_data[31:0]
+tb.engine.seq.code[31:0]
+tb.engine.seq.op_code[6:0]
+tb.engine.seq.gain[15:0]
+tb.engine.seq.addr_add.chan[3:0]
+tb.engine.seq.addr_add.offset[4:0]
+tb.engine.seq.gain_pipe_0[15:0]
+tb.engine.seq.mul.a[15:0]
+tb.engine.seq.mul.b[15:0]
+tb.engine.seq.mul_out[31:0]
 @28
-tb.top_.engine.seq.out_we
-tb.top_.engine.seq.done_req
-tb.top_.engine.seq.done
-tb.top_.engine.seq.error
+tb.engine.seq.acc_rst
+@22
+tb.engine.seq.acc_out[39:0]
+@28
+tb.engine.seq.noop
+@22
+tb.engine.seq.acc.top[7:0]
+tb.engine.seq.data_out[15:0]
+@28
+tb.engine.seq.offset_0[2:0]
+tb.engine.seq.sh.shift[2:0]
+@22
+tb.engine.seq.out_addr[3:0]
+tb.engine.seq.out_audio[15:0]
+@28
+tb.engine.seq.out_we
+tb.engine.seq.done
+tb.engine.seq.error
 [pattern_trace] 1
 [pattern_trace] 0

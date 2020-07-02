@@ -28,7 +28,7 @@ module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3
     /* verilator lint_on UNUSED */
 
     /* verilator lint_off UNUSED */
-    wire [3:0] test;
+    wire [7:0] test;
     /* verilator lint_on UNUSED */
 
     audio_engine engine(.ck(ck), .rst(rst),

@@ -124,7 +124,8 @@ module sequencer(
     output reg [15:0] out_audio,
     output reg out_we,
     output reg done,
-    output reg error
+    output reg error,
+    output reg [7:0] test
 );
     parameter CHAN_W = 3;
     parameter FRAME_W = 4;
@@ -288,6 +289,11 @@ module sequencer(
         out_addr <= out_we_0 ? out_addr_1 : 0;
 
         out_audio <= out_we_0 ? data_out : 0;
+    end
+
+    always @(negedge ck) begin
+        //test <= { 5'h0, offset_1 };
+        test <= gain_pipe_1[7:0];
     end
 
 endmodule
