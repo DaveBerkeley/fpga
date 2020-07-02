@@ -14,20 +14,20 @@ module tb ();
 
     always #42 ck <= !ck;
 
-	reg [1:0] reset_cnt = 0;
-	wire rst = & reset_cnt;
+    reg [1:0] reset_cnt = 0;
+    wire rst = & reset_cnt;
 
-	always @(posedge ck) begin
+    always @(posedge ck) begin
         if (!rst)
-    		reset_cnt <= reset_cnt + 1;
-	end
+            reset_cnt <= reset_cnt + 1;
+    end
 
-	reg        iomem_valid;
-	wire       iomem_ready;
-	reg [3:0]  iomem_wstrb;
-	reg [31:0] iomem_addr;
-	reg [31:0] iomem_wdata;
-	wire [31:0] iomem_rdata;
+    reg        iomem_valid;
+    wire       iomem_ready;
+    reg [3:0]  iomem_wstrb;
+    reg [31:0] iomem_addr;
+    reg [31:0] iomem_wdata;
+    wire [31:0] iomem_rdata;
 
     // Write audio test data into memory
 
@@ -66,26 +66,30 @@ module tb ();
         @(posedge ck);
         // Setup the coefficient RAM
         i = 32'h60000000;
-        write(i, 32'h82000001); i += 4;
-        write(i, 32'h80100001); i += 4;
-        write(i, 32'h80200001); i += 4;
-        write(i, 32'h80300001); i += 4;
-        write(i, 32'h840a0000); i += 4;
+        write(i, 32'h82000001); i += 4; 
+        write(i, 32'h84000000); i += 4;
         write(i, 32'h82010001); i += 4;
-        write(i, 32'h8011ffff); i += 4;
-        write(i, 32'h80210001); i += 4;
-        write(i, 32'h8031ffff); i += 4;
-        write(i, 32'h840b0000); i += 4;
-        write(i, 32'h82020002); i += 4;
-        write(i, 32'h80120002); i += 4;
-        write(i, 32'h80220002); i += 4;
-        write(i, 32'h80320002); i += 4;
-        write(i, 32'h80020002); i += 4;
-        write(i, 32'h80120002); i += 4;
-        write(i, 32'h80220002); i += 4;
-        write(i, 32'h80320002); i += 4;
-        write(i, 32'h84150000); i += 4;
+        write(i, 32'h84010000); i += 4;
+        write(i, 32'h82020001); i += 4;
+        write(i, 32'h84020000); i += 4;
+        write(i, 32'h82030001); i += 4;
+        write(i, 32'h84030000); i += 4;
+
         write(i, 32'h00000000); i += 4; // HALT
+        write(i, 32'h00000000); i += 4; // HALT
+        write(i, 32'h00000000); i += 4; // HALT
+ 
+        // set control register
+        write(32'h62000000, 1 + (5 << 1)); // allow_audio_writes
+
+        // Write to audio RAM
+        i = 32'h64000000;
+        write(i, 32'h0000aaaa); i += 4;
+        write(i, 32'h00005555); i += 4;
+        write(i, 32'h0000aaaa); i += 4;
+        write(i, 32'h00005555); i += 4;
+        write(i, 32'h00000000); i += 4;
+
         reset_cnt <= 0;
     end
 

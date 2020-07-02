@@ -125,7 +125,8 @@ module sequencer(
     output reg out_we,
     output reg done,
     output reg error,
-    output reg [7:0] test
+    input wire [2:0] test_in,
+    output reg [7:0] test_out
 );
     parameter CHAN_W = 3;
     parameter FRAME_W = 4;
@@ -167,17 +168,11 @@ module sequencer(
     wire [15:0] gain;
 
     // decode the command
-    // OP_CODE,CHAN,OFFSET,GAIN
+    // OP_CODE(7),CHAN(4),OFFSET(5),GAIN(16)
     assign gain    = code[15:0];
     assign chan    = code[16+(CHAN_W-1):16];
     assign offset  = code[16+(CHAN_W+FRAME_W-1):16+(CHAN_W)];
     assign op_code = code[31:16+(CHAN_W+FRAME_W)];
-
-    reg seq_en;
-
-    always @(posedge ck) begin
-        seq_en <= reset;
-    end
 
     reg noop = 0;
     reg noop_0 = 0;
@@ -212,7 +207,7 @@ module sequencer(
             noop <= 0;
 
         // Decode the instructions
-        if (reset && seq_en && !done_req) begin
+        if (reset && !done_req) begin
             case (op_code)
                 7'h00   : begin done_req <= 1; end // halt
                 7'h40   : begin acc_rst <= 1; end // MAC 
@@ -246,7 +241,8 @@ module sequencer(
     wire [(ACC_W-1):0] acc_out;
     reg acc_rst;
 
-    accumulator #(.OUT_W(ACC_W)) acc(.ck(!ck), .en(!noop_1), .rst(acc_rst), .add(1'b1), .data(mul_out), .out(acc_out));
+    reg add = 1;
+    accumulator #(.OUT_W(ACC_W)) acc(.ck(!ck), .en(!noop_1), .rst(acc_rst), .add(add), .data(mul_out), .out(acc_out));
 
     /* verilator lint_off UNUSED */
     wire [15:0] data_out;
@@ -291,9 +287,21 @@ module sequencer(
         out_audio <= out_we_0 ? data_out : 0;
     end
 
-    always @(negedge ck) begin
-        //test <= { 5'h0, offset_1 };
-        test <= gain_pipe_1[7:0];
+    function [7:0] test_src(input [2:0] select);
+        case (select)
+            0 : test_src = { 3'b0, add, out_we, out_we_0, write_req, acc_rst };
+            1 : test_src = gain[7:0];
+            2 : test_src = gain_pipe_0[7:0];
+            3 : test_src = gain_pipe_1[7:0];
+            4 : test_src = audio_in[7:0];
+            5 : test_src = audio_in_latch[7:0];
+            6 : test_src = audio_raddr[7:0];
+            7 : test_src = { 3'b0, noop_1, noop_0, noop, done_0, done_req };
+        endcase
+    endfunction
+
+    always @(posedge ck) begin
+        test_out <= test_src(test_in);
     end
 
 endmodule

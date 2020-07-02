@@ -15,12 +15,6 @@ module dpram
 
     reg [BITS-1:0] ram[0:SIZE-1];
 
-    `ifdef SIMULATION
-    initial begin
-        $readmemh(FNAME, ram);
-    end
-    `endif
-
     always@(posedge ck)
     begin
 

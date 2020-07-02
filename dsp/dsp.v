@@ -8,23 +8,23 @@ module top (input wire CLK, output wire P1A1, output wire P1A2, output wire P1A3
     wire ck;
     assign ck = CLK;
 
-	reg [1:0] reset_cnt = 0;
-	wire rst = & reset_cnt;
+    reg [1:0] reset_cnt = 0;
+    wire rst = & reset_cnt;
 
-	always @(posedge ck) begin
+    always @(posedge ck) begin
         if (!rst)
-    		reset_cnt <= reset_cnt + 1;
-	end
+            reset_cnt <= reset_cnt + 1;
+    end
 
-	reg        iomem_valid = 0;
+    reg        iomem_valid = 0;
     /* verilator lint_off UNUSED */
-	wire        iomem_ready;
+    wire        iomem_ready;
     /* verilator lint_on UNUSED */
-	reg [3:0]  iomem_wstrb = 0;
-	reg [31:0] iomem_addr = 0;
-	reg [31:0] iomem_wdata = 0;
+    reg [3:0]  iomem_wstrb = 0;
+    reg [31:0] iomem_addr = 0;
+    reg [31:0] iomem_wdata = 0;
     /* verilator lint_off UNUSED */
-	wire [31:0] iomem_rdata;
+    wire [31:0] iomem_rdata;
     /* verilator lint_on UNUSED */
 
     /* verilator lint_off UNUSED */

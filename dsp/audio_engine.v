@@ -6,16 +6,14 @@
 module audio_engine (
     input wire ck,
     input wire rst,
+    input wire iomem_valid,
+    output wire iomem_ready,
+    input wire [3:0] iomem_wstrb,
     /* verilator lint_off UNUSED */
-	input wire iomem_valid,
+    input wire [31:0] iomem_addr,
     /* verilator lint_on UNUSED */
-	output wire iomem_ready,
-    /* verilator lint_off UNUSED */
-	input wire [3:0] iomem_wstrb,
-	input wire [31:0] iomem_addr,
-	input wire [31:0] iomem_wdata,
-	output wire [31:0] iomem_rdata,
-    /* verilator lint_on UNUSED */
+    input wire [31:0] iomem_wdata,
+    output wire [31:0] iomem_rdata,
     output wire [7:0] test
 );
 
@@ -25,10 +23,36 @@ module audio_engine (
     localparam ADDR_RESULT = ADDR + 16'h0100;
     localparam ADDR_STATUS = ADDR + 16'h0200;
     localparam ADDR_RESET  = ADDR + 16'h0300;
-    localparam ADDR_TEST   = ADDR + 16'h0400;
+    localparam ADDR_INPUT  = ADDR + 16'h0400;
+
+    // Send an extended reset pulse to the audio engine
+
+    reg [1:0] resetx = 0;
+
+    always @(negedge ck) begin
+        if (reset_req)
+            resetx <= 0;
+        else 
+           if (resetx != 2'b11)
+                resetx <= resetx + 1;
+    end
+
+    wire reset;
+    assign reset = rst && (resetx == 2'b11);
 
     wire done;
-    reg [(FRAME_W-1):0] frame = 4;
+    // TODO : increment audio frame 
+    reg [(FRAME_W-1):0] frame = 0;
+
+    //  Control Register
+
+    // bit-0 : set to allow writes to the audio input RAM
+    reg [4:0] control_reg = 0;
+
+    wire allow_audio_writes;
+    assign allow_audio_writes = control_reg[0];
+    wire [3:0] test_select;
+    assign test_select = control_reg[4:1];
 
     //  Drive the engine
 
@@ -60,9 +84,9 @@ module audio_engine (
     // and read out by the audio engine.
 
     // TODO : connect I2S Rx to the RAM
-    reg audio_we = 0;
-    reg [15:0] audio_wdata = 0;
-    reg [(AUDIO_W-1):0] audio_waddr = 0;
+    wire audio_we;
+    wire [15:0] audio_wdata;
+    wire [(AUDIO_W-1):0] audio_waddr;
     wire [15:0] audio_rdata;
     wire [(AUDIO_W-1):0] audio_raddr;
 
@@ -71,6 +95,13 @@ module audio_engine (
             .we(audio_we), .waddr(audio_waddr), .wdata(audio_wdata),
             .re(1'h1), .raddr(audio_raddr), .rdata(audio_rdata));
 
+    // allow_audio_writes
+    wire input_we;
+    // TODO : allow writes from I2S hardware
+    assign audio_we    = allow_audio_writes ? input_we : 0;
+    assign audio_waddr = allow_audio_writes ? iomem_addr[10:2] : 9'h0;
+    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0] : 16'h0;
+
     // Sequencer
 
     wire [3:0] out_wr_addr;
@@ -78,7 +109,6 @@ module audio_engine (
     wire out_we;
     wire error;
 
-    wire reset;
     /* verilator lint_off UNUSED */
     wire [7:0] seq_test;
     /* verilator lint_on UNUSED */
@@ -88,7 +118,8 @@ module audio_engine (
             .coef_addr(coef_raddr), .coef_data(coef_rdata), 
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
-            .done(done), .error(error), .test(seq_test));
+            .done(done), .error(error), 
+            .test_in(test_select[2:0]), .test_out(seq_test));
 
     //  Results RAM
     //  TODO : Also write results to I2S hardware
@@ -106,12 +137,13 @@ module audio_engine (
 
     // Interface the peripheral to the Risc-V bus
 
-    wire coef_en, result_en, status_en, reset_en;
+    wire coef_en, result_en, status_en, reset_en, input_en;
 
     assign coef_en   = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_COEF);
     assign result_en = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_RESULT);
     assign status_en = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_STATUS);
     assign reset_en  = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_RESET);
+    assign input_en  = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_INPUT);
 
     reg reset_req = 0;
 
@@ -120,15 +152,15 @@ module audio_engine (
 
     assign iomem_rdata = rd_result | rd_status;
 
-    reg coef_ready = 0;
-    reg result_ready = 0, status_ready = 0, reset_ready = 0;
+    reg coef_ready = 0, result_ready = 0, status_ready = 0, reset_ready = 0, input_ready = 0;
 
-    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready;
+    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready;
 
     assign coef_we = coef_en;
+    assign input_we = input_en;
 
-	always @(negedge ck) begin
-		if (rst) begin
+    always @(negedge ck) begin
+        if (rst) begin
 
             if (result_re)
                 result_re <= 0;
@@ -136,6 +168,7 @@ module audio_engine (
             result_ready <= 0;
             status_ready <= 0;
             reset_ready <= 0;
+            input_ready <= 0;
 
             // Write to the coefficient RAM
             if (coef_ready)
@@ -143,21 +176,29 @@ module audio_engine (
             if (coef_en)
                 coef_ready <= 1;
 
+            // Write to the audio input RAM
+            if (input_ready)
+                input_ready <= 0;
+            if (input_en)
+                input_ready <= 1;
+
             // Read from the results RAM
             if (result_en) begin
                 result_re <= 1;
-				rd_result <= { 16'h0, result_rdata };
+                rd_result <= { 16'h0, result_rdata };
                 result_ready <= 1;
             end else begin
-				rd_result <= 0;
-			end
+                rd_result <= 0;
+            end
 
             // Read the status
             if (status_en) begin
-				rd_status <= { 30'h0, error, done };
+                rd_status <= { 29'h0, error, done, allow_audio_writes };
+                if (| iomem_wstrb)
+                    control_reg <= iomem_wdata[4:0];
                 status_ready <= 1;
             end else begin
-				rd_status <= 0;
+                rd_status <= 0;
             end
 
             // Reset the engine
@@ -168,41 +209,36 @@ module audio_engine (
                 reset_req <= 0;
             end
 
-		end
-	end
-
-    // Send an extended reset pulse to the audio engine
-
-    reg [1:0] resetx = 0;
-
-    always @(negedge ck) begin
-        if (reset_req)
-            resetx <= 0;
-        else 
-           if (resetx != 2'b11)
-                resetx <= resetx + 1;
+        end
     end
-
-    assign reset = rst && (resetx == 2'b11);
 
     //  Debug traces
 
-    reg [6:0] testx;
-    initial testx = 0;
+    function [7:0] test_src();
+        case (test_select[2:0])
+            0 : test_src = { 3'b0, allow_audio_writes, audio_we, coef_en, coef_we, coef_ready }; 
+            1 : test_src = { 3'b0, frame };
+            2 : test_src = { 3'b0, input_en, input_ready, input_we, iomem_ready, iomem_valid };
+            3 : test_src = { 3'b0, out_we, out_wr_addr };
+            4 : test_src = 0;
+            5 : test_src = 0;
+            6 : test_src = 0;
+            7 : test_src = 0;
+        endcase
+    endfunction
 
-    assign test = { testx, ck };
-
-//coef_raddr result_raddr out_wr_addr
+    /* verilator lint_off UNUSED */
+    reg [7:0] test_out;
+    /* verilator lint_on UNUSED */
 
     always @(posedge ck) begin
-        testx[0] <= iomem_valid;
-        testx[1] <= done;
-        testx[2] <= reset;
-        testx[3] <= error;
-        testx[4] <= seq_test[0];
-        testx[5] <= seq_test[1];
-        testx[6] <= seq_test[2];
+        if (test_select[3])
+            test_out <= test_src();
+        else
+            test_out <= seq_test;
     end
+
+    assign test = { ck, reset, done, test_out[4], test_out[3], test_out[2], test_out[1], test_out[0] };
 
 endmodule
 

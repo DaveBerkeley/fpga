@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul  2 08:17:23 2020
+[*] Thu Jul  2 15:15:44 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Thu Jul  2 08:14:30 2020"
-[dumpfile_size] 4283102
+[dumpfile_mtime] "Thu Jul  2 15:15:11 2020"
+[dumpfile_size] 5108615
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
-[timestart] 5499000
+[timestart] 4871100
 [size] 1918 791
-[pos] -1 109
-*-18.326889 7434000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-17.326889 5214200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.engine.
 [sst_width] 196
@@ -27,29 +27,35 @@ tb.engine.iomem_valid
 @22
 tb.engine.iomem_wstrb[3:0]
 @28
-tb.engine.coef_en
-tb.engine.coef_ready
 tb.engine.iomem_ready
-tb.engine.coef_we
-@200
--
-@28
 tb.engine.coef.ck
 @22
 tb.engine.coef.waddr[7:0]
 tb.engine.coef.wdata[31:0]
 @28
 tb.engine.coef.we
-@200
--
-@28
 tb.engine.seq.reset
+@29
+tb.engine.seq.seq_en
 @22
 tb.engine.seq.frame[4:0]
 tb.engine.seq.audio_addr[8:0]
 tb.engine.seq.audio_in[15:0]
 tb.engine.seq.audio_in_latch[15:0]
+@c00022
 tb.engine.seq.coef_addr[7:0]
+@28
+(0)tb.engine.seq.coef_addr[7:0]
+(1)tb.engine.seq.coef_addr[7:0]
+(2)tb.engine.seq.coef_addr[7:0]
+(3)tb.engine.seq.coef_addr[7:0]
+(4)tb.engine.seq.coef_addr[7:0]
+(5)tb.engine.seq.coef_addr[7:0]
+(6)tb.engine.seq.coef_addr[7:0]
+(7)tb.engine.seq.coef_addr[7:0]
+@1401200
+-group_end
+@22
 tb.engine.seq.coef_data[31:0]
 tb.engine.seq.code[31:0]
 tb.engine.seq.op_code[6:0]
@@ -71,13 +77,56 @@ tb.engine.seq.acc.top[7:0]
 tb.engine.seq.data_out[15:0]
 @28
 tb.engine.seq.offset_0[2:0]
+@800028
 tb.engine.seq.sh.shift[2:0]
+@28
+(0)tb.engine.seq.sh.shift[2:0]
+(1)tb.engine.seq.sh.shift[2:0]
+(2)tb.engine.seq.sh.shift[2:0]
+@1001200
+-group_end
 @22
 tb.engine.seq.out_addr[3:0]
+@c00022
 tb.engine.seq.out_audio[15:0]
+@28
+(0)tb.engine.seq.out_audio[15:0]
+(1)tb.engine.seq.out_audio[15:0]
+(2)tb.engine.seq.out_audio[15:0]
+(3)tb.engine.seq.out_audio[15:0]
+(4)tb.engine.seq.out_audio[15:0]
+(5)tb.engine.seq.out_audio[15:0]
+(6)tb.engine.seq.out_audio[15:0]
+(7)tb.engine.seq.out_audio[15:0]
+(8)tb.engine.seq.out_audio[15:0]
+(9)tb.engine.seq.out_audio[15:0]
+(10)tb.engine.seq.out_audio[15:0]
+(11)tb.engine.seq.out_audio[15:0]
+(12)tb.engine.seq.out_audio[15:0]
+(13)tb.engine.seq.out_audio[15:0]
+(14)tb.engine.seq.out_audio[15:0]
+(15)tb.engine.seq.out_audio[15:0]
+@1401200
+-group_end
 @28
 tb.engine.seq.out_we
 tb.engine.seq.done
 tb.engine.seq.error
+tb.rst
+@22
+tb.engine.test_select[3:0]
+@800022
+tb.test[7:0]
+@28
+(0)tb.test[7:0]
+(1)tb.test[7:0]
+(2)tb.test[7:0]
+(3)tb.test[7:0]
+(4)tb.test[7:0]
+(5)tb.test[7:0]
+(6)tb.test[7:0]
+(7)tb.test[7:0]
+@1001200
+-group_end
 [pattern_trace] 1
 [pattern_trace] 0
