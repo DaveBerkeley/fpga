@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul  2 15:15:44 2020
+[*] Fri Jul  3 08:36:45 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Thu Jul  2 15:15:11 2020"
-[dumpfile_size] 5108615
+[dumpfile_mtime] "Fri Jul  3 08:36:19 2020"
+[dumpfile_size] 5112794
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
-[timestart] 4871100
+[timestart] 5940000
 [size] 1918 791
 [pos] -1 -1
-*-17.326889 5214200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.326889 6630400 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.engine.
 [sst_width] 196
@@ -35,8 +35,6 @@ tb.engine.coef.wdata[31:0]
 @28
 tb.engine.coef.we
 tb.engine.seq.reset
-@29
-tb.engine.seq.seq_en
 @22
 tb.engine.seq.frame[4:0]
 tb.engine.seq.audio_addr[8:0]
@@ -63,6 +61,7 @@ tb.engine.seq.gain[15:0]
 tb.engine.seq.addr_add.chan[3:0]
 tb.engine.seq.addr_add.offset[4:0]
 tb.engine.seq.gain_pipe_0[15:0]
+tb.engine.seq.gain_pipe_1[15:0]
 tb.engine.seq.mul.a[15:0]
 tb.engine.seq.mul.b[15:0]
 tb.engine.seq.mul_out[31:0]
@@ -71,19 +70,25 @@ tb.engine.seq.acc_rst
 @22
 tb.engine.seq.acc_out[39:0]
 @28
+tb.engine.seq.ck
 tb.engine.seq.noop
+tb.engine.seq.capture[2:0]
+tb.engine.seq.capture_en
+@23
+tb.engine.test_select[3:0]
 @22
+tb.engine.seq.capture_out[31:0]
 tb.engine.seq.acc.top[7:0]
 tb.engine.seq.data_out[15:0]
 @28
 tb.engine.seq.offset_0[2:0]
-@800028
+@c00028
 tb.engine.seq.sh.shift[2:0]
 @28
 (0)tb.engine.seq.sh.shift[2:0]
 (1)tb.engine.seq.sh.shift[2:0]
 (2)tb.engine.seq.sh.shift[2:0]
-@1001200
+@1401200
 -group_end
 @22
 tb.engine.seq.out_addr[3:0]
@@ -113,8 +118,6 @@ tb.engine.seq.out_we
 tb.engine.seq.done
 tb.engine.seq.error
 tb.rst
-@22
-tb.engine.test_select[3:0]
 @800022
 tb.test[7:0]
 @28

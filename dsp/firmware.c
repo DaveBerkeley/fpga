@@ -668,9 +668,10 @@ void cmd_echo()
 
 enum Opcode {
     HALT = 0,
-    MAC = 0x40,
+    CAPTURE = 0x10,
+    MAC  = 0x40,
     MACZ = 0x41,
-    OUT = 0x42,
+    OUT  = 0x42,
     NOOP = 0x7F,
 };
 
@@ -685,6 +686,7 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
     switch (opcode)
     {
         case HALT   :   print("HALT "); break;
+        case CAPTURE:   print("CAPT "); break;
         case MAC    :   print("MAC  "); break;
         case MACZ   :   print("MACZ "); break;
         case OUT    :   print("OUT  "); break;
@@ -714,10 +716,18 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
     return value;
 }
 
+static uint8_t code = 0;
+
+#define ADDR_COEF  ((uint32_t*) 0x60000000)
+#define ADDR_STAT  ((uint32_t*) 0x62000000)
+#define ADDR_RESET ((uint32_t*) 0x63000000)
+#define ADDR_AUDIO ((uint32_t*) 0x64000000)
+
 void set_coef()
 {
-    uint32_t *coef = (uint32_t*) 0x60000000;
+    uint32_t *coef = ADDR_COEF;
 
+    *coef++ = opcode(CAPTURE, 0, 0, 0);
     *coef++ = opcode(MACZ, 0, 0, 1);
     *coef++ = opcode(OUT,  0, 0, 0);
     *coef++ = opcode(MACZ, 0, 1, 1);
@@ -731,8 +741,7 @@ void set_coef()
     *coef++ = opcode(HALT, 0, 0, 0);
 
     // control_reg
-    static uint8_t code = 0;
-    uint32_t *status = (uint32_t*) 0x62000000;
+    uint32_t *status = ADDR_STAT;
     const uint32_t s = 1 + (code << 1);
     *status = s;
     print("select : 0x"); print_hex(code, 8); print("\n");
@@ -741,21 +750,38 @@ void set_coef()
     code += 1;
     code &= 0xf;
 
+    for (int i = 0; i < 512; i++)
+    {
+        uint32_t *input = ADDR_AUDIO;
+        input[i] = 0x0000;
+    }
+
     // Write to audio RAM
-    uint32_t *input = (uint32_t*) 0x64000000;
-    input[ 0] = 0x00000001;
-    input[32] = 0x00000001;
-    input[64] = 0x00000001;
-    input[48] = 0x00000001;
+    uint32_t *input = ADDR_AUDIO;
+    //input[ 0] = 0x00000001;
+    //input[32] = 0x00000001;
+    //input[64] = 0x00000001;
+    //input[48] = 0x00000001;
+
 }
 
 void idle_fn()
 {
     // Reset the audio engine
-    uint32_t *reset = (uint32_t*) 0x63000000;
+    uint32_t *reset = ADDR_RESET;
     *reset = 0;
 
-    uint32_t *status = (uint32_t*) 0x63000000;
+    uint32_t *status = ADDR_STAT;
+
+    uint32_t s = status[0];
+    uint32_t t = status[1];
+    print("status ");
+    print_hex(s, 8);
+    print(" ");
+    print_hex(t, 8);
+    print(" code=");
+    print_hex(code, 2);
+    print("\n");
 }
 
 void (*idle)() = 0;

@@ -1,5 +1,44 @@
 
    /*
+    *   Handle iomem interface
+    */
+
+module io (
+    input wire ck,
+    input wire rst,
+    input wire iomem_valid,
+    input wire [3:0] iomem_wstrb,
+    /* verilator lint_off UNUSED */
+    input wire [31:0] iomem_addr,
+    /* verilator lint_on UNUSED */
+
+    output reg ready,
+    output wire we,
+    output wire re
+);
+
+    parameter ADDR = 16'h6000;
+
+    initial ready = 0;
+
+    wire enable;
+
+    assign enable = rst && iomem_valid && (!ready) && (iomem_addr[31:16] == ADDR);
+
+    wire write;
+    assign write = | iomem_wstrb;
+    assign we = enable & write;
+    assign re = enable & !write;
+
+    always @(negedge ck) begin
+        
+        ready <= (rst & enable) ? 1 : 0;
+
+    end
+
+endmodule
+
+   /*
     *   Audio Perihperal
     */
 
@@ -24,6 +63,7 @@ module audio_engine (
     localparam ADDR_STATUS = ADDR + 16'h0200;
     localparam ADDR_RESET  = ADDR + 16'h0300;
     localparam ADDR_INPUT  = ADDR + 16'h0400;
+    localparam ADDR_TEST   = ADDR + 16'h0500;
 
     // Send an extended reset pulse to the audio engine
 
@@ -112,6 +152,7 @@ module audio_engine (
     /* verilator lint_off UNUSED */
     wire [7:0] seq_test;
     /* verilator lint_on UNUSED */
+    wire [31:0] capture;
 
     sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W)) seq (
             .ck(ck), .rst(reset), .frame(frame),
@@ -119,12 +160,12 @@ module audio_engine (
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
             .done(done), .error(error), 
-            .test_in(test_select[2:0]), .test_out(seq_test));
+            .test_in(test_select[2:0]), .test_out(seq_test), .capture_out(capture));
 
     //  Results RAM
     //  TODO : Also write results to I2S hardware
 
-    reg result_re = 0;
+    wire result_re;
     wire [15:0] result_rdata;
     wire [3:0] result_raddr;
 
@@ -135,90 +176,96 @@ module audio_engine (
 
     assign result_raddr = iomem_addr[5:2];
 
+    // Test the risc-v bus read/write to RAM
+    
+    wire [4:0] test_addr;
+    wire [31:0] test_rdata;
+    reg [31:0] rd_test = 0;
+    wire test_we, test_re;
+
+    assign test_addr = iomem_addr[6:2];
+
+    dpram #(.BITS(32), .SIZE(32))
+        test_ram (.ck(ck), 
+            .we(test_we), .waddr(test_addr), .wdata(iomem_wdata),
+            .re(test_re), .raddr(test_addr), .rdata(test_rdata));
+
     // Interface the peripheral to the Risc-V bus
 
-    wire coef_en, result_en, status_en, reset_en, input_en;
+    wire reset_en;
+    wire coef_ready, reset_ready, input_ready, test_ready, result_ready;
 
-    assign coef_en   = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_COEF);
-    assign result_en = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_RESULT);
-    assign status_en = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_STATUS);
-    assign reset_en  = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_RESET);
-    assign input_en  = rst && iomem_valid && !iomem_ready && (iomem_addr[31:16] == ADDR_INPUT);
+    /* verilator lint_off PINCONNECTEMPTY */
+    io #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
+                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+                            .ready(coef_ready), .we(coef_we), .re());
 
     reg reset_req = 0;
 
-    reg [31:0] rd_result = 0;
-    reg [31:0] rd_status = 0;
+    always @(negedge ck) begin
+        reset_req <= reset_en;
+    end
 
-    assign iomem_rdata = rd_result | rd_status;
+    io #(.ADDR(ADDR_RESET)) reset_io (.ck(ck), .rst(rst), 
+                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+                            .ready(reset_ready), .we(reset_en), .re());
 
-    reg coef_ready = 0, result_ready = 0, status_ready = 0, reset_ready = 0, input_ready = 0;
-
-    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready;
-
-    assign coef_we = coef_en;
-    assign input_we = input_en;
+    io #(.ADDR(ADDR_INPUT)) input_io (.ck(ck), .rst(rst), 
+                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+                            .ready(input_ready), .we(input_we), .re());
 
     always @(negedge ck) begin
-        if (rst) begin
-
-            if (result_re)
-                result_re <= 0;
-
-            result_ready <= 0;
-            status_ready <= 0;
-            reset_ready <= 0;
-            input_ready <= 0;
-
-            // Write to the coefficient RAM
-            if (coef_ready)
-                coef_ready <= 0;
-            if (coef_en)
-                coef_ready <= 1;
-
-            // Write to the audio input RAM
-            if (input_ready)
-                input_ready <= 0;
-            if (input_en)
-                input_ready <= 1;
-
-            // Read from the results RAM
-            if (result_en) begin
-                result_re <= 1;
-                rd_result <= { 16'h0, result_rdata };
-                result_ready <= 1;
-            end else begin
-                rd_result <= 0;
-            end
-
-            // Read the status
-            if (status_en) begin
-                rd_status <= { 29'h0, error, done, allow_audio_writes };
-                if (| iomem_wstrb)
-                    control_reg <= iomem_wdata[4:0];
-                status_ready <= 1;
-            end else begin
-                rd_status <= 0;
-            end
-
-            // Reset the engine
-            if (reset_en) begin
-                reset_req <= | iomem_wstrb;
-                reset_ready <= 1;
-            end else begin
-                reset_req <= 0;
-            end
-
-        end
+        rd_test <= test_re ? test_rdata : 0;
     end
+
+    io #(.ADDR(ADDR_TEST)) test_io (.ck(ck), .rst(rst), 
+                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+                            .ready(test_ready), .we(test_we), .re(test_re));
+
+    reg [31:0] rd_result = 0;
+
+    always @(negedge ck) begin
+        rd_result <= result_re ? { 16'h0, result_rdata } : 0;
+    end
+
+    io #(.ADDR(ADDR_RESULT)) result_io (.ck(ck), .rst(rst), 
+                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+                            .ready(result_ready), .we(), .re(result_re));
+
+    reg [31:0] rd_status = 0;
+
+    wire status_re, status_we, status_ready;
+
+    always @(negedge ck) begin
+
+        if (status_re) begin
+            if (iomem_addr[2])
+                rd_status <= capture;
+            else                
+                rd_status <= { 29'h0, error, done, allow_audio_writes };
+        end else begin
+            rd_status <= 0;
+        end
+
+        if (status_we)
+            control_reg <= iomem_wdata[4:0];
+
+    end
+
+    io #(.ADDR(ADDR_STATUS)) status_io (.ck(ck), .rst(rst), 
+                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+                            .ready(status_ready), .we(status_we), .re(status_re));
+
+    assign iomem_rdata = rd_result | rd_status | rd_test;
+    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready | test_ready;
 
     //  Debug traces
 
     function [7:0] test_src();
         case (test_select[2:0])
-            0 : test_src = { 3'b0, allow_audio_writes, audio_we, coef_en, coef_we, coef_ready }; 
+            0 : test_src = { 3'b0, allow_audio_writes, audio_we, coef_we, 1'b0, coef_ready }; 
             1 : test_src = { 3'b0, frame };
-            2 : test_src = { 3'b0, input_en, input_ready, input_we, iomem_ready, iomem_valid };
+            2 : test_src = { 3'b0, input_we, input_ready, input_we, iomem_ready, iomem_valid };
             3 : test_src = { 3'b0, out_we, out_wr_addr };
             4 : test_src = 0;
             5 : test_src = 0;

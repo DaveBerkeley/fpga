@@ -1,10 +1,10 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul  2 12:08:22 2020
+[*] Fri Jul  3 14:34:49 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Thu Jul  2 12:08:10 2020"
-[dumpfile_size] 4274085
+[dumpfile_mtime] "Fri Jul  3 14:34:33 2020"
+[dumpfile_size] 5116326
 [savefile] "/home/dave/Desktop/git/fpga/dsp/test.gtkw"
 [timestart] 0
 [size] 1899 785
@@ -17,56 +17,21 @@
 [sst_expanded] 1
 [sst_vpaned_height] 221
 @28
-tb.engine.seq.ck
+tb.engine.coef_io.ck
+tb.engine.coef_io.rst
+tb.engine.coef_io.iomem_valid
 @22
-tb.iomem_addr[31:0]
-tb.iomem_rdata[31:0]
+tb.engine.coef_io.iomem_addr[31:0]
+tb.engine.coef_io.iomem_wstrb[3:0]
 @28
-tb.iomem_ready
-tb.iomem_valid
-@22
-tb.iomem_wdata[31:0]
-tb.iomem_wstrb[3:0]
+tb.engine.coef_io.enable
+tb.engine.coef_io.re
+tb.engine.coef_io.dave
+@23
+tb.engine.coef_io.addr[31:0]
 @28
-tb.reset_cnt[1:0]
-tb.rst
-@800023
-tb.test[7:0]
-@29
-(0)tb.test[7:0]
-(1)tb.test[7:0]
-(2)tb.test[7:0]
-(3)tb.test[7:0]
-(4)tb.test[7:0]
-(5)tb.test[7:0]
-(6)tb.test[7:0]
-(7)tb.test[7:0]
-@1001201
--group_end
-@200
--
-@28
-tb.engine.coef.ck
-tb.engine.coef_ready
-tb.engine.coef_en
-@22
-tb.engine.coef.waddr[7:0]
-tb.engine.coef.wdata[31:0]
-@28
-tb.engine.coef.we
-tb.engine.allow_audio_writes
-tb.engine.status_en
-tb.engine.status_ready
-tb.engine.audio_in.ck
-@22
-tb.engine.audio_in.raddr[8:0]
-tb.engine.audio_in.rdata[15:0]
-@28
-tb.engine.audio_in.re
-@22
-tb.engine.audio_in.waddr[8:0]
-tb.engine.audio_in.wdata[15:0]
-@28
-tb.engine.audio_in.we
+tb.engine.coef_io.ready
+tb.engine.coef_io.we
+tb.engine.coef_io.write
 [pattern_trace] 1
 [pattern_trace] 0

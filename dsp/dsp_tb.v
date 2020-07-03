@@ -50,9 +50,6 @@ module tb ();
             iomem_wstrb <= 0;            
             iomem_addr <= 32'hZ;
             iomem_wdata <= 32'hZ;
-        //end else if (iomem_valid & iomem_ready) begin
-        //    iomem_valid <= 0;
-        //    iomem_wstrb <= 0;            
         end
     end
 
@@ -66,6 +63,7 @@ module tb ();
         @(posedge ck);
         // Setup the coefficient RAM
         i = 32'h60000000;
+        write(i, 32'h2000ffff); i += 4; // Capture
         write(i, 32'h82000001); i += 4; 
         write(i, 32'h84000000); i += 4;
         write(i, 32'h82010001); i += 4;
@@ -80,7 +78,7 @@ module tb ();
         write(i, 32'h00000000); i += 4; // HALT
  
         // set control register
-        write(32'h62000000, 1 + (5 << 1)); // allow_audio_writes
+        write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
 
         // Write to audio RAM
         i = 32'h64000000;
@@ -88,7 +86,15 @@ module tb ();
         write(i, 32'h00005555); i += 4;
         write(i, 32'h0000aaaa); i += 4;
         write(i, 32'h00005555); i += 4;
-        write(i, 32'h00000000); i += 4;
+
+        i = 32'h64000000 + ((1 * 32) * 4);
+        write(i, 32'h00001111); i += 4;
+
+        i = 32'h64000000 + ((2 * 32) * 4);
+        write(i, 32'h00002222); i += 4;
+
+        i = 32'h64000000 + ((3 * 32) * 4);
+        write(i, 32'h00004444); i += 4;
 
         reset_cnt <= 0;
     end

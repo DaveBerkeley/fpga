@@ -126,7 +126,8 @@ module sequencer(
     output reg done,
     output reg error,
     input wire [2:0] test_in,
-    output reg [7:0] test_out
+    output reg [7:0] test_out,
+    output reg [31:0] capture_out
 );
     parameter CHAN_W = 3;
     parameter FRAME_W = 4;
@@ -161,6 +162,9 @@ module sequencer(
         done_0 <= done_req & rst;
         done <= done_0 & rst;
     end
+
+    reg [2:0] capture = 0;
+    initial capture_out = 0;
 
     wire [6:0] op_code;
     wire [(FRAME_W-1):0] offset;
@@ -205,16 +209,19 @@ module sequencer(
             write_req <= 0;
         if (noop)
             noop <= 0;
+        if (capture != 0)
+            capture <= capture - 1;
 
         // Decode the instructions
         if (reset && !done_req) begin
-            case (op_code)
-                7'h00   : begin done_req <= 1; end // halt
-                7'h40   : begin acc_rst <= 1; end // MAC 
-                7'h41   : begin acc_rst <= 0; end // MAC, Zero the ACC first
-                7'h42   : begin write_req <= 1; acc_rst <= 1; end //shift / save / output the result
-                7'h7F   : noop <= 1; // No-op
-                default : begin error <= 1; done_req <= 1; acc_rst <= 0; end
+            casez (op_code)
+                7'b000_0000 : begin done_req <= 1; end  // halt
+                7'b001_???? : begin capture <= 5; end // Capture
+                7'b100_0000 : begin acc_rst <= 1; end   // MAC 
+                7'b100_0001 : begin acc_rst <= 0; end   // MAC, Zero the ACC first
+                7'b100_0010 : begin write_req <= 1; acc_rst <= 1; end //shift / save / output the result
+                7'b111_1111 : noop <= 1; // No-op
+                default     : begin error <= 1; done_req <= 1; acc_rst <= 0; end
             endcase
         end
         
@@ -285,6 +292,26 @@ module sequencer(
         out_addr <= out_we_0 ? out_addr_1 : 0;
 
         out_audio <= out_we_0 ? data_out : 0;
+    end
+
+    always @(posedge ck) begin
+
+        /*
+        if ((test_in == 0) && (capture == 3))
+            capture_out <= { gain_pipe_1, audio_in_latch }; // multiplier in
+        if ((test_in == 1) && (capture == 2))
+            capture_out <= mul_out; // multiplier out
+        if ((test_in == 2) && (capture == 2))
+            capture_out <= acc_out[31:0]; // accumulator out
+        if ((test_in == 3) && (capture == 1))
+            capture_out <= { 16'h0, data_out }; // shifter out
+        if ((test_in == 4) && (capture == 1))
+            capture_out <= { 12'h0, out_addr, out_audio };
+        */
+
+        if ((test_in == 0) && (capture == 3))
+           capture_out <= { gain_pipe_1, audio_in_latch };
+
     end
 
     function [7:0] test_src(input [2:0] select);
