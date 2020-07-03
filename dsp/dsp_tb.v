@@ -63,15 +63,16 @@ module tb ();
         @(posedge ck);
         // Setup the coefficient RAM
         i = 32'h60000000;
-        write(i, 32'h2000ffff); i += 4; // Capture
+        write(i, 32'hffffffff); i += 4; // NOOP
+        write(i, 32'h2000ffff + (3'h7 << 25)); i += 4; // Capture (match=n)
         write(i, 32'h82000001); i += 4; 
-        write(i, 32'h84000000); i += 4;
+        write(i, 32'h84100000); i += 4;
         write(i, 32'h82010001); i += 4;
-        write(i, 32'h84010000); i += 4;
+        write(i, 32'h84110000); i += 4;
         write(i, 32'h82020001); i += 4;
-        write(i, 32'h84020000); i += 4;
+        write(i, 32'h84120000); i += 4;
         write(i, 32'h82030001); i += 4;
-        write(i, 32'h84030000); i += 4;
+        write(i, 32'h84130000); i += 4;
 
         write(i, 32'h00000000); i += 4; // HALT
         write(i, 32'h00000000); i += 4; // HALT

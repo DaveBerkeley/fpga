@@ -1,3 +1,44 @@
+
+   /*
+    *   Handle iomem interface
+    *
+    *   Interface to the Risc-V bus
+    */
+
+module iomem (
+    input wire ck,
+    input wire rst,
+    input wire iomem_valid,
+    input wire [3:0] iomem_wstrb,
+    /* verilator lint_off UNUSED */
+    input wire [31:0] iomem_addr,
+    /* verilator lint_on UNUSED */
+
+    output reg ready,
+    output wire we,
+    output wire re
+);
+
+    parameter ADDR = 16'h6000;
+
+    initial ready = 0;
+
+    wire enable;
+
+    assign enable = rst && iomem_valid && (!ready) && (iomem_addr[31:16] == ADDR);
+
+    wire write;
+    assign write = | iomem_wstrb;
+    assign we = enable & write;
+    assign re = enable & !write;
+
+    always @(negedge ck) begin
+        
+        ready <= (rst & enable) ? 1 : 0;
+
+    end
+
+endmodule
     
    /*
     *
@@ -189,6 +230,8 @@ module sequencer(
         noop_1 <= noop_0;
     end
 
+    reg [2:0] capture_match = 0;
+
     always @(negedge ck) begin
 
         if (!reset) begin
@@ -216,7 +259,7 @@ module sequencer(
         if (reset && !done_req) begin
             casez (op_code)
                 7'b000_0000 : begin done_req <= 1; end  // halt
-                7'b001_???? : begin capture <= 5; end // Capture
+                7'b001_0??? : begin capture <= 5; capture_match <= op_code[2:0]; end // Capture
                 7'b100_0000 : begin acc_rst <= 1; end   // MAC 
                 7'b100_0001 : begin acc_rst <= 0; end   // MAC, Zero the ACC first
                 7'b100_0010 : begin write_req <= 1; acc_rst <= 1; end //shift / save / output the result
@@ -296,21 +339,24 @@ module sequencer(
 
     always @(posedge ck) begin
 
-        /*
-        if ((test_in == 0) && (capture == 3))
+        // capture_match is the requested trace
+        // capture is the time slot, counting down from 5
+        if ((capture_match == 0) && (capture == 3))
             capture_out <= { gain_pipe_1, audio_in_latch }; // multiplier in
-        if ((test_in == 1) && (capture == 2))
+        if ((capture_match == 1) && (capture == 2))
             capture_out <= mul_out; // multiplier out
-        if ((test_in == 2) && (capture == 2))
+        if ((capture_match == 2) && (capture == 2))
             capture_out <= acc_out[31:0]; // accumulator out
-        if ((test_in == 3) && (capture == 1))
-            capture_out <= { 16'h0, data_out }; // shifter out
-        if ((test_in == 4) && (capture == 1))
+        if ((capture_match == 3) && (capture == 1))
+            capture_out <= { 13'h0, offset_1, data_out }; // shifter out
+        if ((capture_match == 4) && (capture == 1))
             capture_out <= { 12'h0, out_addr, out_audio };
-        */
-
-        if ((test_in == 0) && (capture == 3))
-           capture_out <= { gain_pipe_1, audio_in_latch };
+        if ((capture_match == 5) && (capture == 4))
+            capture_out <= { audio_in, 7'h0, audio_addr };
+        if ((capture_match == 6) && (capture == 5))
+            capture_out <= code;
+        if ((capture_match == 7) && (capture == 5))
+            capture_out <= { 11'h0, frame, 7'h0, offset, chan };
 
     end
 

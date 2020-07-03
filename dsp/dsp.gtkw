@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Jul  3 08:36:45 2020
+[*] Fri Jul  3 17:55:38 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Jul  3 08:36:19 2020"
-[dumpfile_size] 5112794
+[dumpfile_mtime] "Fri Jul  3 17:33:58 2020"
+[dumpfile_size] 5125398
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
-[timestart] 5940000
+[timestart] 5909000
 [size] 1918 791
 [pos] -1 -1
-*-17.326889 6630400 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.326889 6468000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.engine.
 [sst_width] 196
@@ -34,6 +34,8 @@ tb.engine.coef.waddr[7:0]
 tb.engine.coef.wdata[31:0]
 @28
 tb.engine.coef.we
+tb.engine.reset_en
+tb.engine.reset_req
 tb.engine.seq.reset
 @22
 tb.engine.seq.frame[4:0]
@@ -73,22 +75,20 @@ tb.engine.seq.acc_out[39:0]
 tb.engine.seq.ck
 tb.engine.seq.noop
 tb.engine.seq.capture[2:0]
-tb.engine.seq.capture_en
-@23
-tb.engine.test_select[3:0]
+tb.engine.seq.capture_match[2:0]
 @22
 tb.engine.seq.capture_out[31:0]
 tb.engine.seq.acc.top[7:0]
 tb.engine.seq.data_out[15:0]
 @28
 tb.engine.seq.offset_0[2:0]
-@c00028
+@c00029
 tb.engine.seq.sh.shift[2:0]
-@28
+@29
 (0)tb.engine.seq.sh.shift[2:0]
 (1)tb.engine.seq.sh.shift[2:0]
 (2)tb.engine.seq.sh.shift[2:0]
-@1401200
+@1401201
 -group_end
 @22
 tb.engine.seq.out_addr[3:0]

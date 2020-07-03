@@ -1,44 +1,5 @@
 
    /*
-    *   Handle iomem interface
-    */
-
-module io (
-    input wire ck,
-    input wire rst,
-    input wire iomem_valid,
-    input wire [3:0] iomem_wstrb,
-    /* verilator lint_off UNUSED */
-    input wire [31:0] iomem_addr,
-    /* verilator lint_on UNUSED */
-
-    output reg ready,
-    output wire we,
-    output wire re
-);
-
-    parameter ADDR = 16'h6000;
-
-    initial ready = 0;
-
-    wire enable;
-
-    assign enable = rst && iomem_valid && (!ready) && (iomem_addr[31:16] == ADDR);
-
-    wire write;
-    assign write = | iomem_wstrb;
-    assign we = enable & write;
-    assign re = enable & !write;
-
-    always @(negedge ck) begin
-        
-        ready <= (rst & enable) ? 1 : 0;
-
-    end
-
-endmodule
-
-   /*
     *   Audio Perihperal
     */
 
@@ -196,7 +157,7 @@ module audio_engine (
     wire coef_ready, reset_ready, input_ready, test_ready, result_ready;
 
     /* verilator lint_off PINCONNECTEMPTY */
-    io #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
+    iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(coef_ready), .we(coef_we), .re());
 
@@ -206,11 +167,11 @@ module audio_engine (
         reset_req <= reset_en;
     end
 
-    io #(.ADDR(ADDR_RESET)) reset_io (.ck(ck), .rst(rst), 
+    iomem #(.ADDR(ADDR_RESET)) reset_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(reset_ready), .we(reset_en), .re());
 
-    io #(.ADDR(ADDR_INPUT)) input_io (.ck(ck), .rst(rst), 
+    iomem #(.ADDR(ADDR_INPUT)) input_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(input_ready), .we(input_we), .re());
 
@@ -218,7 +179,7 @@ module audio_engine (
         rd_test <= test_re ? test_rdata : 0;
     end
 
-    io #(.ADDR(ADDR_TEST)) test_io (.ck(ck), .rst(rst), 
+    iomem #(.ADDR(ADDR_TEST)) test_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(test_ready), .we(test_we), .re(test_re));
 
@@ -228,7 +189,7 @@ module audio_engine (
         rd_result <= result_re ? { 16'h0, result_rdata } : 0;
     end
 
-    io #(.ADDR(ADDR_RESULT)) result_io (.ck(ck), .rst(rst), 
+    iomem #(.ADDR(ADDR_RESULT)) result_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(result_ready), .we(), .re(result_re));
 
@@ -252,7 +213,7 @@ module audio_engine (
 
     end
 
-    io #(.ADDR(ADDR_STATUS)) status_io (.ck(ck), .rst(rst), 
+    iomem #(.ADDR(ADDR_STATUS)) status_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(status_ready), .we(status_we), .re(status_re));
 
