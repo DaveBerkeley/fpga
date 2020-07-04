@@ -3,26 +3,20 @@
     *
     */
 
-module addr_adder(
-    input wire ck,
-    input wire [FRAME_W-1:0] frame,
-    input wire [FRAME_W-1:0] offset,
-    input wire [CHAN_W-1:0] chan,
-    output reg [(FRAME_W+CHAN_W)-1:0] addr
-);
+module pipe(input wire ck, input wire rst, input wire in, output wire out);
 
-    parameter FRAME_W = 4;
-    parameter CHAN_W = 3;
+    parameter LENGTH=1;
 
-    reg [(FRAME_W+CHAN_W)-1:0] addr_0;
-
-    always @(posedge ck) begin
-        addr_0 <= { chan, frame + offset };
-    end
+    reg [(LENGTH-1):0] delay;
 
     always @(negedge ck) begin
-        addr <= addr_0;
+        if (rst)
+            delay <= { in, delay[(LENGTH-1):1] };
+        else
+            delay <= 0;
     end
+
+    assign out = delay[0];
 
 endmodule
 
@@ -30,80 +24,12 @@ endmodule
     *
     */
 
-module multiplier(
-    input wire ck,
-    input  wire /*signed*/ [15:0] a,
-    input wire /*signed*/ [15:0] b,
-    output reg /*signed*/ [31:0] out
-);
-
-    always @(posedge ck) begin
-        out <= a * b;
-    end
-
-endmodule
-
-   /*
-    *
-    */
-
-module accumulator(
-    input wire ck,
-    input wire en,
-    input wire rst,
-    input wire signed add,
-    input wire [31:0] data,
-    output reg signed [(OUT_W-1):0] out
-);
-
-    parameter OUT_W = 40;
+module twos_complement(input wire ck, input wire [15:0] in, output reg [15:0] out);
 
     initial out = 0;
 
-    wire [(OUT_W-33):0] top;
-    wire [(OUT_W-1):0] in;
-
-    assign top = {(OUT_W-32){ $signed(data[31]) }};
-
-    assign in = { top, data };
-
-    always @(posedge ck) begin
-        if (!rst)
-            out <= 0;
-        else if (en) begin
-            if (add)
-                out <= out + in;
-            else
-                out <= out - in;
-        end
-    end
-
-endmodule
-
-   /*
-    *
-    */
-
-module shifter(
-    input wire ck,
-    input wire [2:0] shift,
-    input wire [(ACC_W-1):0] acc,
-    output reg [15:0] out
-);
-
-    parameter ACC_W = 40;
-
-    always @(posedge ck) begin
-        case (shift)
-            0   :   out <= acc[15:0];
-            1   :   out <= acc[19:4];
-            2   :   out <= acc[23:8];
-            3   :   out <= acc[27:12];
-            4   :   out <= acc[31:16];
-            5   :   out <= acc[35:20];
-            6   :   out <= acc[39:24];
-            7   :   out <= 0;
-        endcase
+    always @(negedge ck) begin
+        out <= (~in) + 1'b1;
     end
 
 endmodule
@@ -120,16 +46,18 @@ module sequencer(
     input wire [31:0] coef_data,
     output wire [(AUDIO_W-1):0] audio_raddr,
     input wire [15:0] audio_in,
-    output reg [3:0] out_addr,
-    output reg [15:0] out_audio,
-    output reg out_we,
-    output reg done,
     output reg error,
+    output wire done,
+    output wire [3:0] out_addr,
+    output wire [15:0] out_audio,
+    output reg out_we,
+    /* verilator lint_off UNUSED */
     input wire [2:0] test_in,
     output reg [7:0] test_out,
     output reg [31:0] capture_out
+    /* verilator lint_on UNUSED */
 );
-    parameter CHAN_W = 3;
+    parameter CHAN_W = 4;
     parameter FRAME_W = 4;
     parameter CODE_W = 8;
     parameter AUDIO_W = 9;
@@ -143,158 +71,232 @@ module sequencer(
         reset <= rst;
     end
 
-    initial done = 0;
-
-    //  Program Counter
-
-    initial coef_addr = -1;
-    initial error = 0;
-
-    wire [(AUDIO_W-1):0] audio_addr;
-    assign audio_raddr = done ? 0 : audio_addr;
-
-    reg [31:0] code;
-
-    reg done_req = 0;
-    reg done_0 = 0;
-
-    always @(negedge ck) begin
-        done_0 <= done_req & rst;
-        done <= done_0 & rst;
+    initial begin 
+        coef_addr = 0;
+        error = 0;
+        out_we = 0;
+        test_out = 0;
+        capture_out = 0;
     end
 
-    reg [2:0] capture = 0;
-    initial capture_out = 0;
-
-    wire [6:0] op_code;
-    wire [(FRAME_W-1):0] offset;
-    wire [(CHAN_W-1):0] chan;
-    wire [15:0] gain;
-
-    // decode the command
-    // OP_CODE(7),CHAN(4),OFFSET(5),GAIN(16)
-    assign gain    = code[15:0];
-    assign chan    = code[16+(CHAN_W-1):16];
-    assign offset  = code[16+(CHAN_W+FRAME_W-1):16+(CHAN_W)];
-    assign op_code = code[31:16+(CHAN_W+FRAME_W)];
-
-    reg noop = 0;
-    reg noop_0 = 0;
-    reg noop_1 = 0;
-
     always @(negedge ck) begin
-        noop_0 <= noop;
-    end
-    always @(posedge ck) begin
-        noop_1 <= noop_0;
-    end
-
-    reg [2:0] capture_match = 0;
-
-    always @(negedge ck) begin
-
         if (!reset) begin
-            coef_addr <= 0;
-            done_req <= 0;
             error <= 0;
+        end
+    end
+
+    // Pipeline t0
+    // Program Counter : fetch the opcodes / coefficients
+ 
+    always @(negedge ck) begin
+        if (reset)
+            coef_addr <= coef_addr + 1;
+        else
+            coef_addr <= 0;
+    end
+
+    // Pipeline t1
+    // Latch the op-code, offset, chan and gain
+
+    reg [6:0] op_code;
+    reg [(FRAME_W-1):0] offset;
+    reg [(CHAN_W-1):0] chan;
+    reg [15:0] gain;
+
+    always @(negedge ck) begin
+        if (reset & !done_req) begin
+            gain    <= coef_data[15:0];
+            chan    <= coef_data[16+(CHAN_W-1):16];
+            offset  <= coef_data[16+(CHAN_W+FRAME_W-1):16+(CHAN_W)];
+            op_code <= coef_data[31:16+(CHAN_W+FRAME_W)];
         end else begin
-            // Increment Program Counter
-            if (!done_req) begin
-                coef_addr <= coef_addr + 1;
-            end
+            op_code <= 0;
         end
+    end
 
-        // Save the current instruction
-        code <= coef_data;
+    // Pipeline t2
 
-        if (write_req)
-            write_req <= 0;
-        if (noop)
-            noop <= 0;
-        if (capture != 0)
-            capture <= capture - 1;
+    // Instruction Decode
 
-        // Decode the instructions
-        if (reset && !done_req) begin
+    reg acc_rst_req = 0;    // reset the accumulator
+    reg done_req = 0;       // sequence finished
+    reg acc_en_req = 0;     // enable accumulator
+    reg out_en_req = 0;     // enable accumulator
+    reg add_req = 0;        // set if gain is -ve
+
+    task mac(input [1:0] code);
+        acc_en_req <= 1;
+        acc_rst_req <= code[0];
+        add_req <= !code[1];
+        out_en_req <= 0;
+    endtask
+
+    task halt;
+        acc_en_req <= 0;
+        acc_rst_req <= 0;
+        out_en_req <= 0;
+        add_req <= 0;
+        done_req <= 1;
+    endtask
+
+    task save;
+        acc_en_req <= 0;
+        acc_rst_req <= 0;
+        add_req <= 0;
+        out_en_req <= 1;
+    endtask
+
+    task noop;
+        acc_en_req <= 0;
+        out_en_req <= 0;
+        acc_rst_req <= 0;
+        add_req <= 0;
+    endtask
+
+    task err;
+        error <= 1;
+    endtask
+
+    // Decode the instructions
+    always @(negedge ck) begin
+        if (reset) begin
             casez (op_code)
-                7'b000_0000 : begin done_req <= 1; end  // halt
-                7'b001_0??? : begin capture <= 5; capture_match <= op_code[2:0]; end // Capture
-                7'b100_0000 : begin acc_rst <= 1; end   // MAC 
-                7'b100_0001 : begin acc_rst <= 0; end   // MAC, Zero the ACC first
-                7'b100_0010 : begin write_req <= 1; acc_rst <= 1; end //shift / save / output the result
-                7'b111_1111 : noop <= 1; // No-op
-                default     : begin error <= 1; done_req <= 1; acc_rst <= 0; end
+                7'b111_1111 : halt();           // halt
+                //7'b001_0??? : ; // Capture
+                7'b100_00?? : mac(op_code[1:0]);// MAC 
+                7'b101_0000 : save();           // shift / save / output the result
+                7'b000_0000 : noop();           // No-op
+                default     : err();            // Error
             endcase
+        end else begin
+            error <= 0;
+            acc_en_req <= 0;
+            acc_rst_req <= 0;
+            out_en_req <= 0;
+            done_req <= 0;
+            add_req <= 0;
         end
-        
     end
+ 
+    // Calculate the input audio addr to fetch the next sample from
 
-    reg [15:0] gain_pipe_0 = 0;
-    reg [15:0] gain_pipe_1 = 0;
+    addr_adder#(.FRAME_W(FRAME_W), .CHAN_W(CHAN_W)) 
+        adder(.ck(ck), .frame(frame), .offset(offset), .chan(chan), .addr(audio_raddr)); 
+
+    // Align the gain to feed the multiplier
+
+    reg [15:0] gain_0;
 
     always @(negedge ck) begin
-        gain_pipe_0 <= gain;
-        gain_pipe_1 <= gain_pipe_0;
+        gain_0 <= gain;
     end
 
-    reg [15:0] audio_in_latch;
+    // Pipeline t3
+
+    // Sign adjust for the multiplier and accumulator stages
+    //
+    // If the audio is -ve, make it signed
+    // But use subtract at the accumulator stage
+
+    reg negative = 0;
+
+    // test top bit of audio for -ve value
+    always @(negedge ck) begin
+        negative <= audio_in[15];
+    end
+
+    reg [15:0] gain_1;
+    reg [15:0] audio_0;
 
     always @(negedge ck) begin
-        audio_in_latch <= audio_in;
+        gain_1 <= gain_0;
+        audio_0 <= audio_in;
     end
+
+    wire [15:0] neg_audio;
+
+    twos_complement neg(.ck(ck), .in(audio_in), .out(neg_audio));
+
+    wire [15:0] audio;
+
+    assign audio = negative ? neg_audio : audio_0;
+
+    // Pipeline t4
+    // Multiply audio signal by gain
 
     wire [31:0] mul_out;
 
-    multiplier mul(.ck(ck), .a(gain_pipe_1), .b(audio_in_latch), .out(mul_out));
+    multiplier mul(.ck(ck), .a(gain_1), .b(audio), .out(mul_out));
 
-    wire [(ACC_W-1):0] acc_out;
-    reg acc_rst;
-
-    reg add = 1;
-    accumulator #(.OUT_W(ACC_W)) acc(.ck(!ck), .en(!noop_1), .rst(acc_rst), .add(add), .data(mul_out), .out(acc_out));
+    // Pipeline t5
+    // Acumulator Stage
 
     /* verilator lint_off UNUSED */
-    wire [15:0] data_out;
+    wire signed [(ACC_W-1):0] acc_out;
     /* verilator lint_on UNUSED */
 
-    reg [2:0] offset_0 = 0;
-    reg [2:0] offset_1 = 0;
+    wire acc_reset, acc_en;
+    pipe #(.LENGTH(2)) pipe_acc_reset (.ck(ck), .rst(reset), .in(acc_rst_req), .out(acc_reset));
+    pipe #(.LENGTH(2)) pipe_acc_en    (.ck(ck), .rst(reset), .in(acc_en_req), .out(acc_en));
 
-    always @(posedge ck) begin
-        offset_0 <= offset[2:0];
-        offset_1 <= offset_0;
+    reg acc_add_0 = 0;
+    reg acc_add = 0;
+    always @(negedge ck) begin
+        acc_add_0 <= add_req;
+        acc_add <= acc_add_0 ^ negative;
     end
 
-    shifter sh (.ck(ck), .shift(offset_1), .acc(acc_out), .out(data_out));
+    accumulator #(.OUT_W(ACC_W)) acc(.ck(ck), .en(acc_en), .rst(acc_reset), 
+        .add(acc_add), .data(mul_out), .out(acc_out));
 
-    addr_adder #(.FRAME_W(FRAME_W), .CHAN_W(CHAN_W)) 
-            addr_add (.ck(ck), .frame(frame), .offset(offset), .chan(chan), .addr(audio_addr));
+    // Pipeline t6
+    // Shift the result into 16-bits
 
-    reg write_req = 0;
-
-    reg out_we_0 = 0;
-    initial out_we = 0;
+    // TODO : shift is delayed offset
+    reg [(FRAME_W-1):0] shift_0 = 0;
+    reg [(FRAME_W-1):0] shift_1 = 0;
+    reg [(FRAME_W-1):0] shift_2 = 0;
 
     always @(negedge ck) begin
-        if (!reset) begin
-            out_we <= 0;
-            out_we_0 <= 0;
-        end else begin
-            out_we_0 <= write_req;
-            out_we <= out_we_0;
-        end
+        shift_0 <= offset;
+        shift_1 <= shift_0;
+        shift_2 <= shift_1;
     end
 
-    reg [3:0] out_addr_0 = 0;
-    reg [3:0] out_addr_1 = 0;
+    wire [15:0] shift_out;
+
+    wire shift_en;
+    pipe #(.LENGTH(2)) pipe_shift_en (.ck(ck), .rst(reset), .in(out_en_req), .out(shift_en));
+ 
+    shifter shift_data (.ck(ck), .en(shift_en), .shift(shift_2), .in(acc_out), .out(shift_out));
+
+    // Pipeline t7
+    // Write output
+    // Takes data from the shifter and writes to address derived from 'gain' field
 
     always @(negedge ck) begin
-        out_addr_0 <= chan;
+        out_we <= shift_en;
+    end
+
+    reg [3:0] out_addr_0;
+    reg [3:0] out_addr_1;
+
+    always @(negedge ck) begin
+        out_addr_0 <= gain_1[3:0];
         out_addr_1 <= out_addr_0;
-        out_addr <= out_we_0 ? out_addr_1 : 0;
-
-        out_audio <= out_we_0 ? data_out : 0;
     end
+
+    assign out_audio = out_we ? shift_out : 0;
+    assign out_addr = out_we ? out_addr_1[3:0] : 0;
+
+    // Sequence ended
+
+    pipe #(.LENGTH(3)) pipe_done (.ck(ck), .rst(reset), .in(done_req), .out(done));
+
+    /*
+
+    reg [2:0] capture = 0;
+    initial capture_out = 0;
 
     always @(posedge ck) begin
 
@@ -335,6 +337,7 @@ module sequencer(
     always @(posedge ck) begin
         test_out <= test_src(test_in);
     end
+    */
 
 endmodule
 

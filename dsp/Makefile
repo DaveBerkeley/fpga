@@ -1,5 +1,5 @@
 PROJ = dsp
-ADD_SRC = dpram.v audio_engine.v sequencer.v iomem.v
+ADD_SRC = dpram.v audio_engine.v sequencer.v iomem.v multiplier.v accumulator.v shifter.v addr_adder.v
 ADD_CLEAN = dsp_tb dsp_syntb dsp_syn.v *_tb *.vcd
 
 PACKAGE = sg48
@@ -13,5 +13,6 @@ iomem_tb: iomem.v iomem_tb.v
 	# verilator --top-module top $^ --lint-only -Wall -Wno-DECLFILENAME -Wno-STMTDLY
 	iverilog -DSIMULATION -g2012 -o $@ $^
 	./$@
-	
+
+# tests: iomem_tb
 

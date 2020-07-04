@@ -7,7 +7,7 @@ module tb ();
     initial begin
         $dumpfile("dsp.vcd");
         $dumpvars(0, tb);
-        #5000000 $finish;
+        #50000 $finish;
     end
 
     reg ck = 0;
@@ -53,6 +53,20 @@ module tb ();
         end
     end
 
+    task write_opcode;
+        
+        input [31:0] addr;
+        input [6:0] opcode;
+        input [4:0] offset;
+        input [3:0] chan;
+        input [15:0] gain;
+
+        begin
+            write(addr, gain + (chan << 16) + (offset << 20) + (opcode << 25));
+        end
+
+    endtask
+
     integer i;
 
     initial begin
@@ -63,39 +77,22 @@ module tb ();
         @(posedge ck);
         // Setup the coefficient RAM
         i = 32'h60000000;
-        write(i, 32'hffffffff); i += 4; // NOOP
-        write(i, 32'h2000ffff + (3'h7 << 25)); i += 4; // Capture (match=n)
-        write(i, 32'h82000001); i += 4; 
-        write(i, 32'h84100000); i += 4;
-        write(i, 32'h82010001); i += 4;
-        write(i, 32'h84110000); i += 4;
-        write(i, 32'h82020001); i += 4;
-        write(i, 32'h84120000); i += 4;
-        write(i, 32'h82030001); i += 4;
-        write(i, 32'h84130000); i += 4;
 
-        write(i, 32'h00000000); i += 4; // HALT
-        write(i, 32'h00000000); i += 4; // HALT
-        write(i, 32'h00000000); i += 4; // HALT
+        //write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // NOOP
+        write_opcode(i, 7'b1000001, 0, 0, 3); i += 4; // MAC Z
+        write_opcode(i, 7'b1000010, 1, 0, 3); i += 4; // MAC N
+        write_opcode(i, 7'b1010000, 0, 0, 0); i += 4; // SAVE
+        write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
+        write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
+        //write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
  
         // set control register
         write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
 
         // Write to audio RAM
         i = 32'h64000000;
-        write(i, 32'h0000aaaa); i += 4;
-        write(i, 32'h00005555); i += 4;
-        write(i, 32'h0000aaaa); i += 4;
-        write(i, 32'h00005555); i += 4;
-
-        i = 32'h64000000 + ((1 * 32) * 4);
         write(i, 32'h00001111); i += 4;
-
-        i = 32'h64000000 + ((2 * 32) * 4);
-        write(i, 32'h00002222); i += 4;
-
-        i = 32'h64000000 + ((3 * 32) * 4);
-        write(i, 32'h00004444); i += 4;
+        write(i, 32'h0000EEEE); i += 4;
 
         reset_cnt <= 0;
     end
