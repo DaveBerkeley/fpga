@@ -1,46 +1,34 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Jul  3 17:20:24 2020
+[*] Sat Jul  4 10:01:09 2020
 [*]
-[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Jul  3 16:49:55 2020"
-[dumpfile_size] 5125411
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/iomem.vcd"
+[dumpfile_mtime] "Sat Jul  4 09:28:15 2020"
+[dumpfile_size] 1523368
 [savefile] "/home/dave/Desktop/git/fpga/dsp/test.gtkw"
-[timestart] 5759000
+[timestart] 1223000
 [size] 1899 785
-[pos] -1 -194
-*-18.000000 6300000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-[treeopen] tb.
-[treeopen] tb.engine.
+[pos] -1 -1
+*-18.330584 1512000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
 [sst_width] 196
 [signals_width] 174
 [sst_expanded] 1
 [sst_vpaned_height] 221
-@28
-tb.engine.audio_in.ck
-@22
-tb.engine.audio_in.raddr[8:0]
-tb.engine.audio_in.rdata[15:0]
-@28
-tb.engine.audio_in.re
-@22
-tb.engine.audio_in.waddr[8:0]
-tb.engine.audio_in.wdata[15:0]
-@28
-tb.engine.audio_in.we
 @200
 -coef
 @28
-tb.engine.coef.ck
+top.io.ck
+top.io.rst
 @22
-tb.engine.coef.raddr[7:0]
-tb.engine.coef.rdata[31:0]
+top.io.iomem_addr[31:0]
+top.io.iomem_wstrb[3:0]
 @28
-tb.engine.coef.re
+top.io.iomem_valid
+top.io.re
+top.io.we
+top.io.ready
 @22
-tb.engine.coef.waddr[7:0]
-tb.engine.coef.wdata[31:0]
-@28
-tb.engine.coef.we
+top.iomem_data[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

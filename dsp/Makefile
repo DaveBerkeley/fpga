@@ -1,6 +1,6 @@
 PROJ = dsp
-ADD_SRC = dpram.v audio_engine.v sequencer.v 
-ADD_CLEAN = dsp_tb dsp_syntb dsp_syn.v
+ADD_SRC = dpram.v audio_engine.v sequencer.v iomem.v
+ADD_CLEAN = dsp_tb dsp_syntb dsp_syn.v *_tb *.vcd
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -8,3 +8,10 @@ DEVICE = up5k
 PIN_DEF = ../icebreaker.pcf
 
 include ../main.mk
+
+iomem_tb: iomem.v iomem_tb.v
+	# verilator --top-module top $^ --lint-only -Wall -Wno-DECLFILENAME -Wno-STMTDLY
+	iverilog -DSIMULATION -g2012 -o $@ $^
+	./$@
+	
+

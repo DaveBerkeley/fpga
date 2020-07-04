@@ -156,10 +156,13 @@ module audio_engine (
     wire reset_en;
     wire coef_ready, reset_ready, input_ready, test_ready, result_ready;
 
-    /* verilator lint_off PINCONNECTEMPTY */
+    /* verilator lint_off UNUSED */
+    wire nowt_1, nowt_2, nowt_3, nowt_4;
+    /* verilator lint_on UNUSED */
+
     iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
-                            .ready(coef_ready), .we(coef_we), .re());
+                            .ready(coef_ready), .we(coef_we), .re(nowt_1));
 
     reg reset_req = 0;
 
@@ -169,11 +172,11 @@ module audio_engine (
 
     iomem #(.ADDR(ADDR_RESET)) reset_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
-                            .ready(reset_ready), .we(reset_en), .re());
+                            .ready(reset_ready), .we(reset_en), .re(nowt_2));
 
     iomem #(.ADDR(ADDR_INPUT)) input_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
-                            .ready(input_ready), .we(input_we), .re());
+                            .ready(input_ready), .we(input_we), .re(nowt_3));
 
     always @(negedge ck) begin
         rd_test <= test_re ? test_rdata : 0;
@@ -191,7 +194,7 @@ module audio_engine (
 
     iomem #(.ADDR(ADDR_RESULT)) result_io (.ck(ck), .rst(rst), 
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
-                            .ready(result_ready), .we(), .re(result_re));
+                            .ready(result_ready), .we(nowt_4), .re(result_re));
 
     reg [31:0] rd_status = 0;
 
