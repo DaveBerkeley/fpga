@@ -41,8 +41,9 @@ module shifter(
                 24 : out <= in[39:24];
                 default : out <= 0;
             endcase
-        end else
+        end else begin
             out <= 0;
+        end
     end
 
 endmodule

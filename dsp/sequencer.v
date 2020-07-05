@@ -9,14 +9,16 @@ module pipe(input wire ck, input wire rst, input wire in, output wire out);
 
     reg [(LENGTH-1):0] delay;
 
+    /* verilator lint_off WIDTH */
     always @(negedge ck) begin
         if (rst)
-            delay <= { in, delay[(LENGTH-1):1] };
+            delay <= (delay << 1) | in;
         else
             delay <= 0;
     end
+    /* verilator lint_on WIDTH */
 
-    assign out = delay[0];
+    assign out = delay[LENGTH-1];
 
 endmodule
 
@@ -79,12 +81,6 @@ module sequencer(
         capture_out = 0;
     end
 
-    always @(negedge ck) begin
-        if (!reset) begin
-            error <= 0;
-        end
-    end
-
     // Pipeline t0
     // Program Counter : fetch the opcodes / coefficients
  
@@ -122,59 +118,71 @@ module sequencer(
     reg done_req = 0;       // sequence finished
     reg acc_en_req = 0;     // enable accumulator
     reg out_en_req = 0;     // enable accumulator
-    reg add_req = 0;        // set if gain is -ve
+    reg acc_add_req = 0;        // set if gain is -ve
 
-    task mac(input [1:0] code);
+    task noop;
+        acc_en_req <= 0;
+        out_en_req <= 0;
+        acc_rst_req <= 0;
+        acc_add_req <= 0;
+    endtask
+
+    task mac(input zero, input add);
         acc_en_req <= 1;
-        acc_rst_req <= code[0];
-        add_req <= !code[1];
+        acc_rst_req <= zero;
+        acc_add_req <= add;
         out_en_req <= 0;
     endtask
 
     task halt;
-        acc_en_req <= 0;
-        acc_rst_req <= 0;
-        out_en_req <= 0;
-        add_req <= 0;
+        noop();
         done_req <= 1;
     endtask
 
     task save;
         acc_en_req <= 0;
         acc_rst_req <= 0;
-        add_req <= 0;
+        acc_add_req <= 0;
         out_en_req <= 1;
-    endtask
-
-    task noop;
-        acc_en_req <= 0;
-        out_en_req <= 0;
-        acc_rst_req <= 0;
-        add_req <= 0;
     endtask
 
     task err;
         error <= 1;
     endtask
 
+    wire [15:0] trace;
+    assign trace = { 2'b0, negative, shift_en, out_we, acc_reset, acc_en, acc_add, 1'b0, frame, error, done };
+    
+    task capture(input [2:0] code);
+        noop();
+        case (code)
+            0 : capture_out <= coef_data; // the next instructon
+            1 : capture_out <= { audio_in, 7'h0, audio_raddr }; 
+            2 : capture_out <= { gain_1, audio }; // multiplier in
+            3 : capture_out <= mul_out; // multiplier out
+            5 : capture_out <= acc_out[31:0]; // accumulator out
+            7 : capture_out <= { 16'h0, trace };
+        endcase
+    endtask
+
     // Decode the instructions
     always @(negedge ck) begin
         if (reset) begin
             casez (op_code)
-                7'b111_1111 : halt();           // halt
-                //7'b001_0??? : ; // Capture
-                7'b100_00?? : mac(op_code[1:0]);// MAC 
-                7'b101_0000 : save();           // shift / save / output the result
-                7'b000_0000 : noop();           // No-op
-                default     : err();            // Error
+                7'b000_0000 : noop();       // No-op
+                7'b001_0??? : capture(op_code[2:0]); // Capture
+                7'b100_0000 : mac(0, 1);    // MAC 
+                7'b100_0001 : mac(0, 0);    // MACN
+                7'b100_0010 : mac(1, 1);    // MACZ
+                7'b100_0011 : mac(1, 0);    // MACNZ
+                7'b101_0000 : save();       // shift / save / output the result
+                7'b111_1111 : halt();       // halt
+                default     : err();        // Error
             endcase
         end else begin
+            noop();
             error <= 0;
-            acc_en_req <= 0;
-            acc_rst_req <= 0;
-            out_en_req <= 0;
             done_req <= 0;
-            add_req <= 0;
         end
     end
  
@@ -242,17 +250,20 @@ module sequencer(
     reg acc_add_0 = 0;
     reg acc_add = 0;
     always @(negedge ck) begin
-        acc_add_0 <= add_req;
+        acc_add_0 <= acc_add_req;
+        // subtract if the audio is -ve
         acc_add <= acc_add_0 ^ negative;
     end
 
+    wire [31:0] acc_in;
+    assign acc_in = mul_out;
+
     accumulator #(.OUT_W(ACC_W)) acc(.ck(ck), .en(acc_en), .rst(acc_reset), 
-        .add(acc_add), .data(mul_out), .out(acc_out));
+        .add(acc_add), .in(acc_in), .out(acc_out));
 
     // Pipeline t6
-    // Shift the result into 16-bits
+    // Shift the 40-bit accumulator result into 16-bits
 
-    // TODO : shift is delayed offset
     reg [(FRAME_W-1):0] shift_0 = 0;
     reg [(FRAME_W-1):0] shift_1 = 0;
     reg [(FRAME_W-1):0] shift_2 = 0;
@@ -289,37 +300,11 @@ module sequencer(
     assign out_audio = out_we ? shift_out : 0;
     assign out_addr = out_we ? out_addr_1[3:0] : 0;
 
-    // Sequence ended
+    // Sequence ended. Assert 'done'
 
     pipe #(.LENGTH(3)) pipe_done (.ck(ck), .rst(reset), .in(done_req), .out(done));
 
     /*
-
-    reg [2:0] capture = 0;
-    initial capture_out = 0;
-
-    always @(posedge ck) begin
-
-        // capture_match is the requested trace
-        // capture is the time slot, counting down from 5
-        if ((capture_match == 0) && (capture == 3))
-            capture_out <= { gain_pipe_1, audio_in_latch }; // multiplier in
-        if ((capture_match == 1) && (capture == 2))
-            capture_out <= mul_out; // multiplier out
-        if ((capture_match == 2) && (capture == 2))
-            capture_out <= acc_out[31:0]; // accumulator out
-        if ((capture_match == 3) && (capture == 1))
-            capture_out <= { 13'h0, offset_1, data_out }; // shifter out
-        if ((capture_match == 4) && (capture == 1))
-            capture_out <= { 12'h0, out_addr, out_audio };
-        if ((capture_match == 5) && (capture == 4))
-            capture_out <= { audio_in, 7'h0, audio_addr };
-        if ((capture_match == 6) && (capture == 5))
-            capture_out <= code;
-        if ((capture_match == 7) && (capture == 5))
-            capture_out <= { 11'h0, frame, 7'h0, offset, chan };
-
-    end
 
     function [7:0] test_src(input [2:0] select);
         case (select)

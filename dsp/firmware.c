@@ -667,19 +667,21 @@ void cmd_echo()
 }
 
 enum Opcode {
-    HALT = 0,
+    HALT    = 0x7f,
     CAPTURE = 0x10,
-    MAC  = 0x40,
-    MACZ = 0x41,
-    OUT  = 0x42,
-    NOOP = 0x7F,
+    MAC     = 0x40,
+    MACZ    = 0x42,
+    MACN    = 0x41,
+    MACNZ   = 0x43,
+    OUT     = 0x50,
+    NOOP    = 0x00,
 };
 
 uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
 {
     const uint32_t value = gain + (chan << 16) + (offset << 20) + (opcode << 25);
 
-    bool verbose = false;
+    bool verbose = true;
 
     if (!verbose)
         return value;
@@ -688,15 +690,31 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
     print_hex(value, 8);
     print(" ");
 
-    switch (opcode)
-    {
-        case HALT   :   print("HALT "); break;
-        case CAPTURE:   print("CAPT "); break;
-        case MAC    :   print("MAC  "); break;
-        case MACZ   :   print("MACZ "); break;
-        case OUT    :   print("OUT  "); break;
-        case NOOP   :   print("NOOP "); break;
-        default     :   print("ERROR"); break;
+    if ((opcode & 0x70) == CAPTURE) {
+        print("CAPT ");
+        const int v = opcode - CAPTURE;
+        print_hex(v, 1);
+        switch (v)
+        {
+            case 0 : print(" next cooef"); break;
+            case 1 : print(" audio in/addr"); break;
+            case 2 : print(" mul in a/b"); break;
+            case 3 : print(" mul out"); break;
+            case 4 : print(" acc out"); break;
+        }
+    } else {
+        switch (opcode)
+        {
+            case HALT   :   print("HALT "); break;
+            //case CAPTURE:   print("CAPT "); break;
+            case MAC    :   print("MAC  "); break;
+            case MACZ   :   print("MACZ "); break;
+            case MACN   :   print("MACN "); break;
+            case MACNZ  :   print("MACNZ"); break;
+            case OUT    :   print("OUT  "); break;
+            case NOOP   :   print("NOOP "); break;
+            default     :   print("ERROR"); break;
+        }
     }
 
     if ((opcode == MAC) || (opcode == MACZ))
@@ -711,9 +729,9 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
     if (opcode == OUT)
     {
         print(" shift=");
-        print_hex(offset*4, 2);
+        print_hex(offset, 2);
         print(" addr=");
-        print_hex(chan, 1);
+        print_hex(gain & 0xff, 2);
     }
 
     print("\n");
@@ -733,19 +751,15 @@ void set_coef()
 {
     uint32_t *coef = ADDR_COEF;
 
-    //*coef++ = opcode(CAPTURE + 1, 0, 0, 0);
     *coef++ = opcode(MACZ, 0, 0, 1);
-    //*coef++ = opcode(MAC , 1, 0, 1);
-    //*coef++ = opcode(MAC , 2, 0, 1);
-    //*coef++ = opcode(MAC , 3, 0, 1);
-    *coef++ = opcode(OUT , 0, 0, 0);
-    //*coef++ = opcode(MACZ, 0, 1, 1);
-    //*coef++ = opcode(OUT , 0, 1, 0);
-    //*coef++ = opcode(MACZ, 0, 2, 1);
-    //*coef++ = opcode(OUT , 0, 2, 0);
-    //*coef++ = opcode(MACZ, 0, 3, 1);
-    //*coef++ = opcode(OUT , 0, 3, 0);
-    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(MAC,  1, 0, 10);
+    *coef++ = opcode(MAC,  2, 0, 100);
+    *coef++ = opcode(MAC,  4, 0, 1000);
+    *coef++ = opcode(OUT , 0xa, 0, 123);
+    *coef++ = opcode(NOOP,  0, 0, 0);
+    *coef++ = opcode(NOOP,  0, 0, 0);
+    *coef++ = opcode(NOOP,  0, 0, 0);
+    *coef++ = opcode(CAPTURE + 7, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
 
@@ -767,24 +781,28 @@ void set_coef()
 
     // Write to audio RAM
     uint32_t *input = ADDR_AUDIO;
-    input[0] = 0x00001111;
-    input[1] = 0x00000010;
-    input[2] = 0x00000100;
-    input[3] = 0x00001000;
+    int idx = 0;
+    input[idx++] = 0x00001234;
+    input[idx++] = 0x00001111;
+    input[idx++] = 0x00002222;
+    input[idx++] = 0x00003333;
+    input[idx++] = 0x00004444;
+
+    idle_fn();
+
+    while (true) ; /// HALT!!!!!
 }
 
 void idle_fn()
 {
-    uint32_t *coef = ADDR_COEF;
-
-    static uint32_t gain = 0x100;
-    *coef++ = opcode(CAPTURE + 2, 0, 0, 0);
-    *coef++ = opcode(MACZ, 0, 0, gain);
-    *coef++ = opcode(OUT , 2, 0, 0);
-    *coef++ = opcode(HALT, 0, 0, 0);
-    *coef++ = opcode(HALT, 0, 0, 0);
-    *coef++ = opcode(HALT, 0, 0, 0);
-    //gain += 1;
+    // Write to audio RAM
+#if 0
+    uint32_t *input = ADDR_AUDIO;
+    int idx = 0;
+    static uint32_t v = 0;
+    input[idx++] = v++;
+    input[idx++] = 0x12345678;
+#endif
 
     // Reset the audio engine
     uint32_t *reset = ADDR_RESET;
