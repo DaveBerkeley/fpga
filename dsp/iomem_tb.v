@@ -36,6 +36,8 @@ module top ();
             iomem_addr <= addr;
             @(negedge ck);
             @(negedge ck);
+            @(negedge ck);
+            @(negedge ck);
         end
 
     endtask
@@ -49,6 +51,8 @@ module top ();
             iomem_addr <= addr;
             @(posedge ck);
             iomem_data <= data;
+            @(negedge ck);
+            @(negedge ck);
             @(negedge ck);
             @(negedge ck);
         end

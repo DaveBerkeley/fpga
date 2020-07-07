@@ -1,7 +1,7 @@
 
 
 module dpram 
-# (parameter BITS=16, SIZE=256, AWIDTH=$clog2(SIZE), FNAME="")
+# (parameter BITS=16, SIZE=256, AWIDTH=$clog2(SIZE))
 (   
     input wire ck,
     input wire we,

@@ -53,11 +53,7 @@ module sequencer(
     output wire [3:0] out_addr,
     output wire [15:0] out_audio,
     output reg out_we,
-    /* verilator lint_off UNUSED */
-    input wire [2:0] test_in,
-    output reg [7:0] test_out,
     output reg [31:0] capture_out
-    /* verilator lint_on UNUSED */
 );
     parameter CHAN_W = 4;
     parameter FRAME_W = 4;
@@ -77,7 +73,6 @@ module sequencer(
         coef_addr = 0;
         error = 0;
         out_we = 0;
-        test_out = 0;
         capture_out = 0;
     end
 
@@ -150,18 +145,20 @@ module sequencer(
         error <= 1;
     endtask
 
-    wire [15:0] trace;
-    assign trace = { 2'b0, negative, shift_en, out_we, acc_reset, acc_en, acc_add, 1'b0, frame, error, done };
+    //wire [15:0] trace;
+    //assign trace = { 2'b0, negative, shift_en, out_we, acc_reset, acc_en, acc_add, 1'b0, frame, error, done };
     
-    task capture(input [2:0] code);
+    task capture(input [3:0] code);
         noop();
         case (code)
             0 : capture_out <= coef_data; // the next instructon
-            1 : capture_out <= { audio_in, 7'h0, audio_raddr }; 
-            2 : capture_out <= { gain_1, audio }; // multiplier in
-            3 : capture_out <= mul_out; // multiplier out
-            5 : capture_out <= acc_out[31:0]; // accumulator out
-            7 : capture_out <= { 16'h0, trace };
+            //1 : capture_out <= { coef_data[15:0], coef_data[31:16] }; // the next instructon
+            //1 : capture_out <= { audio_in, 7'h0, audio_raddr }; 
+            //2 : capture_out <= { gain_1, audio }; // multiplier in
+            //3 : capture_out <= mul_out; // multiplier out
+            //5 : capture_out <= acc_out[31:0]; // accumulator out
+            //6 : capture_out <= { 12'h0, out_addr, out_audio };
+            7 : capture_out <= { 32'h12345678 };
         endcase
     endtask
 
@@ -170,7 +167,7 @@ module sequencer(
         if (reset) begin
             casez (op_code)
                 7'b000_0000 : noop();       // No-op
-                7'b001_0??? : capture(op_code[2:0]); // Capture
+                7'b001_???? : capture(op_code[3:0]); // Capture
                 7'b100_0000 : mac(0, 1);    // MAC 
                 7'b100_0001 : mac(0, 0);    // MACN
                 7'b100_0010 : mac(1, 1);    // MACZ

@@ -43,6 +43,17 @@ module tb ();
         end
     endtask
 
+    task read(input [31:0] addr);
+
+            @(posedge ck);
+            iomem_addr <= addr;
+            iomem_wstrb <= 0;
+            iomem_valid <= 1;
+            @(posedge ck);
+            @(posedge ck);
+
+    endtask
+
     // Simulate removing iomem_valid
     always @(posedge ck) begin
         if (iomem_ready || !rst) begin
@@ -121,25 +132,29 @@ module tb ();
         //write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
         //capture(i, 7); i += 4; // CAPTURE
 
-        write_opcode(i, 7'b1000010, 0, 0, 1); i += 4; // MAC Z
-        write_opcode(i, 7'b1000000, 1, 0, 10); i += 4; // MAC
-        write_opcode(i, 7'b1000000, 2, 0, 100); i += 4; // MAC
         capture(i, 7); i += 4; // CAPTURE
-        write_opcode(i, 7'b1000000, 3, 0, 1000); i += 4; // MAC
+        write_opcode(i, 7'b1000010, 1, 0, 1); i += 4; // MAC Z
+        //write_opcode(i, 7'b1000000, 1, 0, 10); i += 4; // MAC
+        //write_opcode(i, 7'b1000000, 2, 0, 100); i += 4; // MAC
+        //write_opcode(i, 7'b1000000, 3, 0, 1000); i += 4; // MAC
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
-        write_opcode(i, 7'b0000000, 0, 0, 0); i += 4; // NOOP
-        write_opcode(i, 7'b0000000, 0, 0, 0); i += 4; // NOOP
+        write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
+        //write_opcode(i, 7'b0000000, 0, 0, 0); i += 4; // NOOP
+        //write_opcode(i, 7'b0000000, 0, 0, 0); i += 4; // NOOP
+        
+        i = 32'h60000000;
+        read(i);
  
         // set control register
-        write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
+        //write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
 
         // Write to audio RAM
-        i = 32'h64000000;
-        write(i, 32'h00001234); i += 4;
-        write(i, 32'h00001111); i += 4;
-        write(i, 32'h00002222); i += 4;
-        write(i, 32'h00003333); i += 4;
-        write(i, 32'h00004444); i += 4;
+        //i = 32'h64000000;
+        //write(i, 32'h00001234); i += 4;
+        //write(i, 32'h00001111); i += 4;
+        //write(i, 32'h00002222); i += 4;
+        //write(i, 32'h00003333); i += 4;
+        //write(i, 32'h00004444); i += 4;
 
         reset_cnt <= 0;
     end

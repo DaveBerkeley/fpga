@@ -21,7 +21,6 @@ module gpio(
 	assign leds = gpio_reg;
 
     wire gpio_reg_en;
-    wire dpram_en;
 
     initial iomem_ready = 0;
 

@@ -20,11 +20,73 @@ module audio_engine (
     parameter                ADDR = 16'h6000;
 
     localparam ADDR_COEF   = ADDR;
+    localparam CODE = 128;
+    localparam CODE_W = $clog2(CODE);
+
+    // Test read / write
+    wire coef_we;
+    wire coef_re;
+    /* verilator lint_off UNUSED */
+    wire [(CODE_W-1):0] coef_waddr;
+    wire [(CODE_W-1):0] coef_raddr;
+    /* verilator lint_on UNUSED */
+    wire [31:0] coef_rdata;
+
+    //dpram #(.BITS(32), .SIZE(CODE))
+    //    coef (.ck(ck), 
+    //        .we(coef_we), .waddr(coef_waddr), .wdata(iomem_wdata),
+    //        .re(coef_re), .raddr(coef_raddr), .rdata(coef_rdata));
+
+    //reg [31:0] ram[0:CODE-1];
+
+    //always@(posedge ck)
+    //begin
+    //    if(coef_we)
+    //        ram[coef_waddr] <= iomem_wdata;
+    //end
+
+    //assign coef_rdata = coef_re ? ram[coef_raddr] : 0;
+
+    reg [31:0] save;
+    reg [1:0] ready_count = 0;
+    wire ready;
+    assign ready = ready_count != 0;
+
+    always @(posedge ck) begin
+        if (coef_we)
+            save <= iomem_wdata;
+
+        if (coef_re && !ready)
+            ready_count <= 1;
+        else
+            if (ready_count != 0)
+                ready_count <= ready_count - 1;
+    end
+ 
+    assign coef_waddr = iomem_addr[(2+CODE_W-1):2];
+    assign coef_raddr = iomem_addr[(2+CODE_W-1):2];
+    assign coef_rdata = save;
+
+    wire write, coef_ready;
+    assign write = | iomem_wstrb;
+    assign coef_ready = rst && iomem_valid && (iomem_addr[31:16] == ADDR);
+    assign coef_we = coef_ready && write;
+    assign coef_re = coef_ready || ready;
+    assign iomem_rdata = ready ? coef_rdata : 0;
+    assign iomem_ready = write ? coef_ready : ready;
+
+    assign test = { iomem_wdata[0], iomem_rdata[0], coef_re, coef_we, iomem_ready, coef_waddr[0], iomem_valid, ck };
+
+endmodule
+
+`ifdef TURNEDOFF
+    parameter                ADDR = 16'h6000;
+
+    localparam ADDR_COEF   = ADDR;
     localparam ADDR_RESULT = ADDR + 16'h0100;
     localparam ADDR_STATUS = ADDR + 16'h0200;
     localparam ADDR_RESET  = ADDR + 16'h0300;
     localparam ADDR_INPUT  = ADDR + 16'h0400;
-    localparam ADDR_TEST   = ADDR + 16'h0500;
 
     // Send an extended reset pulse to the audio engine
 
@@ -48,12 +110,12 @@ module audio_engine (
     //  Control Register
 
     // bit-0 : set to allow writes to the audio input RAM
+    /* verilator lint_off UNUSED */
     reg [4:0] control_reg = 0;
+    /* verilator lint_on UNUSED */
 
     wire allow_audio_writes;
     assign allow_audio_writes = control_reg[0];
-    wire [3:0] test_select;
-    assign test_select = control_reg[4:1];
 
     //  Drive the engine
 
@@ -121,7 +183,7 @@ module audio_engine (
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
             .done(done), .error(error), 
-            .test_in(test_select[2:0]), .test_out(seq_test), .capture_out(capture));
+            .capture_out(capture));
 
     //  Results RAM
     //  TODO : Also write results to I2S hardware
@@ -137,24 +199,10 @@ module audio_engine (
 
     assign result_raddr = iomem_addr[5:2];
 
-    // Test the risc-v bus read/write to RAM
-    
-    wire [4:0] test_addr;
-    wire [31:0] test_rdata;
-    reg [31:0] rd_test = 0;
-    wire test_we, test_re;
-
-    assign test_addr = iomem_addr[6:2];
-
-    dpram #(.BITS(32), .SIZE(32))
-        test_ram (.ck(ck), 
-            .we(test_we), .waddr(test_addr), .wdata(iomem_wdata),
-            .re(test_re), .raddr(test_addr), .rdata(test_rdata));
-
     // Interface the peripheral to the Risc-V bus
 
     wire reset_en;
-    wire coef_ready, reset_ready, input_ready, test_ready, result_ready;
+    wire coef_ready, reset_ready, input_ready, result_ready;
 
     /* verilator lint_off UNUSED */
     wire nowt_1, nowt_2, nowt_3, nowt_4;
@@ -178,14 +226,6 @@ module audio_engine (
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(input_ready), .we(input_we), .re(nowt_3));
 
-    always @(negedge ck) begin
-        rd_test <= test_re ? test_rdata : 0;
-    end
-
-    iomem #(.ADDR(ADDR_TEST)) test_io (.ck(ck), .rst(rst), 
-                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
-                            .ready(test_ready), .we(test_we), .re(test_re));
-
     reg [31:0] rd_result = 0;
 
     always @(negedge ck) begin
@@ -196,20 +236,16 @@ module audio_engine (
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(result_ready), .we(nowt_4), .re(result_re));
 
-    reg [31:0] rd_status = 0;
+    //reg [31:0] rd_status = 0;
 
     wire status_re, status_we, status_ready;
 
-    always @(negedge ck) begin
+    wire [31:0] rd_status;
+    wire [31:0] status;
+    assign status = { 29'h0, error, done, allow_audio_writes };
+    assign rd_status = status_re ? (iomem_addr[2] ? capture : status) : 0;
 
-        if (status_re) begin
-            if (iomem_addr[2])
-                rd_status <= capture;
-            else                
-                rd_status <= { 29'h0, error, done, allow_audio_writes };
-        end else begin
-            rd_status <= 0;
-        end
+    always @(negedge ck) begin
 
         if (status_we)
             control_reg <= iomem_wdata[4:0];
@@ -220,36 +256,44 @@ module audio_engine (
                             .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
                             .ready(status_ready), .we(status_we), .re(status_re));
 
-    assign iomem_rdata = rd_result | rd_status | rd_test;
-    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready | test_ready;
+    assign iomem_rdata = rd_result | rd_status;
+    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready;
 
     //  Debug traces
 
-    function [7:0] test_src();
-        case (test_select[2:0])
-            0 : test_src = { 3'b0, allow_audio_writes, audio_we, coef_we, 1'b0, coef_ready }; 
-            1 : test_src = { 3'b0, frame };
-            2 : test_src = { 3'b0, input_we, input_ready, input_we, iomem_ready, iomem_valid };
-            3 : test_src = { 3'b0, out_we, out_wr_addr };
-            4 : test_src = 0;
-            5 : test_src = 0;
-            6 : test_src = 0;
-            7 : test_src = 0;
-        endcase
-    endfunction
+    reg [2:0] prescale = 0;
 
-    /* verilator lint_off UNUSED */
-    reg [7:0] test_out;
-    /* verilator lint_on UNUSED */
-
-    always @(posedge ck) begin
-        if (test_select[3])
-            test_out <= test_src();
+    always @(negedge ck) begin
+        if (prescale == 5)
+            prescale <= 0;
         else
-            test_out <= seq_test;
+            prescale <= prescale + 1;
     end
 
-    assign test = { ck, reset, done, test_out[4], test_out[3], test_out[2], test_out[1], test_out[0] };
+    reg [31:0] capture_shift = 0;
+    reg [4:0] capture_count = 0;
+
+    wire capture_en;
+    assign capture_en = (capture_count == 0) ? 1 : 0;
+    wire capture_trig;
+    assign capture_trig = | capture_count;
+
+    always @(negedge ck)  begin
+
+        if (prescale == 0) begin
+            
+            capture_count <= capture_count + 1;
+
+            if (capture_en)
+                capture_shift <= capture;
+            else
+                capture_shift <= capture_shift << 1;
+        end
+    end
+
+    assign test = { ck, reset, done, 3'h0, capture_trig, capture_shift[31] };
 
 endmodule
+
+`endif
 

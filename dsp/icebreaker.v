@@ -125,13 +125,23 @@ module icebreaker (
     */
 
     //  Audio Engine
+    
+    wire audio_ck;
+    assign audio_ck = clk;
+    /*
+    reg audio_ck = 0;
+
+    always @(posedge clk) begin
+        audio_ck = !audio_ck;
+    end
+    */
 
     wire iomem_dsp_ready;
 	wire [31:0] iomem_dsp_rdata;
 
     wire [7:0] test = { test3, test2, test1, test0, i2s_d0, i2s_out, i2s_ws, i2s_sck };
 
-    audio_engine #(.ADDR(16'h6000)) engine(.ck(!clk), .rst(resetn),
+    audio_engine #(.ADDR(16'h6000)) engine(.ck(audio_ck), .rst(resetn),
         .iomem_valid(iomem_valid),
         .iomem_ready(iomem_dsp_ready),
         .iomem_wstrb(iomem_wstrb),

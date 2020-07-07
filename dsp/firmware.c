@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #ifdef ICEBREAKER
 #  define MEM_TOTAL 0x20000 /* 128 KB */
@@ -216,6 +217,30 @@ void print_dec(uint32_t v)
     else if (v >= 1) { putchar('1'); v -= 1; }
     else putchar('0');
 }
+
+    /*
+     *
+     */
+
+void __assert_func(const char *file, int line, const char *function, const char *expr)
+{
+    print("Assert failed : ");
+    print(file);
+    print(" +");
+    print_dec(line);
+    print(" ");
+    print(function);
+    print("() ");
+    print(expr);
+    print("\n");
+    while (true) ;
+}
+
+#define ASSERT(x) assert(x)
+
+    /*
+     *
+     */
 
 extern void (*idle)();
 
@@ -666,6 +691,10 @@ void cmd_echo()
         putchar(c);
 }
 
+    /*
+     *
+     */
+
 enum Opcode {
     HALT    = 0x7f,
     CAPTURE = 0x10,
@@ -700,7 +729,9 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
             case 1 : print(" audio in/addr"); break;
             case 2 : print(" mul in a/b"); break;
             case 3 : print(" mul out"); break;
-            case 4 : print(" acc out"); break;
+            case 5 : print(" acc out"); break;
+            case 6 : print(" audio out"); break;
+            case 7 : print(" trace"); break;
         }
     } else {
         switch (opcode)
@@ -739,13 +770,14 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
     return value;
 }
 
-static uint8_t code = 0;
-
+// Base address of peripheral blocks
 #define ADDR_COEF   ((uint32_t*) 0x60000000)
 #define ADDR_RESULT ((uint32_t*) 0x61000000)
 #define ADDR_STAT   ((uint32_t*) 0x62000000)
 #define ADDR_RESET  ((uint32_t*) 0x63000000)
 #define ADDR_AUDIO  ((uint32_t*) 0x64000000)
+
+#define AUDIO_ITEMS 512
 
 void set_coef()
 {
@@ -759,55 +791,14 @@ void set_coef()
     *coef++ = opcode(NOOP,  0, 0, 0);
     *coef++ = opcode(NOOP,  0, 0, 0);
     *coef++ = opcode(NOOP,  0, 0, 0);
-    *coef++ = opcode(CAPTURE + 7, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 6, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
 
-    // control_reg
-    uint32_t *status = ADDR_STAT;
-    const uint32_t s = 1 + (code << 1);
-    *status = s;
-    print("select : 0x"); print_hex(code, 8); print("\n");
-    reg_leds = code << 2;
-
-    code += 1;
-    code &= 0xf;
-
-    for (int i = 0; i < 512; i++)
-    {
-        uint32_t *input = ADDR_AUDIO;
-        input[i] = 0xffff;
-    }
-
-    // Write to audio RAM
-    uint32_t *input = ADDR_AUDIO;
-    int idx = 0;
-    input[idx++] = 0x00001234;
-    input[idx++] = 0x00001111;
-    input[idx++] = 0x00002222;
-    input[idx++] = 0x00003333;
-    input[idx++] = 0x00004444;
-
-    idle_fn();
-
-    while (true) ; /// HALT!!!!!
 }
 
 void idle_fn()
 {
-    // Write to audio RAM
-#if 0
-    uint32_t *input = ADDR_AUDIO;
-    int idx = 0;
-    static uint32_t v = 0;
-    input[idx++] = v++;
-    input[idx++] = 0x12345678;
-#endif
-
-    // Reset the audio engine
-    uint32_t *reset = ADDR_RESET;
-    *reset = 0;
-
     uint32_t *status = ADDR_STAT;
     uint32_t *result = ADDR_RESULT;
 
@@ -817,38 +808,107 @@ void idle_fn()
     print_hex(s, 8);
     print(" ");
     print_hex(t, 8);
-    print(" code=");
-    print_hex(code, 2);
     print("\n");
 }
 
 void (*idle)() = 0;
 
+    /*
+     *
+     */
+
+void reset_engine()
+{
+    print("reset engine\n");
+
+    // Reset the audio engine
+    uint32_t *reset = ADDR_RESET;
+    *reset = 0;
+
+    // Wait for done
+    uint32_t *status = ADDR_STAT;
+
+    while (true)
+    {
+        uint32_t t = status[0];
+        if (t & 0x01)
+            return;
+
+        print("status ");
+        print_hex(t, 8);
+        print("\n");
+    }
+}
+
+void set_audio(uint32_t addr, uint32_t value)
+{
+    uint32_t *input = ADDR_AUDIO;
+    input[addr] = value;
+}
+
+void clr_audio(uint32_t value)
+{
+    uint32_t *input = ADDR_AUDIO;
+
+    for (int i = 0; i < AUDIO_ITEMS; i++)
+    {
+        set_audio(i, value);
+    }
+}
+
 void cmd_dave()
 {
 #if 0
-    uint32_t *addr = (uint32_t*) 0x40000000;
-    print_hex((uint32_t) addr, 8);
+    // control_reg
+    uint32_t *status = ADDR_STAT;
+    const uint32_t s = 1; // allow audio writes
+    *status = s;
+
+    clr_audio(0);
+
+    //set_audio(1, 0x1234);
+
+    uint32_t *coef = ADDR_COEF;
+
+    *coef++ = opcode(CAPTURE + 0, 0, 0, 0);
+    *coef++ = opcode(MACZ, 1, 0, 1);
+    //*coef++ = opcode(NOOP,  0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    reset_engine();
+
+    uint32_t t = status[1];
+    print("status ");
+    print_hex(t, 8);
     print("\n");
-    uint32_t d = *addr;
-    print_hex(d, 8);
-    print("\n");
+    ASSERT(t == 0x84100001);
 
-    static uint32_t leds = 0x000000ff;
-
-    for (int i = 0; i< 12; i++)
-    {
-        addr[i] = leds;
-    }
-
-    leds <<= 8;
-    if (!leds)
-        leds = 0x000000ff;
+    print("Done\n");
+    while (true) ;
 #endif
 
-    set_coef();
+    uint32_t *coef = ADDR_COEF;
 
-    idle = idle_fn;
+    print("testing ...\n");
+
+    while (true) {
+        bool bad = false;
+        bool verbose = 0;
+    for (int i = 0; i < 64; i++)
+    {
+        if (verbose) print("addr ");
+        if (verbose) print_hex((uint32_t) coef + i, 8);
+        coef[i] = i;
+        uint32_t v = coef[i];
+        if (verbose) print(" data ");
+        if (verbose) print_hex(v, 8);
+        if (verbose) print("\n");
+        bad |= v != i;
+    }
+        if (!bad)
+            print("+");
+    }
 }
 
 // --------------------------------------------------------
@@ -863,7 +923,7 @@ void main()
     set_flash_qspi_flag();
 
     reg_leds = 127;
-    //while (getchar_prompt("Press ENTER to continue..\n") != '\r') { /* wait */ }
+    while (getchar_prompt("Press ENTER to continue..\n") != '\r') { /* wait */ }
 
     print("\n");
     print("  ____  _          ____         ____\n");
@@ -886,11 +946,11 @@ void main()
 
     reg_leds = 0;
 
-    cmd_dave();
-    while (true)
-        idle_fn();
+    //cmd_dave();
+    //while (true)
+    //    idle_fn();
 
-#if 0
+#if 1
     while (1)
     {
         print("\n");

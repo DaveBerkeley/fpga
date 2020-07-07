@@ -17,10 +17,10 @@ module accumulator(
     initial out = 0;
 
     wire [(OUT_W-33):0] zeros;
-    wire [(OUT_W-1):0] in_;
+    wire [(OUT_W-1):0] to_add;
 
     assign zeros = 0;
-    assign in_ = { zeros, in };
+    assign to_add = { zeros, in };
 
     wire [(OUT_W-1):0] prev;
 
@@ -29,9 +29,9 @@ module accumulator(
     always @(negedge ck) begin
         if (en) begin
             if (add)
-                out <= prev + in_;
+                out <= prev + to_add;
             else
-                out <= prev - in_;
+                out <= prev - to_add;
         end
     end
 

@@ -25,7 +25,7 @@ module iomem (
 
     wire enable;
 
-    assign enable = rst && iomem_valid && (!ready) && (iomem_addr[31:16] == ADDR);
+    assign enable = rst && iomem_valid && (iomem_addr[31:16] == ADDR);
 
     wire write;
     assign write = | iomem_wstrb;
