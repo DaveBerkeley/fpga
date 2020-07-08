@@ -6,7 +6,7 @@ all: $(PROJ).rpt $(PROJ).bin
 
 %.json: %.v $(ADD_SRC) $(ADD_DEPS)
 	verilator --top-module top $< $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
-	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -dsp -top top -json $@' $< $(ADD_SRC)
+	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 $(ADD_YOSYS) -top top -json $@' $< $(ADD_SRC)
 
 ifeq ($(USE_ARACHNEPNR),)
 %.asc: $(PIN_DEF) %.json

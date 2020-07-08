@@ -1,5 +1,7 @@
 
-module I2S_CLOCK(
+module i2s_clock
+# (parameter DIVIDER=12)
+(
     input wire ck,      // 12MHz system clock
     output reg sck,     // I2S clock
     output reg ws,      // I2S WS
@@ -16,7 +18,7 @@ initial frame = 0;
 
 always @(posedge ck) begin
 
-    if (prescale == 11) begin
+    if (prescale == (DIVIDER-1)) begin
 
         prescale <= 0;
 
@@ -29,7 +31,7 @@ always @(posedge ck) begin
         prescale <= prescale + 1;
     end
 
-    sck <= (prescale >= 6) ? 1 : 0;
+    sck <= (prescale >= (DIVIDER/2)) ? 1 : 0;
     ws <= (frame_posn >= 32) ? 1 : 0;
 
 end
