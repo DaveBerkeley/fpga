@@ -5,7 +5,7 @@ all: $(PROJ).rpt $(PROJ).bin
 	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -top top -blif $@' $< $(ADD_SRC)
 
 %.json: %.v $(ADD_SRC) $(ADD_DEPS)
-	verilator --top-module top $< $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
+	verilator --top-module top $(ADD_VERILATOR) $< $(ADD_SRC) /usr/share/yosys/ice40/cells_sim.v --lint-only -Wall 
 	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 $(ADD_YOSYS) -top top -json $@' $< $(ADD_SRC)
 
 ifeq ($(USE_ARACHNEPNR),)

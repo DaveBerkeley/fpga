@@ -9,7 +9,8 @@ module i2s_clock
 );
 
     // Divide the 12MHz system clock down
-    reg [3:0] prescale = 0;
+    localparam BITS = $clog2(DIVIDER);
+    reg [BITS:0] prescale = 0;
 
     // 64 clock counter for complete L/R frame
     initial frame_posn = 0;

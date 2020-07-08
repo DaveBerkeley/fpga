@@ -2,6 +2,7 @@ PROJ = dsp
 ADD_SRC = dpram.v audio_engine.v sequencer.v iomem.v multiplier.v accumulator.v shifter.v addr_adder.v
 ADD_CLEAN = dsp_tb dsp_syntb dsp_syn.v *_tb *.vcd
 ADD_YOSYS = -dsp
+ADD_VERILATOR = config.vlt
 
 PACKAGE = sg48
 DEVICE = up5k

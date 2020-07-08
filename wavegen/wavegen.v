@@ -5,20 +5,6 @@
     *
     */
 
-module multiplier(
-    input wire ck,
-    input  wire signed [15:0] a,
-    input wire signed [15:0] b,
-    output reg signed [31:0] out
-);
-
-    always @(negedge ck) begin
-        out <= a * b;
-    end
-
-endmodule
-
-
 module top (
     input wire CLK, 
     output wire LED0,
@@ -38,10 +24,22 @@ module top (
     output wire D5
 );
 
+    wire ck_12mhz;
+    wire ck;
+
+    assign ck_12mhz = CLK;
+
+    // 22.58 MHz PLL clock derived from ck_12mhz clock input
+    /* verilator lint_off PINCONNECTEMPTY */
+    pll clock(.clock_in(ck_12mhz), .clock_out(ck), .locked());
+    /* verilator lint_on PINCONNECTEMPTY */
+
+    // 44.1kHz audio * 64-bits per frame = 22.58/8 MHz
+
     wire i2s_ck, i2s_ws;
     wire [5:0] frame_posn;
 
-    i2s_clock #(.DIVIDER(4)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(frame_posn));
+    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(frame_posn));
 
     assign D3 = i2s_ck;
     assign D4 = i2s_ws;
@@ -69,15 +67,12 @@ module top (
     /* verilator lint_on UNUSED */
     wire tx;
     wire baud;
-    uart u(.ck(ck), .tx_data(tx_data), .ready(tx_ready), .tx(tx), .baud(baud));
+    uart u(.ck(ck_12mhz), .tx_data(tx_data), .ready(tx_ready), .tx(tx), .baud(baud));
 
     assign TX = tx;
     assign D0 = tx;
     assign D1 = baud;
     assign D2 = tx_ready;
-
-    wire ck;
-    assign ck = CLK;
 
     reg [20:0] prescale = 0;
 
