@@ -39,12 +39,9 @@ module top (
 );
 
     wire i2s_ck, i2s_ws;
-    /* verilator lint_off UNUSED */
     wire [5:0] frame_posn;
-    wire [7:0] frame;
-    /* verilator lint_on UNUSED */
 
-    i2s_clock #(.DIVIDER(4)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(frame_posn), .frame(frame));
+    i2s_clock #(.DIVIDER(4)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(frame_posn));
 
     assign D3 = i2s_ck;
     assign D4 = i2s_ws;
@@ -63,20 +60,6 @@ module top (
     wire d0;
     i2s_tx tx_0(.sck(i2s_ck), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
     assign D5 = d0;
-
-    /*    
-
-    reg [63:0] shift;
-
-    always @(negedge i2s_ck) begin
-        if (frame_posn == 0)
-            shift <= { audio_32(signal_l), audio_32(signal_r) };
-        else
-            shift <= shift << 1;
-    end
-
-    assign D5 = shift[63];
-    */
 
     //  UART
 
