@@ -51,36 +51,34 @@ module top (
 
     reg [6:0] addr;
 
-    //reg signed [15:0] gain = 0;
-
-    //always @(negedge i2s_ws) begin
-    //    gain <= gain + 1;
-    //end
-
-    reg signed [15:0] signal;
-
-    //multiplier mul(.ck(i2s_ws), .a(gain), .b(signal), .out(audio));
+    reg signed [15:0] signal_l = 0;
+    reg signed [15:0] signal_r = 0;
 
     always @(negedge i2s_ws) begin
         addr <= addr + 1;
-        signal <= sin(addr);
+        signal_l <= sin(addr);
+        signal_r <= sin(addr << 1);
     end
 
-    reg [63:0] shift;
-    wire signed [31:0] audio;
-    wire [1:0] extend;
+    wire d0;
+    i2s_tx tx_0(.sck(i2s_ck), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
+    assign D5 = d0;
 
-    assign extend = {2{signal[15]}};
-    assign audio = { extend, signal, 14'h0 };
+    /*    
+
+    reg [63:0] shift;
 
     always @(negedge i2s_ck) begin
         if (frame_posn == 0)
-            shift <= { audio, audio };
+            shift <= { audio_32(signal_l), audio_32(signal_r) };
         else
             shift <= shift << 1;
     end
 
     assign D5 = shift[63];
+    */
+
+    //  UART
 
     reg [7:0] tx_data = 8'h41;
     /* verilator lint_off UNUSED */

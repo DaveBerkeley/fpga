@@ -6,7 +6,7 @@ addr_bits = 7
 gain_bits = 16
 
 points = 1 << addr_bits
-gain = (1 << (gain_bits - 1)) - 1
+gain = int(((1 << (gain_bits - 1)) - 1) * 0.7)
 dc = 1 << (gain_bits - 1)
 
 print("// Auto-Generated : do not edit")
@@ -20,7 +20,6 @@ for i in range(points):
     rad = (i * 2 * math.pi) / points
     value = math.sin(rad) * gain
     value = int(value)
-    #value += dc
     value &= 0xFFFF
 
     print("        if (addr == %d) sin = 16'h%04x;" % (i, value))

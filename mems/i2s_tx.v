@@ -1,5 +1,5 @@
 
-module I2S_TX(
+module i2s_tx(
     input wire sck, // I2S sck
     input wire [5:0] frame_posn,
     input wire [15:0] left,

@@ -1,5 +1,5 @@
 PROJ = wavegen
-ADD_SRC = uart.v ../mems/i2s_clock.v 
+ADD_SRC = uart.v ../mems/i2s_clock.v ../mems/i2s_tx.v 
 ADD_CLEAN = wave.v 
 ADD_DEPS = wave.v
 ADD_YOSYS = 
