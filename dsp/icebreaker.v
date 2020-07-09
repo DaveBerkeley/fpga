@@ -96,7 +96,7 @@ module icebreaker (
     wire iomem_led_ready;
 	wire [31:0] iomem_led_rdata;
 
-    gpio #(.ADDR(16'h0300)) lp(.ck(clk), .resetn(resetn),
+    gpio #(.ADDR(16'h0300)) lp(.ck(clk), .rst(resetn),
         .iomem_valid(iomem_valid),
         .iomem_ready(iomem_led_ready),
         .iomem_wstrb(iomem_wstrb),

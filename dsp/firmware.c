@@ -776,6 +776,7 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
 #define ADDR_STAT   ((uint32_t*) 0x62000000)
 #define ADDR_RESET  ((uint32_t*) 0x63000000)
 #define ADDR_AUDIO  ((uint32_t*) 0x64000000)
+#define ADDR_LED    ((uint32_t*) 0x03000000)
 
 #define AUDIO_ITEMS 512
 
@@ -889,6 +890,7 @@ void cmd_dave()
 #endif
 
     uint32_t *coef = ADDR_COEF;
+    uint32_t *led = ADDR_LED;
 
     print("testing ...\n");
 
@@ -898,9 +900,13 @@ void cmd_dave()
     for (int i = 0; i < 64; i++)
     {
         if (verbose) print("addr ");
-        if (verbose) print_hex((uint32_t) coef + i, 8);
+        //if (verbose) print_hex((uint32_t) coef + i, 8);
         coef[i] = i;
         uint32_t v = coef[i];
+        //if (verbose) print_hex((uint32_t) coef + i, 8);
+        //*led = i;
+        //uint32_t v = *led;
+
         if (verbose) print(" data ");
         if (verbose) print_hex(v, 8);
         if (verbose) print("\n");

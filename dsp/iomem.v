@@ -5,13 +5,14 @@
     *   Interface to the Risc-V bus
     */
 
-module iomem (
-    input wire ck,
+module iomem
+    #(parameter ADDR=16'h0300)
+    (input wire ck,
     input wire rst,
-    input wire iomem_valid,
-    input wire [3:0] iomem_wstrb,
+    input wire valid,
+    input wire [3:0] wstrb,
     /* verilator lint_off UNUSED */
-    input wire [31:0] iomem_addr,
+    input wire [31:0] addr,
     /* verilator lint_on UNUSED */
 
     output reg ready,
@@ -19,25 +20,26 @@ module iomem (
     output wire re
 );
 
-    parameter ADDR = 16'h6000;
-
     initial ready = 0;
 
     wire enable;
-
-    assign enable = rst && iomem_valid && (iomem_addr[31:16] == ADDR);
+    assign enable = valid && !ready && (addr[31:16] == ADDR);
 
     wire write;
-    assign write = | iomem_wstrb;
-    assign we = enable & write;
-    assign re = enable & !write;
+    assign write = | wstrb;
+    assign we = enable && write; 
+    assign re = enable && !write; 
 
-    always @(negedge ck) begin
-        
-        ready <= (rst & enable) ? 1 : 0;
-
+    always @(posedge ck) begin
+        if (rst) begin
+            if (ready)
+                ready <= 0;
+            if (enable) begin
+                ready <= 1;
+            end
+        end
     end
 
 endmodule
-    
+
 //  FIN

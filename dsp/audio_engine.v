@@ -17,7 +17,7 @@ module audio_engine (
     output wire [7:0] test
 );
 
-    parameter                ADDR = 16'h6000;
+    parameter  ADDR = 16'h6000;
 
     localparam ADDR_COEF   = ADDR;
     localparam CODE = 128;
@@ -26,54 +26,25 @@ module audio_engine (
     // Test read / write
     wire coef_we;
     wire coef_re;
-    /* verilator lint_off UNUSED */
     wire [(CODE_W-1):0] coef_waddr;
     wire [(CODE_W-1):0] coef_raddr;
-    /* verilator lint_on UNUSED */
     wire [31:0] coef_rdata;
+    wire coef_ready;
 
-    //dpram #(.BITS(32), .SIZE(CODE))
-    //    coef (.ck(ck), 
-    //        .we(coef_we), .waddr(coef_waddr), .wdata(iomem_wdata),
-    //        .re(coef_re), .raddr(coef_raddr), .rdata(coef_rdata));
-
-    //reg [31:0] ram[0:CODE-1];
-
-    //always@(posedge ck)
-    //begin
-    //    if(coef_we)
-    //        ram[coef_waddr] <= iomem_wdata;
-    //end
-
-    //assign coef_rdata = coef_re ? ram[coef_raddr] : 0;
-
-    reg [31:0] save;
-    reg [1:0] ready_count = 0;
-    wire ready;
-    assign ready = ready_count != 0;
-
-    always @(posedge ck) begin
-        if (coef_we)
-            save <= iomem_wdata;
-
-        if (coef_re && !ready)
-            ready_count <= 1;
-        else
-            if (ready_count != 0)
-                ready_count <= ready_count - 1;
-    end
- 
     assign coef_waddr = iomem_addr[(2+CODE_W-1):2];
     assign coef_raddr = iomem_addr[(2+CODE_W-1):2];
-    assign coef_rdata = save;
 
-    wire write, coef_ready;
-    assign write = | iomem_wstrb;
-    assign coef_ready = rst && iomem_valid && (iomem_addr[31:16] == ADDR);
-    assign coef_we = coef_ready && write;
-    assign coef_re = coef_ready || ready;
-    assign iomem_rdata = ready ? coef_rdata : 0;
-    assign iomem_ready = write ? coef_ready : ready;
+    dpram #(.BITS(32), .SIZE(CODE))
+        coef (.ck(ck), .rst(rst),
+            .we(coef_we), .waddr(coef_waddr), .wdata(iomem_wdata),
+            .re(coef_re), .raddr(coef_raddr), .rdata(coef_rdata));
+
+    iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
+                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
+                            .ready(coef_ready), .we(coef_we), .re(coef_re));
+
+    assign iomem_rdata = coef_rdata;
+    assign iomem_ready = coef_ready;
 
     assign test = { iomem_wdata[0], iomem_rdata[0], coef_re, coef_we, iomem_ready, coef_waddr[0], iomem_valid, ck };
 
