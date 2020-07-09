@@ -8,7 +8,6 @@
 module iomem
     #(parameter ADDR=16'h0300)
     (input wire ck,
-    input wire rst,
     input wire valid,
     input wire [3:0] wstrb,
     /* verilator lint_off UNUSED */
@@ -31,12 +30,10 @@ module iomem
     assign re = enable && !write; 
 
     always @(posedge ck) begin
-        if (rst) begin
-            if (ready)
-                ready <= 0;
-            if (enable) begin
-                ready <= 1;
-            end
+        if (ready)
+            ready <= 0;
+        if (enable) begin
+            ready <= 1;
         end
     end
 

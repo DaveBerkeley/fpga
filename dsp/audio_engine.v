@@ -17,40 +17,6 @@ module audio_engine (
     output wire [7:0] test
 );
 
-    parameter  ADDR = 16'h6000;
-
-    localparam ADDR_COEF   = ADDR;
-    localparam CODE = 128;
-    localparam CODE_W = $clog2(CODE);
-
-    // Test read / write
-    wire coef_we;
-    wire coef_re;
-    wire [(CODE_W-1):0] coef_waddr;
-    wire [(CODE_W-1):0] coef_raddr;
-    wire [31:0] coef_rdata;
-    wire coef_ready;
-
-    assign coef_waddr = iomem_addr[(2+CODE_W-1):2];
-    assign coef_raddr = iomem_addr[(2+CODE_W-1):2];
-
-    dpram #(.BITS(32), .SIZE(CODE))
-        coef (.ck(ck), .rst(rst),
-            .we(coef_we), .waddr(coef_waddr), .wdata(iomem_wdata),
-            .re(coef_re), .raddr(coef_raddr), .rdata(coef_rdata));
-
-    iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
-                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
-                            .ready(coef_ready), .we(coef_we), .re(coef_re));
-
-    assign iomem_rdata = coef_rdata;
-    assign iomem_ready = coef_ready;
-
-    assign test = { iomem_wdata[0], iomem_rdata[0], coef_re, coef_we, iomem_ready, coef_waddr[0], iomem_valid, ck };
-
-endmodule
-
-`ifdef TURNEDOFF
     parameter                ADDR = 16'h6000;
 
     localparam ADDR_COEF   = ADDR;
@@ -107,7 +73,7 @@ endmodule
     wire [(CODE_W-1):0] coef_raddr;
 
     dpram #(.BITS(32), .SIZE(CODE))
-        coef (.ck(ck), 
+        coef (.ck(ck),
             .we(coef_we), .waddr(coef_waddr), .wdata(iomem_wdata),
             .re(1'h1), .raddr(coef_raddr), .rdata(coef_rdata));
 
@@ -124,8 +90,8 @@ endmodule
     wire [15:0] audio_rdata;
     wire [(AUDIO_W-1):0] audio_raddr;
 
-    dpram #(.BITS(16), .SIZE(AUDIO), .FNAME("audio.data")) 
-        audio_in (.ck(ck), 
+    dpram #(.BITS(16), .SIZE(AUDIO)) 
+        audio_in (.ck(ck),
             .we(audio_we), .waddr(audio_waddr), .wdata(audio_wdata),
             .re(1'h1), .raddr(audio_raddr), .rdata(audio_rdata));
 
@@ -161,14 +127,19 @@ endmodule
 
     wire result_re;
     wire [15:0] result_rdata;
+    /*
     wire [3:0] result_raddr;
 
     dpram #(.BITS(16), .SIZE(16))
-        audio_out (.ck(ck), 
+        audio_out (.ck(ck),
             .we(out_we), .waddr(out_wr_addr), .wdata(out_audio),
             .re(result_re), .raddr(result_raddr), .rdata(result_rdata));
 
     assign result_raddr = iomem_addr[5:2];
+    */
+    assign result_rdata = 0;
+
+    assign capture = 0;
 
     // Interface the peripheral to the Risc-V bus
 
@@ -179,8 +150,8 @@ endmodule
     wire nowt_1, nowt_2, nowt_3, nowt_4;
     /* verilator lint_on UNUSED */
 
-    iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck), .rst(rst), 
-                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+    iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck),
+                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
                             .ready(coef_ready), .we(coef_we), .re(nowt_1));
 
     reg reset_req = 0;
@@ -189,12 +160,12 @@ endmodule
         reset_req <= reset_en;
     end
 
-    iomem #(.ADDR(ADDR_RESET)) reset_io (.ck(ck), .rst(rst), 
-                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+    iomem #(.ADDR(ADDR_RESET)) reset_io (.ck(ck),
+                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
                             .ready(reset_ready), .we(reset_en), .re(nowt_2));
 
-    iomem #(.ADDR(ADDR_INPUT)) input_io (.ck(ck), .rst(rst), 
-                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+    iomem #(.ADDR(ADDR_INPUT)) input_io (.ck(ck),
+                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
                             .ready(input_ready), .we(input_we), .re(nowt_3));
 
     reg [31:0] rd_result = 0;
@@ -203,35 +174,35 @@ endmodule
         rd_result <= result_re ? { 16'h0, result_rdata } : 0;
     end
 
-    iomem #(.ADDR(ADDR_RESULT)) result_io (.ck(ck), .rst(rst), 
-                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
+    iomem #(.ADDR(ADDR_RESULT)) result_io (.ck(ck),
+                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
                             .ready(result_ready), .we(nowt_4), .re(result_re));
 
-    //reg [31:0] rd_status = 0;
+    //  Read / Write the control reg
 
     wire status_re, status_we, status_ready;
 
-    wire [31:0] rd_status;
-    wire [31:0] status;
-    assign status = { 29'h0, error, done, allow_audio_writes };
-    assign rd_status = status_re ? (iomem_addr[2] ? capture : status) : 0;
+    iomem #(.ADDR(ADDR_STATUS)) status_io (.ck(ck),
+                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
+                            .ready(status_ready), .we(status_we), .re(status_re));
 
-    always @(negedge ck) begin
+    reg [31:0] rd_status;
 
+    always @(posedge ck) begin
         if (status_we)
             control_reg <= iomem_wdata[4:0];
-
+        if (status_re)
+            rd_status[4:0] <= control_reg;
+        else
+            rd_status <= 0;
     end
-
-    iomem #(.ADDR(ADDR_STATUS)) status_io (.ck(ck), .rst(rst), 
-                            .iomem_valid(iomem_valid), .iomem_wstrb(iomem_wstrb), .iomem_addr(iomem_addr),
-                            .ready(status_ready), .we(status_we), .re(status_re));
 
     assign iomem_rdata = rd_result | rd_status;
     assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready;
 
     //  Debug traces
 
+    /*
     reg [2:0] prescale = 0;
 
     always @(negedge ck) begin
@@ -263,8 +234,9 @@ endmodule
     end
 
     assign test = { ck, reset, done, 3'h0, capture_trig, capture_shift[31] };
+    */
+    assign test = 0;
 
 endmodule
 
-`endif
-
+//  FIN

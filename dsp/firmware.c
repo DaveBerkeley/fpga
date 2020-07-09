@@ -890,30 +890,36 @@ void cmd_dave()
 #endif
 
     uint32_t *coef = ADDR_COEF;
-    uint32_t *led = ADDR_LED;
 
     print("testing ...\n");
 
     while (true) {
         bool bad = false;
         bool verbose = 0;
+    // check write / read
     for (int i = 0; i < 64; i++)
     {
         if (verbose) print("addr ");
-        //if (verbose) print_hex((uint32_t) coef + i, 8);
+        if (verbose) print_hex((uint32_t) coef + i, 8);
         coef[i] = i;
         uint32_t v = coef[i];
-        //if (verbose) print_hex((uint32_t) coef + i, 8);
-        //*led = i;
-        //uint32_t v = *led;
-
         if (verbose) print(" data ");
         if (verbose) print_hex(v, 8);
         if (verbose) print("\n");
         bad |= v != i;
     }
-        if (!bad)
-            print("+");
+    // Check read
+    for (int i = 0; i < 64; i++)
+    {
+        if (verbose) print("addr ");
+        if (verbose) print_hex((uint32_t) coef + i, 8);
+        uint32_t v = coef[i];
+        if (verbose) print(" data ");
+        if (verbose) print_hex(v, 8);
+        if (verbose) print("\n");
+        bad |= v != i;
+    }
+    print(bad ? "X" : "+");
     }
 }
 
