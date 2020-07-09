@@ -859,7 +859,7 @@ void clr_audio(uint32_t value)
 
 void cmd_dave()
 {
-#if 0
+#if 1
     // control_reg
     uint32_t *status = ADDR_STAT;
     const uint32_t s = 1; // allow audio writes
@@ -889,6 +889,7 @@ void cmd_dave()
     while (true) ;
 #endif
 
+#if 0
     uint32_t *coef = ADDR_COEF;
 
     print("testing ...\n");
@@ -921,6 +922,7 @@ void cmd_dave()
     }
     print(bad ? "X" : "+");
     }
+#endif
 }
 
 // --------------------------------------------------------

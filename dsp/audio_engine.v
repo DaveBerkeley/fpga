@@ -104,10 +104,12 @@ module audio_engine (
 
     // Sequencer
 
+    /* verilator lint_off UNUSED */
     wire [3:0] out_wr_addr;
     wire [15:0] out_audio;
     wire out_we;
     wire error;
+    /* verilator lint_on UNUSED */
 
     /* verilator lint_off UNUSED */
     wire [7:0] seq_test;
@@ -125,21 +127,20 @@ module audio_engine (
     //  Results RAM
     //  TODO : Also write results to I2S hardware
 
+    /*
     wire result_re;
     wire [15:0] result_rdata;
-    /*
     wire [3:0] result_raddr;
+
+    assign result_raddr = iomem_addr[5:2];
 
     dpram #(.BITS(16), .SIZE(16))
         audio_out (.ck(ck),
             .we(out_we), .waddr(out_wr_addr), .wdata(out_audio),
             .re(result_re), .raddr(result_raddr), .rdata(result_rdata));
-
-    assign result_raddr = iomem_addr[5:2];
     */
-    assign result_rdata = 0;
-
-    assign capture = 0;
+    wire result_re;
+    reg [15:0] result_rdata = 0;
 
     // Interface the peripheral to the Risc-V bus
 
@@ -192,7 +193,10 @@ module audio_engine (
         if (status_we)
             control_reg <= iomem_wdata[4:0];
         if (status_re)
-            rd_status[4:0] <= control_reg;
+            if (iomem_addr[2])
+                rd_status <= capture;
+            else
+                rd_status[4:0] <= control_reg;
         else
             rd_status <= 0;
     end
@@ -202,7 +206,6 @@ module audio_engine (
 
     //  Debug traces
 
-    /*
     reg [2:0] prescale = 0;
 
     always @(negedge ck) begin
@@ -234,8 +237,6 @@ module audio_engine (
     end
 
     assign test = { ck, reset, done, 3'h0, capture_trig, capture_shift[31] };
-    */
-    assign test = 0;
 
 endmodule
 
