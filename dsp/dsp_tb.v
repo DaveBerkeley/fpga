@@ -103,6 +103,18 @@ module tb ();
 
     endtask
 
+    task save;
+
+        input [31:0] addr;
+        input [5:0] shift;
+        input [5:0] offset;
+
+        begin
+            write_opcode(addr, 7'b1010000, 0, 0, 0);
+        end
+
+    endtask
+
     integer i;
 
     initial begin
@@ -120,12 +132,15 @@ module tb ();
         write_opcode(i, 7'b1000010, 4, 1, 16'h2000); i += 4; // MAC Z
         write_opcode(i, 7'b1000000, 5, 1, 16'h89ab); i += 4; // MAC
         write_opcode(i, 7'b1000000, 6, 1, 16'h1234); i += 4; // MAC
+        write_opcode(i, 7'b1000000, 7, 1, 16'h1111); i += 4; // MAC
+        save(i, 0, 0); i += 4;
         noop(i); i += 4;
         noop(i); i += 4;
-        capture(i, 5); i += 4; // CAPTURE
+        noop(i); i += 4;
+        capture(i, 6); i += 4; // CAPTURE
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
-        
+
         i = 32'h60000000;
         read(i);
  
@@ -137,6 +152,7 @@ module tb ();
         write(i + (36 * 4), 32'h00001111); i += 4;
         write(i + (36 * 4), 32'h00001234); i += 4;
         write(i + (36 * 4), 32'h0000abcd); i += 4;
+        write(i + (36 * 4), 32'h00002222); i += 4;
         //write(i, 32'h00001111); i += 4;
         //write(i, 32'h00002222); i += 4;
         //write(i, 32'h00003333); i += 4;
