@@ -134,10 +134,10 @@ module tb ();
         write_opcode(i, 7'b1000000, 6, 1, 16'h1234); i += 4; // MAC
         write_opcode(i, 7'b1000000, 7, 1, 16'h1111); i += 4; // MAC
         save(i, 0, 0); i += 4;
-        noop(i); i += 4;
-        noop(i); i += 4;
-        noop(i); i += 4;
-        capture(i, 6); i += 4; // CAPTURE
+        //noop(i); i += 4;
+        //noop(i); i += 4;
+        //noop(i); i += 4;
+        //capture(i, 6); i += 4; // CAPTURE
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
 

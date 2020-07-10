@@ -1116,6 +1116,7 @@ void cmd_dave()
     run(acc);
 
     //  Check write output
+    verbose = 0;
     print("Check write shift/output\n");
     clr_audio(0);
     set_audio(36, 0x1111);
@@ -1149,7 +1150,20 @@ void cmd_dave()
             *coef++ = opcode(HALT, 0, 0, 0);
 
             uint16_t audio = acc >> shift;
-            run((addr << 16) + audio);
+            uint32_t out = (addr << 16) + audio;
+            run(out);
+
+            uint32_t *result = ADDR_RESULT;
+            uint32_t v = result[addr & 0x01];
+            if (verbose)
+            {
+                print("output ");
+                print_hex(audio, 8);
+                print(" got ");
+                print_hex(v, 8);
+                print("\n");
+            }
+            ASSERT(audio == v);
         }
     }
     verbose = true;

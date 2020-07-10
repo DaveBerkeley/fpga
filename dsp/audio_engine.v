@@ -131,7 +131,7 @@ module audio_engine (
     reg [15:0] left = 0;
     reg [15:0] right = 0;
 
-    always @(posedge ck) begin
+    always @(negedge ck) begin
         if (out_we) begin
             if (out_wr_addr[0] == 0)
                 left <= out_audio;
@@ -141,20 +141,11 @@ module audio_engine (
     end
 
     wire result_re;
-    reg [15:0] result_rdata = 0;
+    wire [15:0] result_rdata;
     wire [0:0] result_raddr;
 
-    assign result_raddr = iomem_addr[0];
-
-    always @(posedge ck) begin
-        if (result_re) begin
-            if (result_raddr[0] == 0)
-                result_rdata <= left;
-            else
-                result_rdata <= right;
-        end else begin end
-            result_rdata <= 0;
-    end
+    assign result_raddr = iomem_addr[2];
+    assign result_rdata = result_raddr ? right : left;
 
     // Interface the peripheral to the Risc-V bus
 
@@ -185,8 +176,11 @@ module audio_engine (
 
     reg [31:0] rd_result = 0;
 
-    always @(negedge ck) begin
-        rd_result <= result_re ? { 16'h0, result_rdata } : 0;
+    always @(posedge ck) begin
+        if (result_re)
+            rd_result <= { 16'h0, result_rdata };
+        else
+            rd_result <= 0;
     end
 
     iomem #(.ADDR(ADDR_RESULT)) result_io (.ck(ck),
@@ -217,42 +211,6 @@ module audio_engine (
 
     assign iomem_rdata = rd_result | rd_status;
     assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready;
-
-    //  Debug traces
-
-    /*
-    reg [2:0] prescale = 0;
-
-    always @(negedge ck) begin
-        if (prescale == 5)
-            prescale <= 0;
-        else
-            prescale <= prescale + 1;
-    end
-
-    reg [31:0] capture_shift = 0;
-    reg [4:0] capture_count = 0;
-
-    wire capture_en;
-    assign capture_en = (capture_count == 0) ? 1 : 0;
-    wire capture_trig;
-    assign capture_trig = | capture_count;
-
-    always @(negedge ck)  begin
-
-        if (prescale == 0) begin
-            
-            capture_count <= capture_count + 1;
-
-            if (capture_en)
-                capture_shift <= capture;
-            else
-                capture_shift <= capture_shift << 1;
-        end
-    end
-
-    //assign test = { ck, reset, done, 3'h0, capture_trig, capture_shift[31] };
-    */
 
 endmodule
 
