@@ -706,11 +706,11 @@ enum Opcode {
     NOOP    = 0x00,
 };
 
+bool verbose = false;
+
 uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
 {
     const uint32_t value = gain + (chan << 16) + (offset << 20) + (opcode << 25);
-
-    bool verbose = true;
 
     if (!verbose)
         return value;
@@ -820,7 +820,7 @@ void (*idle)() = 0;
 
 void reset_engine()
 {
-    print("reset engine\n");
+    if (verbose) print("reset engine\n");
 
     // Reset the audio engine
     uint32_t *reset = ADDR_RESET;
@@ -835,9 +835,12 @@ void reset_engine()
         if (t & 0x01)
             return;
 
-        print("status ");
-        print_hex(t, 8);
-        print("\n");
+        if (verbose)
+        {
+            print("status ");
+            print_hex(t, 8);
+            print("\n");
+        }
     }
 }
 
@@ -845,84 +848,267 @@ void set_audio(uint32_t addr, uint32_t value)
 {
     uint32_t *input = ADDR_AUDIO;
     input[addr] = value;
+
+    if (!verbose)
+        return;
+
+    print("set audio ");
+    print_hex(addr, 8);
+    print(" ");
+    print_hex(value, 8);
+    print("\n");
 }
 
 void clr_audio(uint32_t value)
 {
     uint32_t *input = ADDR_AUDIO;
 
+    if (verbose) 
+    {
+        print("clr_audio ");
+        print_hex(value, 8);
+        print("\n");
+    }
+
+    bool old = verbose;
+    verbose = false;
     for (int i = 0; i < AUDIO_ITEMS; i++)
     {
         set_audio(i, value);
     }
+    verbose = old;
+}
+
+void run(uint32_t expect)
+{
+    reset_engine();
+
+    uint32_t *status = ADDR_STAT;
+
+    uint32_t t = status[1];
+    if (verbose)
+    {
+        print("status ");
+        print_hex(t, 8);
+        print(" expected ");
+        print_hex(expect, 8);
+        print("\n");
+    }
+    ASSERT(t == expect);
+    if (verbose) print("Okay\n");
 }
 
 void cmd_dave()
 {
-#if 1
     // control_reg
     uint32_t *status = ADDR_STAT;
     const uint32_t s = 1; // allow audio writes
     *status = s;
 
-    clr_audio(0);
-
-    //set_audio(1, 0x1234);
-
+    //  Test
+    print("Test fetching opcode\n");
     uint32_t *coef = ADDR_COEF;
-
     *coef++ = opcode(CAPTURE + 0, 0, 0, 0);
-    *coef++ = opcode(MACZ, 1, 0, 1);
+    *coef++ = opcode(MACZ, 1, 0, 0x1234);
     //*coef++ = opcode(NOOP,  0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
 
-    reset_engine();
+    run(0x84101234);
+    
+    //  Check reading all channels
+    print("Writing to audio input\n");
 
-    uint32_t t = status[1];
-    print("status ");
-    print_hex(t, 8);
-    print("\n");
-    ASSERT(t == 0x84100001);
+    // Write an audio signal to all the input RAM locations
+    for (int chan = 0; chan < 16; chan++)
+    {
+        for (int offset = 0; offset < 32; offset++)
+        {
+            const int idx = (chan * 32) + offset;
+            const int32_t audio = ~idx;
+            set_audio(idx, audio);
+        }
+    }
 
-    print("Done\n");
+    for (int chan = 0; chan < 16; chan++)
+    {
+        for (int offset = 0; offset < 32; offset++)
+        {
+            const int idx = (chan * 32) + offset;
+            coef = ADDR_COEF;
+            *coef++ = opcode(MACZ, offset, chan, 0x1234);
+            *coef++ = opcode(CAPTURE + 1, 0, 0, 0); // audio in/addr
+            *coef++ = opcode(HALT, 0, 0, 0);
+            *coef++ = opcode(HALT, 0, 0, 0);
+
+            const int32_t audio = ~idx;
+            const int32_t expect = (audio << 16) + idx;
+            run(expect);
+        }
+    }
+
+    //  Check multiplier input
+    verbose = true;
+    print("Check multiplier input\n");
+    clr_audio(0);
+    set_audio(36, 0x1234);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x3456);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 2, 0, 0, 0); // mul input gain/audio
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x34561234);
+
+    //  Check multiplier input
+    print("Check multiplier input with -ve audio\n");
+    clr_audio(0);
+    set_audio(36, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x3456);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 2, 0, 0, 0); // mul input gain/audio
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    uint32_t x = (~0xabcd) + 1;
+    run((0x3456 << 16) + (x & 0xffff));
+
+    //  Check multiplier output
+    print("Check multiplier output\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 2);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(CAPTURE + 3, 0, 0, 0); // mul output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x2222);
+
+    //  Check multiplier output 2
+    print("Check multiplier output 2\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x2000);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(CAPTURE + 3, 0, 0, 0); // mul output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x2222000);
+
+    //  Check multiplier output 3
+    print("Check multiplier output 3\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x2000);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 3, 0, 0, 0); // mul output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x09c9fcbc);
+
+    //  Check multiplier output 4
+    print("Check multiplier output 4\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x2000);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 3, 0, 0, 0); // mul output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x5fcb05c);
+
+    //  Check accumulator output
+    print("Check accumulator output\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x2000);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 5, 0, 0, 0); // acc output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x2222000);
+
+    //  Check accumulator output 2
+    print("Check accumulator output 2\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x2000);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 5, 0, 0, 0); // acc output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x2222000 + 0x09c9fcbc);
+
+    //  Check accumulator output 3
+    print("Check accumulator output 3\n");
+    clr_audio(0);
+    set_audio(36, 0x1111);
+    set_audio(37, 0x1234);
+    set_audio(38, 0xabcd);
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 4, 1, 0x2000);
+    *coef++ = opcode(MAC, 5, 1, 0x89ab);
+    *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = opcode(CAPTURE + 5, 0, 0, 0); // acc output
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    run(0x2222000 + 0x09c9fcbc - 0x5fcb05c);
+
+    //  End of tests
+    print("Tests run okay\n");
     while (true) ;
-#endif
 
-#if 0
-    uint32_t *coef = ADDR_COEF;
-
-    print("testing ...\n");
-
-    while (true) {
-        bool bad = false;
-        bool verbose = 0;
-    // check write / read
-    for (int i = 0; i < 64; i++)
-    {
-        if (verbose) print("addr ");
-        if (verbose) print_hex((uint32_t) coef + i, 8);
-        coef[i] = i;
-        uint32_t v = coef[i];
-        if (verbose) print(" data ");
-        if (verbose) print_hex(v, 8);
-        if (verbose) print("\n");
-        bad |= v != i;
-    }
-    // Check read
-    for (int i = 0; i < 64; i++)
-    {
-        if (verbose) print("addr ");
-        if (verbose) print_hex((uint32_t) coef + i, 8);
-        uint32_t v = coef[i];
-        if (verbose) print(" data ");
-        if (verbose) print_hex(v, 8);
-        if (verbose) print("\n");
-        bad |= v != i;
-    }
-    print(bad ? "X" : "+");
-    }
-#endif
 }
 
 // --------------------------------------------------------
@@ -937,7 +1123,7 @@ void main()
     set_flash_qspi_flag();
 
     reg_leds = 127;
-    while (getchar_prompt("Press ENTER to continue..\n") != '\r') { /* wait */ }
+    //while (getchar_prompt("Press ENTER to continue..\n") != '\r') { /* wait */ }
 
     print("\n");
     print("  ____  _          ____         ____\n");
@@ -960,11 +1146,11 @@ void main()
 
     reg_leds = 0;
 
-    //cmd_dave();
+    cmd_dave();
     //while (true)
     //    idle_fn();
 
-#if 1
+#if 0
     while (1)
     {
         print("\n");

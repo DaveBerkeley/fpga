@@ -122,25 +122,39 @@ module audio_engine (
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
             .done(done), .error(error), 
-            .capture_out(capture));
+            .capture_out(capture),
+            .test(test));
 
     //  Results RAM
     //  TODO : Also write results to I2S hardware
 
-    /*
-    wire result_re;
-    wire [15:0] result_rdata;
-    wire [3:0] result_raddr;
+    reg [15:0] left = 0;
+    reg [15:0] right = 0;
 
-    assign result_raddr = iomem_addr[5:2];
+    always @(posedge ck) begin
+        if (out_we) begin
+            if (out_wr_addr[0] == 0)
+                left <= out_audio;
+            else
+                right <= out_audio;
+        end
+    end
 
-    dpram #(.BITS(16), .SIZE(16))
-        audio_out (.ck(ck),
-            .we(out_we), .waddr(out_wr_addr), .wdata(out_audio),
-            .re(result_re), .raddr(result_raddr), .rdata(result_rdata));
-    */
     wire result_re;
     reg [15:0] result_rdata = 0;
+    wire [0:0] result_raddr;
+
+    assign result_raddr = iomem_addr[0];
+
+    always @(posedge ck) begin
+        if (result_re) begin
+            if (result_raddr[0] == 0)
+                result_rdata <= left;
+            else
+                result_rdata <= right;
+        end else begin end
+            result_rdata <= 0;
+    end
 
     // Interface the peripheral to the Risc-V bus
 
@@ -196,7 +210,7 @@ module audio_engine (
             if (iomem_addr[2])
                 rd_status <= capture;
             else
-                rd_status[4:0] <= control_reg;
+                rd_status[4:0] <= { 3'h0, error, done };
         else
             rd_status <= 0;
     end
@@ -206,6 +220,7 @@ module audio_engine (
 
     //  Debug traces
 
+    /*
     reg [2:0] prescale = 0;
 
     always @(negedge ck) begin
@@ -236,7 +251,8 @@ module audio_engine (
         end
     end
 
-    assign test = { ck, reset, done, 3'h0, capture_trig, capture_shift[31] };
+    //assign test = { ck, reset, done, 3'h0, capture_trig, capture_shift[31] };
+    */
 
 endmodule
 

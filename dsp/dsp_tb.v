@@ -115,42 +115,28 @@ module tb ();
         i = 32'h60000000;
 
 
-        //write_opcode(i, 7'b1000010, 1, 0, 3); i += 4; // MAC N
-        //write_opcode(i, 7'b1000000, 2, 0, 3); i += 4; // MAC
-        //write_opcode(i, 7'b1000010, 3, 0, 3); i += 4; // MAC N
         //write_opcode(i, 7'b1010000, 0, 0, 0); i += 4; // SAVE
 
-        //noop(i); i += 4;
-
-        //write_opcode(i, 7'b1000001, 0, 0, 3); i += 4; // MAC Z
-        //write_opcode(i, 7'b1000000, 1, 0, 3); i += 4; // MAC
-        //write_opcode(i, 7'b1000000, 2, 0, 3); i += 4; // MAC
-        //write_opcode(i, 7'b1000000, 3, 0, 3); i += 4; // MAC
-        //write_opcode(i, 7'b1010000, 0, 0, 8); i += 4; // SAVE
-
-        //write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
-        //write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
-        //capture(i, 7); i += 4; // CAPTURE
-
-        capture(i, 7); i += 4; // CAPTURE
-        write_opcode(i, 7'b1000010, 1, 0, 1); i += 4; // MAC Z
-        //write_opcode(i, 7'b1000000, 1, 0, 10); i += 4; // MAC
-        //write_opcode(i, 7'b1000000, 2, 0, 100); i += 4; // MAC
-        //write_opcode(i, 7'b1000000, 3, 0, 1000); i += 4; // MAC
+        write_opcode(i, 7'b1000010, 4, 1, 16'h2000); i += 4; // MAC Z
+        write_opcode(i, 7'b1000000, 5, 1, 16'h89ab); i += 4; // MAC
+        write_opcode(i, 7'b1000000, 6, 1, 16'h1234); i += 4; // MAC
+        noop(i); i += 4;
+        noop(i); i += 4;
+        capture(i, 5); i += 4; // CAPTURE
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
         write_opcode(i, 7'b1111111, 0, 0, 0); i += 4; // HALT
-        //write_opcode(i, 7'b0000000, 0, 0, 0); i += 4; // NOOP
-        //write_opcode(i, 7'b0000000, 0, 0, 0); i += 4; // NOOP
         
         i = 32'h60000000;
         read(i);
  
         // set control register
-        //write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
+        write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
 
         // Write to audio RAM
-        //i = 32'h64000000;
-        //write(i, 32'h00001234); i += 4;
+        i = 32'h64000000;
+        write(i + (36 * 4), 32'h00001111); i += 4;
+        write(i + (36 * 4), 32'h00001234); i += 4;
+        write(i + (36 * 4), 32'h0000abcd); i += 4;
         //write(i, 32'h00001111); i += 4;
         //write(i, 32'h00002222); i += 4;
         //write(i, 32'h00003333); i += 4;

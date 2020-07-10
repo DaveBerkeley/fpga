@@ -53,7 +53,8 @@ module sequencer(
     output wire [3:0] out_addr,
     output wire [15:0] out_audio,
     output reg out_we,
-    output reg [31:0] capture_out
+    output reg [31:0] capture_out,
+    output wire [7:0] test
 );
     parameter CHAN_W = 4;
     parameter FRAME_W = 4;
@@ -145,19 +146,16 @@ module sequencer(
         error <= 1;
     endtask
 
-    //wire [15:0] trace;
-    //assign trace = { 2'b0, negative, shift_en, out_we, acc_reset, acc_en, acc_add, 1'b0, frame, error, done };
-    
     task capture(input [3:0] code);
         noop();
         case (code)
             0 : capture_out <= coef_data; // the next instructon
-            //1 : capture_out <= { coef_data[15:0], coef_data[31:16] }; // the next instructon
-            //1 : capture_out <= { audio_in, 7'h0, audio_raddr }; 
-            //2 : capture_out <= { gain_1, audio }; // multiplier in
-            //3 : capture_out <= mul_out; // multiplier out
-            //5 : capture_out <= acc_out[31:0]; // accumulator out
-            //6 : capture_out <= { 12'h0, out_addr, out_audio };
+            1 : capture_out <= { audio_in, 7'h0, audio_raddr }; 
+            2 : capture_out <= { gain_1, audio }; // multiplier in
+            3 : capture_out <= mul_out; // multiplier out
+
+            5 : capture_out <= acc_out[31:0]; // accumulator out
+            6 : capture_out <= { 12'h0, out_addr, out_audio };
             7 : capture_out <= { 32'h12345678 };
         endcase
     endtask
@@ -231,7 +229,7 @@ module sequencer(
 
     wire [31:0] mul_out;
 
-    multiplier mul(.ck(ck), .a(gain_1), .b(audio), .out(mul_out));
+    multiplier mul(.ck(!ck), .a(gain_1), .b(audio), .out(mul_out));
 
     // Pipeline t5
     // Acumulator Stage
@@ -301,25 +299,7 @@ module sequencer(
 
     pipe #(.LENGTH(3)) pipe_done (.ck(ck), .rst(reset), .in(done_req), .out(done));
 
-    /*
-
-    function [7:0] test_src(input [2:0] select);
-        case (select)
-            0 : test_src = { 3'b0, add, out_we, out_we_0, write_req, acc_rst };
-            1 : test_src = gain[7:0];
-            2 : test_src = gain_pipe_0[7:0];
-            3 : test_src = gain_pipe_1[7:0];
-            4 : test_src = audio_in[7:0];
-            5 : test_src = audio_in_latch[7:0];
-            6 : test_src = audio_raddr[7:0];
-            7 : test_src = { 3'b0, noop_1, noop_0, noop, done_0, done_req };
-        endcase
-    endfunction
-
-    always @(posedge ck) begin
-        test_out <= test_src(test_in);
-    end
-    */
-
+    assign test = { ck, error, done, reset, out_we, acc_reset, acc_en, acc_add };
+ 
 endmodule
 
