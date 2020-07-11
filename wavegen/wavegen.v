@@ -37,12 +37,12 @@ module top (
 
     // 44.1kHz audio * 64-bits per frame = 22.58/8 MHz
 
-    wire i2s_ck, i2s_ws;
+    wire i2s_sck, i2s_ws;
     /* verilator lint_off UNUSED */
     wire [5:0] posn;
     /* verilator lint_on UNUSED */
 
-    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(posn));
+    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(posn));
 
     //  Test the I2S Secondary
 
@@ -64,7 +64,7 @@ module top (
     end
 
     wire d0;
-    i2s_tx tx_0(.sck(i2s_ck), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
+    i2s_tx tx_0(.sck(i2s_sck_in), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
 
     //  UART
 
@@ -103,13 +103,15 @@ module top (
 
     assign TX = tx;
 
+    // Sync Audio Input
     assign i2s_sck_in = D0;
-    assign D1 = i2s_ck;
+    assign D1 = i2s_sck;
     assign i2s_ws_in = D2;
     assign D3 = i2s_ws;
 
-    assign D4 = i2s_ck;
-    assign D5 = i2s_ws;
+    // Drive Audio Output
+    assign D4 = i2s_sck_in;
+    assign D5 = i2s_ws_in;
     assign D6 = d0;
 
 endmodule

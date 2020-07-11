@@ -17,6 +17,7 @@ module audio_engine (
     output wire sck, // I2S clock
     output wire ws,  // I2S word select
     output wire sd,  // I2S data out
+    output wire sd_in0,  // I2S data in
     output wire [7:0] test
 );
 
@@ -27,6 +28,15 @@ module audio_engine (
     localparam ADDR_STATUS = ADDR + 16'h0200;
     localparam ADDR_RESET  = ADDR + 16'h0300;
     localparam ADDR_INPUT  = ADDR + 16'h0400;
+
+    localparam CHANNELS = 16;
+    localparam FRAMES = 32;
+    localparam CODE = 256;
+    localparam CHAN_W = $clog2(CHANNELS);
+    localparam FRAME_W = $clog2(FRAMES);
+    localparam CODE_W = $clog2(CODE);
+    localparam AUDIO = CHANNELS * FRAMES;
+    localparam AUDIO_W = $clog2(AUDIO);
 
     // Send an extended reset pulse to the audio engine
 
@@ -44,17 +54,20 @@ module audio_engine (
     assign reset = rst && (resetx == 2'b11);
 
     wire done;
-    reg [(FRAME_W-1):0] frame = 0;
+    reg [(FRAME_W-1):0] frame_counter = 0;
+    wire [(FRAME_W-1):0] frame;
 
     //  Control Register
 
     // bit-0 : set to allow writes to the audio input RAM
     /* verilator lint_off UNUSED */
-    reg [4:0] control_reg = 0;
+    reg [6:0] control_reg = 0;
     /* verilator lint_on UNUSED */
 
     wire allow_audio_writes;
     assign allow_audio_writes = control_reg[0];
+
+    assign frame = allow_audio_writes ? control_reg[6:1] : frame_counter;
 
     //  I2S clock generation
 
@@ -70,16 +83,71 @@ module audio_engine (
     i2s_tx tx(.sck(sck), .frame_posn(frame_posn), 
             .left(left), .right(right), .sd(sd));
 
-    //  Drive the engine
+    //  I2S Input
 
-    localparam CHANNELS = 16;
-    localparam FRAMES = 32;
-    localparam CODE = 256;
-    localparam CHAN_W = $clog2(CHANNELS);
-    localparam FRAME_W = $clog2(FRAMES);
-    localparam CODE_W = $clog2(CODE);
-    localparam AUDIO = CHANNELS * FRAMES;
-    localparam AUDIO_W = $clog2(AUDIO);
+    wire [15:0] mic_0;
+    wire [15:0] mic_1;
+    i2s_rx rx(.sck(sck), .frame_posn(frame_posn), .sd(sd_in0), 
+        .left(mic_0), .right(mic_1));
+
+    //  Write Input data to the Audio RAM
+
+    function [15:0] mic_source(input [(CHAN_W-1):0] chan);
+    
+        begin
+            case (chan)
+                0   :   mic_source = mic_0;
+                1   :   mic_source = mic_1;
+                default : mic_source = 16'h7fff;
+            endcase
+        end
+
+    endfunction
+
+    reg writing = 0;
+    reg [(CHAN_W-1):0] write_addr = 0;
+    reg write_en = 0;
+    reg [15:0] write_data = 0;
+
+    /*
+    always @(negedge ck) begin
+        // Check that the host processor isn't in write mode
+        if (!allow_audio_writes) begin
+
+            // Start the writing process
+            if ((frame_posn == 0) && !writing) begin
+                writing <= 1;
+                frame_counter <= frame_counter + 1;
+            end
+
+            if (writing) begin
+                write_addr <= write_addr + 1;
+            end
+
+            //  Write data
+            if (writing) begin
+                if (write_addr == CHANNELS-1) begin
+                    // Last Channel
+                    writing <= 0;
+                    write_en <= 0;
+                    write_data <= 0;
+                end else begin
+                    write_data <= mic_source(write_addr+1);
+                end
+            end
+
+        end else begin
+            write_en <= 0;
+            write_data <= 0;
+        end
+    end
+    */
+
+    wire [7:0] testx;
+    assign test[0] = frame[0];
+    assign test[7:1] = testx[7:1];
+
+    //  Drive the engine
 
     // Coefficient / Program DP RAM
     // This is written to by the host, read by the engine.
@@ -139,7 +207,7 @@ module audio_engine (
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
             .done(done), .error(error), 
             .capture_out(capture),
-            .test(test));
+            .test(testx));
 
     //  Results RAM
     //  TODO : Also write results to I2S hardware
@@ -212,7 +280,7 @@ module audio_engine (
 
     always @(posedge ck) begin
         if (status_we)
-            control_reg <= iomem_wdata[4:0];
+            control_reg <= iomem_wdata[6:0];
         if (status_re)
             if (iomem_addr[2])
                 rd_status <= capture;

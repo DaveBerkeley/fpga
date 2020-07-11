@@ -876,6 +876,9 @@ void test(const char *text, uint32_t *result, uint32_t expect)
     reset_engine();
 
     uint32_t t = *result;
+    if (t != expect)
+        verbose = 1;
+ 
     if (verbose)
     {
         print(text);
@@ -900,13 +903,32 @@ void calc(uint32_t expect)
     test("result ", result, expect);
 }
 
+void set_control(uint32_t v)
+{
+    uint32_t *status = ADDR_STAT;
+    *status = v;
+    if (1) // verbose)
+    {
+        print("set control=");
+        print_hex(v, 8);
+        print("\n");
+    }
+}
+
 void cmd_dave()
 {
     // control_reg
     uint32_t *status = ADDR_STAT;
-    const uint32_t s = 1; // allow audio writes
-    *status = s;
+    set_control(1); // allow audio writes
+    // Reset the audio engine
+    uint32_t *reset = ADDR_RESET;
+    *reset = 0;
 
+    print("wait for 'done'\n");
+    //while ((*status & 0x01))
+    //    ;
+
+    verbose = 0;
     //  Test
     print("Test fetching opcode\n");
     uint32_t *coef = ADDR_COEF;
@@ -1217,6 +1239,7 @@ void cmd_dave()
     clr_audio(0x7fff);
 
     verbose = false;
+#if 0
     while (true)
     {
         reset_engine();
@@ -1225,9 +1248,25 @@ void cmd_dave()
         uint32_t v = result[0];
         //ASSERT(v == 0xfff);
     }
+#endif
 
     //  End of tests
     print("Tests run okay\n");
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 0, 0, 1);
+    *coef++ = opcode(SAVE, 0, 0, 0);
+    //*coef++ = opcode(MACZ, 0, 1, 1);
+    //*coef++ = opcode(SAVE, 0, 0, 0);
+    //*coef++ = opcode(MACZ, 0, 2, 1);
+    //*coef++ = opcode(SAVE, 0, 0, 0);
+    //*coef++ = opcode(MACZ, 0, 3, 1);
+    //*coef++ = opcode(SAVE, 0, 0, 0);
+    //*coef++ = opcode(HALT, 0, 0, 0);
+    //*coef++ = opcode(HALT, 0, 0, 0);
+ 
+    set_control(0); // stop audio writes
+    reset_engine();
     while (true) ;
 
 }

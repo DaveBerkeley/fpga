@@ -145,7 +145,7 @@ module tb ();
         read(i);
  
         // set control register
-        write(32'h62000000, 1 + (1 << 1)); // allow_audio_writes
+        write(32'h62000000, 1); // allow_audio_writes
 
         // Write to audio RAM
         i = 32'h64000000;
@@ -159,6 +159,12 @@ module tb ();
         //write(i, 32'h00004444); i += 4;
 
         reset_cnt <= 0;
+
+        for (int i = 0; i < 100; i += 1) begin
+            @(posedge ck);
+        end
+        write(32'h62000000, 0); // disable allow_audio_writes
+        
     end
 
     /* verilator lint_off UNUSED */

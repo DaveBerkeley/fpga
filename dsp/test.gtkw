@@ -1,34 +1,42 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jul  4 10:01:09 2020
+[*] Sat Jul 11 11:49:54 2020
 [*]
-[dumpfile] "/home/dave/Desktop/git/fpga/dsp/iomem.vcd"
-[dumpfile_mtime] "Sat Jul  4 09:28:15 2020"
-[dumpfile_size] 1523368
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Sat Jul 11 11:49:06 2020"
+[dumpfile_size] 1067603
 [savefile] "/home/dave/Desktop/git/fpga/dsp/test.gtkw"
-[timestart] 1223000
+[timestart] 0
 [size] 1899 785
 [pos] -1 -1
-*-18.330584 1512000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-[treeopen] top.
+*-25.330584 49476000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
 [sst_width] 196
 [signals_width] 174
 [sst_expanded] 1
 [sst_vpaned_height] 221
-@200
--coef
 @28
-top.io.ck
-top.io.rst
+tb.engine.ck
+tb.engine.reset
+tb.engine.reset
+tb.engine.status_we
 @22
-top.io.iomem_addr[31:0]
-top.io.iomem_wstrb[3:0]
+tb.engine.mic_0[15:0]
+tb.engine.mic_1[15:0]
 @28
-top.io.iomem_valid
-top.io.re
-top.io.we
-top.io.ready
+tb.engine.allow_audio_writes
+tb.engine.sck
+tb.engine.ws
 @22
-top.iomem_data[31:0]
+tb.engine.frame_posn[5:0]
+@28
+tb.engine.writing
+@22
+tb.engine.write_addr[3:0]
+tb.engine.write_data[15:0]
+@28
+tb.engine.write_en
+@23
+tb.engine.frame[4:0]
 [pattern_trace] 1
 [pattern_trace] 0
