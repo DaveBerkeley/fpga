@@ -16,12 +16,13 @@ module top (
     output wire LED6,
     output wire LED7,
     output wire TX,
-    output wire D0,
+    input wire D0,
     output wire D1,
-    output wire D2,
+    input wire D2,
     output wire D3,
     output wire D4,
-    output wire D5
+    output wire D5,
+    output wire D6
 );
 
     wire ck_12mhz;
@@ -37,12 +38,19 @@ module top (
     // 44.1kHz audio * 64-bits per frame = 22.58/8 MHz
 
     wire i2s_ck, i2s_ws;
+    /* verilator lint_off UNUSED */
+    wire [5:0] posn;
+    /* verilator lint_on UNUSED */
+
+    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(posn));
+
+    //  Test the I2S Secondary
+
+    wire i2s_sck_in, i2s_ws_in;
     wire [5:0] frame_posn;
+    i2s_secondary sec(.sck(i2s_sck_in), .ws(i2s_ws_in), .frame_posn(frame_posn));
 
-    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_ck), .ws(i2s_ws), .frame_posn(frame_posn));
-
-    assign D3 = i2s_ck;
-    assign D4 = i2s_ws;
+    //  Generate sinewave
 
     reg [6:0] addr;
 
@@ -57,22 +65,16 @@ module top (
 
     wire d0;
     i2s_tx tx_0(.sck(i2s_ck), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
-    assign D5 = d0;
 
     //  UART
 
     reg [7:0] tx_data = 8'h41;
     /* verilator lint_off UNUSED */
     wire tx_ready;
+    wire baud;
     /* verilator lint_on UNUSED */
     wire tx;
-    wire baud;
     uart u(.ck(ck_12mhz), .tx_data(tx_data), .ready(tx_ready), .tx(tx), .baud(baud));
-
-    assign TX = tx;
-    assign D0 = tx;
-    assign D1 = baud;
-    assign D2 = tx_ready;
 
     reg [20:0] prescale = 0;
 
@@ -98,5 +100,16 @@ module top (
     assign LED5 = counter[5];
     assign LED6 = counter[6];
     assign LED7 = counter[7];
+
+    assign TX = tx;
+
+    assign i2s_sck_in = D0;
+    assign D1 = i2s_ck;
+    assign i2s_ws_in = D2;
+    assign D3 = i2s_ws;
+
+    assign D4 = i2s_ck;
+    assign D5 = i2s_ws;
+    assign D6 = d0;
 
 endmodule
