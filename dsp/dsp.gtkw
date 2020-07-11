@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Jul 10 14:22:13 2020
+[*] Fri Jul 10 15:52:01 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Jul 10 14:20:33 2020"
-[dumpfile_size] 103933
+[dumpfile_mtime] "Fri Jul 10 15:50:32 2020"
+[dumpfile_size] 928658
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
-[timestart] 3896000
+[timestart] 0
 [size] 1918 791
 [pos] -1 -1
-*-17.683033 6006000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.683033 4368000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.engine.
 [treeopen] tb.engine.seq.
@@ -86,7 +86,6 @@ tb.engine.seq.out_en_req
 tb.engine.seq.shift_en
 @22
 tb.engine.seq.shift_2[4:0]
-@23
 tb.engine.seq.out_addr[3:0]
 @28
 tb.engine.seq.out_we
@@ -99,5 +98,10 @@ tb.engine.seq.done
 tb.engine.seq.error
 @22
 tb.engine.seq.capture_out[31:0]
+@29
+tb.engine.sck
+@28
+tb.engine.ws
+tb.engine.sd
 [pattern_trace] 1
 [pattern_trace] 0

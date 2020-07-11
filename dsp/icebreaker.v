@@ -139,7 +139,8 @@ module icebreaker (
     wire iomem_dsp_ready;
 	wire [31:0] iomem_dsp_rdata;
 
-    wire [7:0] test = { test3, test2, test1, test0, i2s_d0, i2s_out, i2s_ws, i2s_sck };
+    //wire [7:0] test = { test3, test2, test1, test0, i2s_d0, i2s_out, i2s_ws, i2s_sck };
+    wire [7:0] test;
 
     audio_engine #(.ADDR(16'h6000)) engine(.ck(audio_ck), .rst(resetn),
         .iomem_valid(iomem_valid),
@@ -148,6 +149,7 @@ module icebreaker (
         .iomem_addr(iomem_addr),
         .iomem_wdata(iomem_wdata),
         .iomem_rdata(iomem_dsp_rdata),
+        .sck(i2s_sck), .ws(i2s_ws), .sd(i2s_out),
         .test(test)
     );
 

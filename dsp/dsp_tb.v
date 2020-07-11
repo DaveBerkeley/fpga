@@ -7,7 +7,7 @@ module tb ();
     initial begin
         $dumpfile("dsp.vcd");
         $dumpvars(0, tb);
-        #50000 $finish;
+        #500000 $finish;
     end
 
     reg ck = 0;

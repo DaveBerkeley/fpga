@@ -14,6 +14,9 @@ module audio_engine (
     /* verilator lint_on UNUSED */
     input wire [31:0] iomem_wdata,
     output wire [31:0] iomem_rdata,
+    output wire sck, // I2S clock
+    output wire ws,  // I2S word select
+    output wire sd,  // I2S data out
     output wire [7:0] test
 );
 
@@ -41,7 +44,6 @@ module audio_engine (
     assign reset = rst && (resetx == 2'b11);
 
     wire done;
-    // TODO : increment audio frame 
     reg [(FRAME_W-1):0] frame = 0;
 
     //  Control Register
@@ -53,6 +55,20 @@ module audio_engine (
 
     wire allow_audio_writes;
     assign allow_audio_writes = control_reg[0];
+
+    //  I2S clock generation
+
+    wire [5:0] frame_posn;
+    i2s_clock #(.DIVIDER(12)) i2s_out(.ck(ck), 
+            .sck(sck), .ws(ws), .frame_posn(frame_posn));
+
+    //  I2S Output
+
+    reg [15:0] left = 0;
+    reg [15:0] right = 0;
+
+    i2s_tx tx(.sck(sck), .frame_posn(frame_posn), 
+            .left(left), .right(right), .sd(sd));
 
     //  Drive the engine
 
@@ -127,9 +143,6 @@ module audio_engine (
 
     //  Results RAM
     //  TODO : Also write results to I2S hardware
-
-    reg [15:0] left = 0;
-    reg [15:0] right = 0;
 
     always @(negedge ck) begin
         if (out_we) begin

@@ -181,10 +181,20 @@ void print_hex(uint32_t v, int digits)
 
 void print_dec(uint32_t v)
 {
-    if (v >= 1000) {
-        print(">=1000");
+    if (v >= 10000) {
+        print(">=10000");
         return;
     }
+
+    if      (v >= 9000) { putchar('9'); v -= 9000; }
+    else if (v >= 8000) { putchar('8'); v -= 8000; }
+    else if (v >= 7000) { putchar('7'); v -= 7000; }
+    else if (v >= 6000) { putchar('6'); v -= 6000; }
+    else if (v >= 5000) { putchar('5'); v -= 5000; }
+    else if (v >= 4000) { putchar('4'); v -= 4000; }
+    else if (v >= 3000) { putchar('3'); v -= 3000; }
+    else if (v >= 2000) { putchar('2'); v -= 2000; }
+    else if (v >= 1000) { putchar('1'); v -= 1000; }
 
     if      (v >= 900) { putchar('9'); v -= 900; }
     else if (v >= 800) { putchar('8'); v -= 800; }
@@ -861,16 +871,14 @@ void clr_audio(uint32_t value)
     verbose = old;
 }
 
-void run(uint32_t expect)
+void test(const char *text, uint32_t *result, uint32_t expect)
 {
     reset_engine();
 
-    uint32_t *status = ADDR_STAT;
-
-    uint32_t t = status[1];
+    uint32_t t = *result;
     if (verbose)
     {
-        print("status ");
+        print(text);
         print_hex(t, 8);
         print(" expected ");
         print_hex(expect, 8);
@@ -878,6 +886,18 @@ void run(uint32_t expect)
     }
     ASSERT(t == expect);
     if (verbose) print("Okay\n");
+}
+
+void run(uint32_t expect)
+{
+    uint32_t *status = ADDR_STAT;
+    test("status ", & status[1], expect);
+}
+
+void calc(uint32_t expect)
+{
+    uint32_t *result = ADDR_RESULT;
+    test("result ", result, expect);
 }
 
 void cmd_dave()
@@ -1166,7 +1186,45 @@ void cmd_dave()
             ASSERT(audio == v);
         }
     }
+
+    //  Check filter performance
+    print("Check filter performance\n");
     verbose = true;
+    clr_audio(0);
+    set_audio(0, 0x0111);
+    set_audio(1, 0x0222);
+    set_audio(2, 0x0444);
+    set_audio(3, 0x0888);
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 0, 0, 1);
+    *coef++ = opcode(MAC, 1, 0, 1);
+    *coef++ = opcode(MAC, 2, 0, 1);
+    *coef++ = opcode(MAC, 3, 0, 1);
+    *coef++ = opcode(SAVE, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
+
+    calc(0xfff);
+    /*
+    reset_engine();
+
+    uint32_t *result = ADDR_RESULT;
+    uint32_t v = result[0];
+    ASSERT(v == 0xfff);
+    */
+
+    //  
+    clr_audio(0x7fff);
+
+    verbose = false;
+    while (true)
+    {
+        reset_engine();
+
+        uint32_t *result = ADDR_RESULT;
+        uint32_t v = result[0];
+        //ASSERT(v == 0xfff);
+    }
 
     //  End of tests
     print("Tests run okay\n");
