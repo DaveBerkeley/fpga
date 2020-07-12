@@ -114,7 +114,7 @@ module sequencer(
     reg done_req = 0;       // sequence finished
     reg acc_en_req = 0;     // enable accumulator
     reg out_en_req = 0;     // enable accumulator
-    reg acc_add_req = 0;        // set if gain is -ve
+    reg acc_add_req = 0;    // set if gain is +ve
 
     task noop;
         acc_en_req <= 0;
@@ -234,9 +234,7 @@ module sequencer(
     // Pipeline t5
     // Acumulator Stage
 
-    /* verilator lint_off UNUSED */
     wire signed [(ACC_W-1):0] acc_out;
-    /* verilator lint_on UNUSED */
 
     wire acc_reset, acc_en;
     pipe #(.LENGTH(2)) pipe_acc_reset (.ck(ck), .rst(reset), .in(acc_rst_req), .out(acc_reset));
@@ -274,7 +272,7 @@ module sequencer(
     wire shift_en;
     pipe #(.LENGTH(2)) pipe_shift_en (.ck(ck), .rst(reset), .in(out_en_req), .out(shift_en));
  
-    shifter shift_data (.ck(ck), .en(shift_en), .shift(shift_2), .in(acc_out), .out(shift_out));
+    shifter #(.SHIFT_W(FRAME_W)) shift_data (.ck(ck), .en(shift_en), .shift(shift_2), .in(acc_out), .out(shift_out));
 
     // Pipeline t7
     // Write output

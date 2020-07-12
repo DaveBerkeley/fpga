@@ -252,16 +252,12 @@ void __assert_func(const char *file, int line, const char *function, const char 
      *
      */
 
-extern void (*idle)();
-
 char getchar_prompt(char *prompt)
 {
     int32_t c = -1;
 
     uint32_t cycles_begin, cycles_now, cycles;
     __asm__ volatile ("rdcycle %0" : "=r"(cycles_begin));
-
-    //reg_leds = ~0;
 
     if (prompt)
         print(prompt);
@@ -276,12 +272,8 @@ char getchar_prompt(char *prompt)
             //reg_leds = ~reg_leds;
         }
         c = reg_uart_data;
-
-        if (idle)
-            idle();
     }
 
-    //reg_leds = 0;
     return c;
 }
 
@@ -705,6 +697,20 @@ void cmd_echo()
      *
      */
 
+// Base address of peripheral blocks
+#define ADDR_COEF   ((uint32_t*) 0x60000000)
+#define ADDR_RESULT ((uint32_t*) 0x61000000)
+#define ADDR_STAT   ((uint32_t*) 0x62000000)
+#define ADDR_RESET  ((uint32_t*) 0x63000000)
+#define ADDR_AUDIO  ((uint32_t*) 0x64000000)
+#define ADDR_LED    ((uint32_t*) 0x03000000)
+
+#define AUDIO_ITEMS 512
+#define CHANNELS    8
+#define CHAN_W      3
+#define FRAMES      64
+#define OFFSET_W    6
+
 enum Opcode {
     HALT    = 0x7f,
     CAPTURE = 0x10,
@@ -720,7 +726,7 @@ bool verbose = false;
 
 uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
 {
-    const uint32_t value = gain + (chan << 16) + (offset << 20) + (opcode << 25);
+    const uint32_t value = gain + (chan << 16) + (offset << (16+CHAN_W)) + (opcode << (16+CHAN_W+OFFSET_W));
 
     if (!verbose)
         return value;
@@ -758,7 +764,7 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
         }
     }
 
-    if ((opcode == MAC) || (opcode == MACZ))
+    if ((opcode == MAC) || (opcode == MACZ) || (opcode == MACN) || (opcode == MACNZ))
     {
         print("offset=");
         print_hex(offset, 2);
@@ -779,32 +785,6 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
 
     return value;
 }
-
-// Base address of peripheral blocks
-#define ADDR_COEF   ((uint32_t*) 0x60000000)
-#define ADDR_RESULT ((uint32_t*) 0x61000000)
-#define ADDR_STAT   ((uint32_t*) 0x62000000)
-#define ADDR_RESET  ((uint32_t*) 0x63000000)
-#define ADDR_AUDIO  ((uint32_t*) 0x64000000)
-#define ADDR_LED    ((uint32_t*) 0x03000000)
-
-#define AUDIO_ITEMS 512
-
-void idle_fn()
-{
-    uint32_t *status = ADDR_STAT;
-    uint32_t *result = ADDR_RESULT;
-
-    uint32_t s = result[0];
-    uint32_t t = status[1];
-    print("status ");
-    print_hex(s, 8);
-    print(" ");
-    print_hex(t, 8);
-    print("\n");
-}
-
-void (*idle)() = 0;
 
     /*
      *
@@ -929,36 +909,38 @@ void cmd_dave()
     //    ;
 
     verbose = 0;
+    uint32_t *coef;
+
     //  Test
     print("Test fetching opcode\n");
-    uint32_t *coef = ADDR_COEF;
+    coef = ADDR_COEF;
     *coef++ = opcode(CAPTURE + 0, 0, 0, 0);
     *coef++ = opcode(MACZ, 1, 0, 0x1234);
     //*coef++ = opcode(NOOP,  0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
 
-    run(0x84101234);
+    run(opcode(MACZ, 1, 0, 0x1234));
     
     //  Check reading all channels
     print("Writing to audio input\n");
 
     // Write an audio signal to all the input RAM locations
-    for (int chan = 0; chan < 16; chan++)
+    for (int chan = 0; chan < CHANNELS; chan++)
     {
-        for (int offset = 0; offset < 32; offset++)
+        for (int offset = 0; offset < FRAMES; offset++)
         {
-            const int idx = (chan * 32) + offset;
+            const int idx = (chan * FRAMES) + offset;
             const int32_t audio = ~idx;
             set_audio(idx, audio);
         }
     }
 
-    for (int chan = 0; chan < 16; chan++)
+    for (int chan = 0; chan < CHANNELS; chan++)
     {
-        for (int offset = 0; offset < 32; offset++)
+        for (int offset = 0; offset < FRAMES; offset++)
         {
-            const int idx = (chan * 32) + offset;
+            const int idx = (chan * FRAMES) + offset;
             coef = ADDR_COEF;
             *coef++ = opcode(MACZ, offset, chan, 0x1234);
             *coef++ = opcode(CAPTURE + 1, 0, 0, 0); // audio in/addr
@@ -974,7 +956,7 @@ void cmd_dave()
     //  Check multiplier input
     print("Check multiplier input\n");
     clr_audio(0);
-    set_audio(36, 0x1234);
+    set_audio(FRAMES+4, 0x1234);
 
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 4, 1, 0x3456);
@@ -988,7 +970,7 @@ void cmd_dave()
     //  Check multiplier input
     print("Check multiplier input with -ve audio\n");
     clr_audio(0);
-    set_audio(36, 0xabcd);
+    set_audio(FRAMES+4, 0xabcd);
 
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 4, 1, 0x3456);
@@ -1238,25 +1220,27 @@ void cmd_dave()
     //  End of tests
     print("Tests run okay\n");
 
-    for (int i = 0; i < 32; i++)
-    {
-        int32_t v = (i - 16) * 1000;
-        set_audio(   i, v);
-        set_audio(32+i, -v);
-    }
+    uint32_t atten = 0;
 
     coef = ADDR_COEF;
-    *coef++ = opcode(MACZ, 0, 0, 1);
-    *coef++ = opcode(SAVE, 0, 0, 0);
-    *coef++ = opcode(MACNZ, 0, 0, 1);
-    *coef++ = opcode(SAVE, 0, 0, 1);
+    *coef++ = opcode(MACZ, 0, 0, 4);
+    *coef++ = opcode(MAC,  0, 1, 4);
+    *coef++ = opcode(SAVE, 3 + atten, 0, 0);
+
+    *coef++ = opcode(MACZ, 0, 1, 8);
+    *coef++ = opcode(MACN, 0, 0, 8);
+    *coef++ = opcode(SAVE, 4 + atten, 0, 1);
 
     *coef++ = opcode(HALT, 0, 0, 0);
     *coef++ = opcode(HALT, 0, 0, 0);
  
     set_control(0); // stop audio writes
     reset_engine();
-    while (true) ;
+    while (true)
+    {
+        const uint32_t v = *status;
+        reg_leds = v;
+    }
 
 }
 
@@ -1296,8 +1280,6 @@ void main()
     reg_leds = 0;
 
     cmd_dave();
-    //while (true)
-    //    idle_fn();
 
 #if 0
     while (1)

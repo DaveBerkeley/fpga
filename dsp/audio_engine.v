@@ -18,6 +18,9 @@ module audio_engine (
     output wire ws,  // I2S word select
     output wire sd_out,  // I2S data out
     output wire sd_in0,  // I2S data in
+    output wire sd_in1,  // I2S data in
+    output wire sd_in2,  // I2S data in
+    output wire sd_in3,  // I2S data in
     output wire [7:0] test
 );
 
@@ -29,8 +32,8 @@ module audio_engine (
     localparam ADDR_RESET  = ADDR + 16'h0300;
     localparam ADDR_INPUT  = ADDR + 16'h0400;
 
-    localparam CHANNELS = 16;
-    localparam FRAMES = 32;
+    localparam CHANNELS = 8;
+    localparam FRAMES = 64;
     localparam CODE = 256;
     localparam CHAN_W = $clog2(CHANNELS);
     localparam FRAME_W = $clog2(FRAMES);
@@ -43,7 +46,7 @@ module audio_engine (
     reg [1:0] resetx = 0;
 
     always @(negedge ck) begin
-        if (reset_req || written)
+        if (reset_req || frame_reset_req)
             resetx <= 0;
         else 
            if (resetx != 2'b11)
@@ -74,8 +77,8 @@ module audio_engine (
     wire i2s_clock;
 
 //`ifdef SIMULATION
-    // Divide the 12Mhz clock down to 1MHz
-    localparam I2S_DIVIDER = 12;
+    // Divide the 12Mhz clock down to 2MHz
+    localparam I2S_DIVIDER = 6;
     assign i2s_clock = ck;
 //`else
 //    // 45.16 MHz PLL clock derived from ck_12mhz clock input
@@ -100,8 +103,17 @@ module audio_engine (
 
     wire [15:0] mic_0;
     wire [15:0] mic_1;
-    i2s_rx rx(.sck(sck), .frame_posn(frame_posn), .sd(sd_in0), 
-        .left(mic_0), .right(mic_1));
+    //wire [15:0] mic_2;
+    //wire [15:0] mic_3;
+    //wire [15:0] mic_4;
+    //wire [15:0] mic_5;
+    //wire [15:0] mic_6;
+    //wire [15:0] mic_7;
+
+    i2s_rx rx_0(.sck(sck), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
+    //i2s_rx rx_1(.sck(sck), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
+    //i2s_rx rx_2(.sck(sck), .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
+    //i2s_rx rx_3(.sck(sck), .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
 
     //  Write Input data to the Audio RAM
 
@@ -111,7 +123,12 @@ module audio_engine (
             case (chan)
                 0   :   mic_source = mic_0;
                 1   :   mic_source = mic_1;
-                // TODO : add other channels
+                //2   :   mic_source = mic_2;
+                //3   :   mic_source = mic_3;
+                //4   :   mic_source = mic_4;
+                //5   :   mic_source = mic_5;
+                //6   :   mic_source = mic_6;
+                //7   :   mic_source = mic_7;
                 default : mic_source = 16'h7fff;
             endcase
         end
@@ -119,7 +136,7 @@ module audio_engine (
     endfunction
 
     reg writing = 0;
-    reg written = 0;
+    reg frame_reset_req = 0;
     reg [(CHAN_W-1):0] chan_addr = 0;
     wire [(AUDIO_W-1):0] write_addr;
     wire write_en;
@@ -143,11 +160,11 @@ module audio_engine (
 
             if (writing && (chan_addr == (CHANNELS-1))) begin
                 writing <= 0;
-                written <= 1;
+                frame_reset_req <= 1;
             end
 
-            if (written)
-                written <= 0;
+            if (frame_reset_req)
+                frame_reset_req <= 0;
 
         end
     end

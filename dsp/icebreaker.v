@@ -60,8 +60,7 @@ module icebreaker (
     output out_ws,
     output out_sd,
 
-    output test0,
-    output test1
+    output test0
 );
 	parameter integer MEM_WORDS = 32768;
 
@@ -132,7 +131,8 @@ module icebreaker (
 
     wire [7:0] test;
 
-    wire sck, ws, sd, sd_in0;
+    wire sck, ws, sd;
+    wire sd_in0, sd_in1, sd_in2, sd_in3;
 
     audio_engine #(.ADDR(16'h6000)) engine(.ck(clk), .rst(resetn),
         .iomem_valid(iomem_valid),
@@ -141,18 +141,21 @@ module icebreaker (
         .iomem_addr(iomem_addr),
         .iomem_wdata(iomem_wdata),
         .iomem_rdata(iomem_dsp_rdata),
-        .sck(sck), .ws(ws), .sd_out(sd), .sd_in0(sd_in0),
+        .sck(sck), .ws(ws), .sd_out(sd), 
+        .sd_in0(sd_in0), .sd_in1(sd_in1), .sd_in2(sd_in2), .sd_in3(sd_in3),
         .test(test)
     );
 
     assign i2s_sck = sck;
     assign i2s_ws = ws;
     assign sd_in0 = i2s_d0;
+    assign sd_in1 = i2s_d1;
+    assign sd_in2 = i2s_d2;
+    assign sd_in3 = i2s_d3;
     assign out_sd = sd;
     assign out_sck = sck;
     assign out_ws = ws;
     assign test0 = test[0];
-    assign test1 = test[1];
 
     // OR the peripheral's *_ready and *_rdata lines together
 

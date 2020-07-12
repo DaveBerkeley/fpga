@@ -3,10 +3,11 @@
     *
     */
 
-module shifter(
-    input wire ck,
+module shifter
+    #(parameter SHIFT_W=5)
+    ( input wire ck,
     input wire en,
-    input wire [4:0] shift,
+    input wire [(SHIFT_W-1):0] shift,
     input wire [39:0] in,
     output reg [15:0] out
 );
