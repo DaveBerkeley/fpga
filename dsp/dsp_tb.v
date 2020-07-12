@@ -160,7 +160,7 @@ module tb ();
 
         reset_cnt <= 0;
 
-        for (int i = 0; i < 100; i += 1) begin
+        for (int i = 0; i < 20; i += 1) begin
             @(posedge ck);
         end
         write(32'h62000000, 0); // disable allow_audio_writes

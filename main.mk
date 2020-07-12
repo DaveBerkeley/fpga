@@ -24,8 +24,8 @@ endif
 	icetime $(if $(FREQ),-c $(FREQ)) -d $(DEVICE) -mtr $@ $<
 
 %_tb: %_tb.v %.v
-	verilator -DSIMULATION --top-module top $(PROJ).v $(ADD_SRC) --lint-only -Wall -Wno-DECLFILENAME
-	iverilog -DSIMULATION -g2012 -o $@ $(ADD_SRC) $^
+	verilator -DSIMULATION --top-module top $(PROJ).v $(TB_SRC) --lint-only -Wall -Wno-DECLFILENAME
+	iverilog -DSIMULATION -g2012 -o $@ $(TB_SRC) $^
 	./$@
 	#gtkwave $(PROJ).vcd $(PROJ).gtkw &
 

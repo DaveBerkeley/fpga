@@ -16,7 +16,7 @@ module audio_engine (
     output wire [31:0] iomem_rdata,
     output wire sck, // I2S clock
     output wire ws,  // I2S word select
-    output wire sd,  // I2S data out
+    output wire sd_out,  // I2S data out
     output wire sd_in0,  // I2S data in
     output wire [7:0] test
 );
@@ -43,7 +43,7 @@ module audio_engine (
     reg [1:0] resetx = 0;
 
     always @(negedge ck) begin
-        if (reset_req)
+        if (reset_req || written)
             resetx <= 0;
         else 
            if (resetx != 2'b11)
@@ -60,19 +60,33 @@ module audio_engine (
     //  Control Register
 
     // bit-0 : set to allow writes to the audio input RAM
-    /* verilator lint_off UNUSED */
-    reg [6:0] control_reg = 0;
-    /* verilator lint_on UNUSED */
+    // bits 1..6 optionally control the frame register
+    localparam CONTROL_W = FRAME_W + 1;
+    reg [(CONTROL_W-1):0] control_reg = 0;
 
     wire allow_audio_writes;
     assign allow_audio_writes = control_reg[0];
 
-    assign frame = allow_audio_writes ? control_reg[6:1] : frame_counter;
+    assign frame = allow_audio_writes ? control_reg[(CONTROL_W-1):1] : frame_counter;
 
     //  I2S clock generation
 
+    wire i2s_clock;
+
+//`ifdef SIMULATION
+    // Divide the 12Mhz clock down to 1MHz
+    localparam I2S_DIVIDER = 12;
+    assign i2s_clock = ck;
+//`else
+//    // 45.16 MHz PLL clock derived from ck_12mhz clock input
+//    /* verilator lint_off PINCONNECTEMPTY */
+//    pll clock(.clock_in(ck), .clock_out(i2s_clock), .locked());
+//    /* verilator lint_on PINCONNECTEMPTY */
+//    localparam I2S_DIVIDER = 16;
+//`endif
+
     wire [5:0] frame_posn;
-    i2s_clock #(.DIVIDER(12)) i2s_out(.ck(ck), 
+    i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), 
             .sck(sck), .ws(ws), .frame_posn(frame_posn));
 
     //  I2S Output
@@ -80,8 +94,7 @@ module audio_engine (
     reg [15:0] left = 0;
     reg [15:0] right = 0;
 
-    i2s_tx tx(.sck(sck), .frame_posn(frame_posn), 
-            .left(left), .right(right), .sd(sd));
+    i2s_tx tx(.sck(sck), .frame_posn(frame_posn), .left(left), .right(right), .sd(sd_out));
 
     //  I2S Input
 
@@ -98,6 +111,7 @@ module audio_engine (
             case (chan)
                 0   :   mic_source = mic_0;
                 1   :   mic_source = mic_1;
+                // TODO : add other channels
                 default : mic_source = 16'h7fff;
             endcase
         end
@@ -105,43 +119,38 @@ module audio_engine (
     endfunction
 
     reg writing = 0;
-    reg [(CHAN_W-1):0] write_addr = 0;
-    reg write_en = 0;
-    reg [15:0] write_data = 0;
+    reg written = 0;
+    reg [(CHAN_W-1):0] chan_addr = 0;
+    wire [(AUDIO_W-1):0] write_addr;
+    wire write_en;
+    wire [15:0] write_data;
 
-    /*
+    assign write_addr = { chan_addr, frame_counter };
+    assign write_data = writing ? mic_source(chan_addr) : 0;
+    assign write_en = writing;
+
     always @(negedge ck) begin
         // Check that the host processor isn't in write mode
         if (!allow_audio_writes) begin
 
-            // Start the writing process
-            if ((frame_posn == 0) && !writing) begin
+            if (ws && (frame_posn == 0)) begin
+                chan_addr <= 0;
                 writing <= 1;
                 frame_counter <= frame_counter + 1;
+            end else begin
+                chan_addr <= chan_addr + 1;
             end
 
-            if (writing) begin
-                write_addr <= write_addr + 1;
+            if (writing && (chan_addr == (CHANNELS-1))) begin
+                writing <= 0;
+                written <= 1;
             end
 
-            //  Write data
-            if (writing) begin
-                if (write_addr == CHANNELS-1) begin
-                    // Last Channel
-                    writing <= 0;
-                    write_en <= 0;
-                    write_data <= 0;
-                end else begin
-                    write_data <= mic_source(write_addr+1);
-                end
-            end
+            if (written)
+                written <= 0;
 
-        end else begin
-            write_en <= 0;
-            write_data <= 0;
         end
     end
-    */
 
     wire [7:0] testx;
     assign test[0] = frame[0];
@@ -167,7 +176,6 @@ module audio_engine (
     // Audio Input data is written into this RAM
     // and read out by the audio engine.
 
-    // TODO : connect I2S Rx to the RAM
     wire audio_we;
     wire [15:0] audio_wdata;
     wire [(AUDIO_W-1):0] audio_waddr;
@@ -179,25 +187,19 @@ module audio_engine (
             .we(audio_we), .waddr(audio_waddr), .wdata(audio_wdata),
             .re(1'h1), .raddr(audio_raddr), .rdata(audio_rdata));
 
-    // allow_audio_writes
     wire input_we;
-    // TODO : allow writes from I2S hardware
-    assign audio_we    = allow_audio_writes ? input_we : 0;
-    assign audio_waddr = allow_audio_writes ? iomem_addr[10:2] : 9'h0;
-    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0] : 16'h0;
+    // allow audio writes from I2S input or from host processor
+    assign audio_we    = allow_audio_writes ? input_we                      : write_en;
+    assign audio_waddr = allow_audio_writes ? iomem_addr[(AUDIO_W+2-1):2]   : write_addr;
+    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0]             : write_data;
 
     // Sequencer
 
-    /* verilator lint_off UNUSED */
     wire [3:0] out_wr_addr;
     wire [15:0] out_audio;
     wire out_we;
     wire error;
-    /* verilator lint_on UNUSED */
 
-    /* verilator lint_off UNUSED */
-    wire [7:0] seq_test;
-    /* verilator lint_on UNUSED */
     wire [31:0] capture;
 
     sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W)) seq (
@@ -210,7 +212,6 @@ module audio_engine (
             .test(testx));
 
     //  Results RAM
-    //  TODO : Also write results to I2S hardware
 
     always @(negedge ck) begin
         if (out_we) begin
@@ -280,7 +281,7 @@ module audio_engine (
 
     always @(posedge ck) begin
         if (status_we)
-            control_reg <= iomem_wdata[6:0];
+            control_reg <= iomem_wdata[(CONTROL_W-1):0];
         if (status_re)
             if (iomem_addr[2])
                 rd_status <= capture;

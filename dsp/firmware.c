@@ -1000,6 +1000,7 @@ void cmd_dave()
     uint32_t x = (~0xabcd) + 1;
     run((0x3456 << 16) + (x & 0xffff));
 
+#if 0
     //  Check multiplier output
     print("Check multiplier output\n");
     clr_audio(0);
@@ -1227,43 +1228,31 @@ void cmd_dave()
     *coef++ = opcode(HALT, 0, 0, 0);
 
     calc(0xfff);
-    /*
-    reset_engine();
-
-    uint32_t *result = ADDR_RESULT;
-    uint32_t v = result[0];
-    ASSERT(v == 0xfff);
-    */
+#endif
 
     //  
     clr_audio(0x7fff);
 
-    verbose = false;
-#if 0
-    while (true)
-    {
-        reset_engine();
-
-        uint32_t *result = ADDR_RESULT;
-        uint32_t v = result[0];
-        //ASSERT(v == 0xfff);
-    }
-#endif
+    verbose = true;
 
     //  End of tests
     print("Tests run okay\n");
 
+    for (int i = 0; i < 32; i++)
+    {
+        int32_t v = (i - 16) * 1000;
+        set_audio(   i, v);
+        set_audio(32+i, -v);
+    }
+
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 0, 0, 1);
     *coef++ = opcode(SAVE, 0, 0, 0);
-    //*coef++ = opcode(MACZ, 0, 1, 1);
-    //*coef++ = opcode(SAVE, 0, 0, 0);
-    //*coef++ = opcode(MACZ, 0, 2, 1);
-    //*coef++ = opcode(SAVE, 0, 0, 0);
-    //*coef++ = opcode(MACZ, 0, 3, 1);
-    //*coef++ = opcode(SAVE, 0, 0, 0);
-    //*coef++ = opcode(HALT, 0, 0, 0);
-    //*coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(MACNZ, 0, 0, 1);
+    *coef++ = opcode(SAVE, 0, 0, 1);
+
+    *coef++ = opcode(HALT, 0, 0, 0);
+    *coef++ = opcode(HALT, 0, 0, 0);
  
     set_control(0); // stop audio writes
     reset_engine();

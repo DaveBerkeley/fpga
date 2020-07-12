@@ -1,16 +1,17 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jul 11 11:49:54 2020
+[*] Sun Jul 12 10:12:07 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Sat Jul 11 11:49:06 2020"
-[dumpfile_size] 1067603
+[dumpfile_mtime] "Sun Jul 12 10:10:22 2020"
+[dumpfile_size] 1354433
 [savefile] "/home/dave/Desktop/git/fpga/dsp/test.gtkw"
-[timestart] 0
+[timestart] 63831000
 [size] 1899 785
 [pos] -1 -1
-*-25.330584 49476000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.007879 64512000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
+[treeopen] tb.engine.
 [sst_width] 196
 [signals_width] 174
 [sst_expanded] 1
@@ -19,24 +20,35 @@
 tb.engine.ck
 tb.engine.reset
 tb.engine.reset
+tb.engine.done
 tb.engine.status_we
 @22
 tb.engine.mic_0[15:0]
 tb.engine.mic_1[15:0]
-@28
+@29
 tb.engine.allow_audio_writes
+@28
 tb.engine.sck
 tb.engine.ws
 @22
 tb.engine.frame_posn[5:0]
+tb.engine.frame[4:0]
+tb.engine.chan_addr[3:0]
+tb.engine.write_addr[8:0]
 @28
 tb.engine.writing
 @22
-tb.engine.write_addr[3:0]
 tb.engine.write_data[15:0]
 @28
 tb.engine.write_en
-@23
+@22
 tb.engine.frame[4:0]
+@28
+tb.engine.audio_in.ck
+@22
+tb.engine.audio_in.waddr[8:0]
+tb.engine.audio_in.wdata[15:0]
+@28
+tb.engine.audio_in.we
 [pattern_trace] 1
 [pattern_trace] 0
