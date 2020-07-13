@@ -1291,6 +1291,20 @@ void cmd_dave()
     *coef++ = halt();
     *coef++ = halt();
  
+#if 0
+    for (int i = 0; i < FRAMES; i++)
+    {
+        set_audio(i, i * 64);
+    }
+
+    while (true)
+    {
+        verbose = 0;
+        reset_engine();
+        print(".");
+    }
+#endif
+
     set_control(0); // stop audio writes
     reset_engine();
     print("loop ..\n");

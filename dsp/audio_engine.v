@@ -49,12 +49,12 @@ module audio_engine (
         if (reset_req || frame_reset_req)
             resetx <= 0;
         else 
-           if (resetx != 2'b11)
+           if (resetx != 2'b10)
                 resetx <= resetx + 1;
     end
 
     wire reset;
-    assign reset = rst && (resetx == 2'b11);
+    assign reset = rst && (resetx == 2'b10);
 
     wire done;
     reg [(FRAME_W-1):0] frame_counter = 0;
@@ -89,7 +89,8 @@ module audio_engine (
 //`endif
 
     wire [5:0] frame_posn;
-    i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), 
+    wire i2s_en;
+    i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), .i2s_en(i2s_en),
             .sck(sck), .ws(ws), .frame_posn(frame_posn));
 
     //  I2S Output
@@ -97,7 +98,7 @@ module audio_engine (
     reg [15:0] left = 0;
     reg [15:0] right = 0;
 
-    i2s_tx tx(.sck(sck), .frame_posn(frame_posn), .left(left), .right(right), .sd(sd_out));
+    i2s_tx tx(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .left(left), .right(right), .sd(sd_out));
 
     //  I2S Input
 
@@ -109,11 +110,9 @@ module audio_engine (
     wire [15:0] write_data;
 
     assign write_addr = { chan_addr, frame_counter };
-    //assign write_data = writing ? mic_source(chan_addr) : 0;
-    assign write_data = 0;
+    assign write_data = writing ? mic_source(chan_addr) : 0;
     assign write_en = writing;
 
-`ifdef XXXX
     wire [15:0] mic_0;
     wire [15:0] mic_1;
     //wire [15:0] mic_2;
@@ -123,7 +122,7 @@ module audio_engine (
     //wire [15:0] mic_6;
     //wire [15:0] mic_7;
 
-    i2s_rx rx_0(.sck(sck), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
+    i2s_rx rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
     //i2s_rx rx_1(.sck(sck), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
     //i2s_rx rx_2(.sck(sck), .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
     //i2s_rx rx_3(.sck(sck), .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
@@ -131,7 +130,7 @@ module audio_engine (
     //  Write Input data to the Audio RAM
 
     function [15:0] mic_source(input [(CHAN_W-1):0] chan);
-    
+ 
         begin
             case (chan)
                 0   :   mic_source = mic_0;
@@ -170,7 +169,6 @@ module audio_engine (
 
         end
     end
-`endif
 
     assign test[0] = frame[0];
 
@@ -207,9 +205,9 @@ module audio_engine (
 
     wire input_we;
     // allow audio writes from I2S input or from host processor
-    assign audio_we    = allow_audio_writes ? input_we                      : 0; //write_en;
-    assign audio_waddr = allow_audio_writes ? iomem_addr[(AUDIO_W+2-1):2]   : 0; //write_addr;
-    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0]             : 0; //write_data;
+    assign audio_we    = allow_audio_writes ? input_we                      : write_en;
+    assign audio_waddr = allow_audio_writes ? iomem_addr[(AUDIO_W+2-1):2]   : write_addr;
+    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0]             : write_data;
 
     // Sequencer
 

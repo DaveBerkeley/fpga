@@ -30,14 +30,14 @@ module top ();
     task write(input [31:0] addr);
 
         begin
-            @(negedge ck);
+            @(posedge ck);
             iomem_valid <= 1;
             iomem_wstrb <= 4'hf;
             iomem_addr <= addr;
-            @(negedge ck);
-            @(negedge ck);
-            @(negedge ck);
-            @(negedge ck);
+            @(posedge ck);
+            @(posedge ck);
+            @(posedge ck);
+            @(posedge ck);
         end
 
     endtask
@@ -45,21 +45,21 @@ module top ();
     task read(input [31:0] addr, input [31:0] data);
 
         begin
-            @(negedge ck);
+            @(posedge ck);
             iomem_valid <= 1;
             iomem_wstrb <= 4'h0;
             iomem_addr <= addr;
             @(posedge ck);
             iomem_data <= data;
-            @(negedge ck);
-            @(negedge ck);
-            @(negedge ck);
-            @(negedge ck);
+            @(posedge ck);
+            @(posedge ck);
+            @(posedge ck);
+            @(posedge ck);
         end
 
     endtask
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         if (ready) begin
             iomem_valid <= 0;
             iomem_wstrb <= 4'h0;

@@ -1,6 +1,7 @@
 
 module i2s_rx(
-    input wire sck, // I2S sck
+    input wire ck,
+    input wire en, // I2S sck en
     input wire [5:0] frame_posn,
     input wire sd,  // I2S data in
     output reg [15:0] left, 
@@ -16,23 +17,22 @@ initial right = 0;
 // shift the microphone data into 16-bit shift register. 
 reg [15:0] shift = 0;
 
-always @(posedge sck) begin
-    shift <= { shift[14:0], sd };
-end
-
-// copy the shift-register state to the Left/Right latches
-// at the end of the 16 significant bits.
-
-parameter EOW = 17;
+parameter EOW = 18;
 parameter WORD_LEN = 32;
 
-always @(negedge sck) begin
+always @(posedge ck) begin
 
-    if (frame_posn == EOW)
-        left <= shift;
+    if (en) begin
 
-    if (frame_posn == (EOW+WORD_LEN))
-        right <= shift;
+        shift <= { shift[14:0], sd };
+
+        if (frame_posn == EOW)
+            left <= shift;
+
+        if (frame_posn == (EOW+WORD_LEN))
+            right <= shift;
+
+    end
 
 end
 

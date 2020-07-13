@@ -9,7 +9,7 @@ DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
 
-TB_SRC = $(filter-out pll.v, $(ADD_SRC))
+TB_SRC = $(filter-out pll.v, $(ADD_SRC)) i2s_secondary.v
 
 include ../main.mk
 
