@@ -101,6 +101,19 @@ module audio_engine (
 
     //  I2S Input
 
+    reg writing = 0;
+    reg frame_reset_req = 0;
+    reg [(CHAN_W-1):0] chan_addr = 0;
+    wire [(AUDIO_W-1):0] write_addr;
+    wire write_en;
+    wire [15:0] write_data;
+
+    assign write_addr = { chan_addr, frame_counter };
+    //assign write_data = writing ? mic_source(chan_addr) : 0;
+    assign write_data = 0;
+    assign write_en = writing;
+
+`ifdef XXXX
     wire [15:0] mic_0;
     wire [15:0] mic_1;
     //wire [15:0] mic_2;
@@ -135,17 +148,6 @@ module audio_engine (
 
     endfunction
 
-    reg writing = 0;
-    reg frame_reset_req = 0;
-    reg [(CHAN_W-1):0] chan_addr = 0;
-    wire [(AUDIO_W-1):0] write_addr;
-    wire write_en;
-    wire [15:0] write_data;
-
-    assign write_addr = { chan_addr, frame_counter };
-    assign write_data = writing ? mic_source(chan_addr) : 0;
-    assign write_en = writing;
-
     always @(negedge ck) begin
         // Check that the host processor isn't in write mode
         if (!allow_audio_writes) begin
@@ -168,10 +170,9 @@ module audio_engine (
 
         end
     end
+`endif
 
-    wire [7:0] testx;
     assign test[0] = frame[0];
-    assign test[7:1] = testx[7:1];
 
     //  Drive the engine
 
@@ -206,9 +207,9 @@ module audio_engine (
 
     wire input_we;
     // allow audio writes from I2S input or from host processor
-    assign audio_we    = allow_audio_writes ? input_we                      : write_en;
-    assign audio_waddr = allow_audio_writes ? iomem_addr[(AUDIO_W+2-1):2]   : write_addr;
-    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0]             : write_data;
+    assign audio_we    = allow_audio_writes ? input_we                      : 0; //write_en;
+    assign audio_waddr = allow_audio_writes ? iomem_addr[(AUDIO_W+2-1):2]   : 0; //write_addr;
+    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0]             : 0; //write_data;
 
     // Sequencer
 
@@ -225,8 +226,7 @@ module audio_engine (
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
             .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
             .done(done), .error(error), 
-            .capture_out(capture),
-            .test(testx));
+            .capture_out(capture));
 
     //  Results RAM
 

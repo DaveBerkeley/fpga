@@ -26,12 +26,15 @@ endmodule
     *
     */
 
-module twos_complement(input wire ck, input wire [15:0] in, output reg [15:0] out);
+module twos_complement(input wire ck, input wire inv, input wire [15:0] in, output reg [15:0] out);
 
     initial out = 0;
 
     always @(negedge ck) begin
-        out <= (~in) + 1'b1;
+        if (inv)
+            out <= (~in) + 1'b1;
+        else
+            out <= in;
     end
 
 endmodule
@@ -53,8 +56,7 @@ module sequencer(
     output wire [3:0] out_addr,
     output wire [15:0] out_audio,
     output reg out_we,
-    output reg [31:0] capture_out,
-    output wire [7:0] test
+    output reg [31:0] capture_out
 );
     parameter CHAN_W = 4;
     parameter FRAME_W = 4;
@@ -163,9 +165,9 @@ module sequencer(
     // Decode the instructions
     always @(negedge ck) begin
         if (reset) begin
-            casez (op_code)
+            case (op_code)
                 7'b000_0000 : noop();       // No-op
-                7'b001_???? : capture(op_code[3:0]); // Capture
+                7'b001_0000 : capture(offset[3:0]); // Capture
                 7'b100_0000 : mac(0, 1);    // MAC 
                 7'b100_0001 : mac(0, 0);    // MACN
                 7'b100_0010 : mac(1, 1);    // MACZ
@@ -201,35 +203,33 @@ module sequencer(
     // If the audio is -ve, make it signed
     // But use subtract at the accumulator stage
 
-    reg negative = 0;
-
-    // test top bit of audio for -ve value
-    always @(negedge ck) begin
-        negative <= audio_in[15];
-    end
-
     reg [15:0] gain_1;
-    reg [15:0] audio_0;
 
     always @(negedge ck) begin
         gain_1 <= gain_0;
-        audio_0 <= audio_in;
     end
 
-    wire [15:0] neg_audio;
-
-    twos_complement neg(.ck(ck), .in(audio_in), .out(neg_audio));
+    // test top bit of audio for -ve value
+    wire neg_audio;
+    assign neg_audio = audio_in[15];
 
     wire [15:0] audio;
 
-    assign audio = negative ? neg_audio : audio_0;
+    twos_complement neg(.ck(ck), .inv(neg_audio), .in(audio_in), .out(audio));
+
+    // pipeline the sign change to apply at the accumulator stage
+    reg negative = 0;
+
+    always @(negedge ck) begin
+        negative <= neg_audio;
+    end
 
     // Pipeline t4
-    // Multiply audio signal by gain
+    // Multiply normalised audio signal by gain
 
     wire [31:0] mul_out;
 
-    multiplier mul(.ck(!ck), .a(gain_1), .b(audio), .out(mul_out));
+    multiplier mul(.ck(ck), .a(gain_1), .b(audio), .out(mul_out));
 
     // Pipeline t5
     // Acumulator Stage
@@ -297,7 +297,5 @@ module sequencer(
 
     pipe #(.LENGTH(3)) pipe_done (.ck(ck), .rst(reset), .in(done_req), .out(done));
 
-    assign test = { ck, error, done, reset, out_we, acc_reset, acc_en, acc_add };
- 
 endmodule
 

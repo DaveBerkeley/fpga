@@ -10,11 +10,16 @@ module multiplier(
     output reg [31:0] out
 );
 
-    reg [31:0] result;
+    reg [15:0] in_a;
+    reg [15:0] in_b;
+
+    always @(posedge ck) begin
+        in_a <= a;
+        in_b <= b;
+    end
 
     always @(negedge ck) begin
-        result <= a * b;
-        out <= result;
+        out <= in_a * in_b;
     end
 
 endmodule

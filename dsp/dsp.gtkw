@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jul 11 11:58:39 2020
+[*] Mon Jul 13 08:34:12 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Sat Jul 11 11:57:51 2020"
-[dumpfile_size] 1067603
+[dumpfile_mtime] "Mon Jul 13 08:32:08 2020"
+[dumpfile_size] 564585
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp.gtkw"
-[timestart] 3826000
+[timestart] 3118000
 [size] 1918 791
 [pos] -1 -1
-*-17.683033 3822000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.683033 3528000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.engine.
 [treeopen] tb.engine.seq.
@@ -32,7 +32,7 @@ tb.engine.coef.wdata[31:0]
 tb.engine.seq.reset
 tb.engine.coef.ck
 @22
-tb.engine.seq.frame[4:0]
+tb.engine.frame[5:0]
 tb.engine.seq.audio_in[15:0]
 @c00022
 tb.engine.seq.coef_addr[7:0]
@@ -47,25 +47,22 @@ tb.engine.seq.coef_addr[7:0]
 (7)tb.engine.seq.coef_addr[7:0]
 @1401200
 -group_end
-@23
-tb.engine.seq.coef_data[31:0]
 @22
+tb.engine.seq.coef_data[31:0]
 tb.engine.seq.op_code[6:0]
-tb.engine.seq.offset[4:0]
-tb.engine.seq.chan[3:0]
 tb.engine.seq.gain[15:0]
+@23
+tb.engine.seq.offset[5:0]
+@22
 tb.engine.seq.audio_raddr[8:0]
-tb.engine.seq.adder.chan[3:0]
-tb.engine.seq.adder.offset[4:0]
+tb.engine.audio_waddr[8:0]
 @28
 tb.engine.seq.done_req
 @22
 tb.engine.seq.audio_in[15:0]
-tb.engine.seq.audio_0[15:0]
 @28
 tb.engine.seq.negative
 @22
-tb.engine.seq.neg_audio[15:0]
 tb.engine.seq.audio[15:0]
 tb.engine.seq.mul.a[15:0]
 tb.engine.seq.mul.b[15:0]
@@ -82,7 +79,6 @@ tb.engine.seq.acc_out[39:0]
 tb.engine.seq.out_en_req
 tb.engine.seq.shift_en
 @22
-tb.engine.seq.shift_2[4:0]
 tb.engine.seq.out_addr[3:0]
 @28
 tb.engine.seq.out_we
@@ -98,6 +94,5 @@ tb.engine.seq.capture_out[31:0]
 @28
 tb.engine.sck
 tb.engine.ws
-tb.engine.sd
 [pattern_trace] 1
 [pattern_trace] 0
