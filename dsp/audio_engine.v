@@ -45,7 +45,7 @@ module audio_engine (
 
     reg [1:0] resetx = 0;
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         if (reset_req || frame_reset_req)
             resetx <= 0;
         else 
@@ -148,7 +148,7 @@ module audio_engine (
 
     endfunction
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         // Check that the host processor isn't in write mode
         if (!allow_audio_writes) begin
 
@@ -230,7 +230,7 @@ module audio_engine (
 
     //  Results RAM
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         if (out_we) begin
             if (out_wr_addr[0] == 0)
                 left <= out_audio;
@@ -261,7 +261,7 @@ module audio_engine (
 
     reg reset_req = 0;
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         reset_req <= reset_en;
     end
 

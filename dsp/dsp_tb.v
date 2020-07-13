@@ -145,10 +145,12 @@ module tb ();
         write(i, 32'h802989ab); i += 4;
         write(i, 32'h80311234); i += 4;
         write(i, 32'h80391111); i += 4;
+        write(i, 32'ha0000001); i += 4;
         write(i, 32'h00000000); i += 4;
         write(i, 32'h00000000); i += 4;
         write(i, 32'h00000000); i += 4;
-        write(i, 32'h20280000); i += 4;
+        write(i, 32'h00000000); i += 4;
+        write(i, 32'h20300000); i += 4;
         write(i, 32'hfe000000); i += 4;
         write(i, 32'hfe000000); i += 4;
 
@@ -160,6 +162,10 @@ module tb ();
 
         // Write to audio RAM
         i = 32'h64000000;
+        write(i + 0, 32'h0000ffff);
+        write(i + 4, 32'h0000fffe);
+        write(i + 8, 32'h0000fffd);
+
         write(i + (30'h44 << 2), 32'h00001111);
         write(i + (30'h45 << 2), 32'h00001234);
         write(i + (30'h46 << 2), 32'h0000abcd);

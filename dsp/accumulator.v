@@ -16,9 +16,9 @@ module accumulator(
 
     initial out = 0;
 
+    // normalise the input as a 40-bit signed +ve number
     wire [(OUT_W-33):0] zeros;
-    wire [(OUT_W-1):0] to_add;
-
+    wire signed [(OUT_W-1):0] to_add;
     assign zeros = 0;
     assign to_add = { zeros, in };
 
@@ -26,7 +26,7 @@ module accumulator(
 
     assign prev = rst ? 0 : out;
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         if (en) begin
             if (add)
                 out <= prev + to_add;

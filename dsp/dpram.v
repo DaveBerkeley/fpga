@@ -18,11 +18,8 @@ module dpram
     always @(posedge ck) begin
         if (we)
             ram[waddr] <= wdata;
-
         if (re)
             rdata <= ram[raddr];
-        else
-            rdata <= 0;
     end
 
 endmodule 

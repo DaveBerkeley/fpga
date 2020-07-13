@@ -745,7 +745,7 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
             case 2 : print(" mul in a/b"); break;
             case 3 : print(" mul out"); break;
             case 5 : print(" acc out"); break;
-            case 6 : print(" audio out"); break;
+            case 6 : print(" out addr / audio"); break;
             case 7 : print(" trace"); break;
         }
     } else {
@@ -965,6 +965,7 @@ void cmd_dave()
             const int idx = (chan * FRAMES) + offset;
             coef = ADDR_COEF;
             *coef++ = opcode(MACZ, offset, chan, 0x1234);
+            *coef++ = noop();
             *coef++ = capture(1); // audio in/addr
             *coef++ = halt();
             *coef++ = halt();
@@ -975,6 +976,7 @@ void cmd_dave()
         }
     }
 
+    verbose = 0;
     //  Check multiplier input
     print("Check multiplier input\n");
     clr_audio(0);
@@ -983,6 +985,7 @@ void cmd_dave()
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 4, 1, 0x3456);
     *coef++ = opcode(NOOP, 0, 0, 0);
+    *coef++ = noop();
     *coef++ = capture(2); // mul input gain/audio
     *coef++ = halt();
     *coef++ = halt();
@@ -990,18 +993,22 @@ void cmd_dave()
     run(0x34561234);
 
     //  Check multiplier input
-    print("Check multiplier input with -ve audio\n");
+    print("Check multiplier input with -ve audio 2\n");
     clr_audio(0);
-    set_audio(FRAMES+4, 0xabcd);
+    set_audio(4 + (1 * FRAMES), 0x1111);
+    set_audio(5 + (1 * FRAMES), 0x1234);
+    set_audio(6 + (1 * FRAMES), 0xabcd);
 
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 4, 1, 0x3456);
+    *coef++ = opcode(MAC, 5, 1, 0x4545);
+    *coef++ = noop();
     *coef++ = noop();
     *coef++ = capture(2); // mul input gain/audio
     *coef++ = halt();
     *coef++ = halt();
 
-    run((0x3456 << 16) + twoc(0xabcd));
+    run((0x4545 << 16) + 0x1234);
 
     //  Check multiplier output
     print("Check multiplier output\n");
@@ -1014,6 +1021,7 @@ void cmd_dave()
     *coef++ = opcode(MACZ, 4, 1, 2);
     *coef++ = opcode(MAC, 5, 1, 0x89ab);
     *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = noop();
     *coef++ = capture(3); // mul output
     *coef++ = halt();
     *coef++ = halt();
@@ -1031,11 +1039,12 @@ void cmd_dave()
     *coef++ = opcode(MACZ, 4, 1, 0x2000);
     *coef++ = opcode(MAC, 5, 1, 0x89ab);
     *coef++ = opcode(MAC, 6, 1, 0x1234);
+    *coef++ = noop();
     *coef++ = capture(3); // mul output
     *coef++ = halt();
     *coef++ = halt();
 
-    const uint32_t m1 = 0x1111 * 0x2000;
+    const uint64_t m1 = 0x1111 * 0x2000;
     run(m1);
 
     //  Check multiplier output 3
@@ -1050,11 +1059,12 @@ void cmd_dave()
     *coef++ = opcode(MAC, 5, 1, 0x89ab);
     *coef++ = opcode(MAC, 6, 1, 0x1234);
     *coef++ = noop();
+    *coef++ = noop();
     *coef++ = capture(3); // mul output
     *coef++ = halt();
     *coef++ = halt();
 
-    const uint32_t m2 = 0x89ab * 0x1234;
+    const uint64_t m2 = 0x89ab * 0x1234;
     run(m2);
 
     //  Check multiplier output 4
@@ -1063,6 +1073,7 @@ void cmd_dave()
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
     set_audio(6 + (1 * FRAMES), 0xabcd); // -ve input!
+    set_audio(7 + (1 * FRAMES), 0x2222);
 
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 4, 1, 0x2000);
@@ -1070,12 +1081,12 @@ void cmd_dave()
     *coef++ = opcode(MAC, 6, 1, 0x1234);
     *coef++ = noop();
     *coef++ = noop();
+    *coef++ = noop();
     *coef++ = capture(3); // mul output
     *coef++ = halt();
     *coef++ = halt();
 
-    // -ve audio inverted before multiplier stage
-    const uint32_t m3 = 0x1234 * twoc(0xabcd);
+    const uint64_t m3 = 0x1234 * twoc(0xabcd);
     run(m3);
 
     //  Check accumulator output
@@ -1091,6 +1102,7 @@ void cmd_dave()
     *coef++ = opcode(MAC, 5, 1, 0x89ab);
     *coef++ = opcode(MAC, 6, 1, 0x1234);
     *coef++ = opcode(MAC, 7, 1, 0x1111);
+    *coef++ = noop();
     *coef++ = capture(5); // acc output
     *coef++ = halt();
     *coef++ = halt();
@@ -1111,10 +1123,20 @@ void cmd_dave()
     *coef++ = opcode(MAC, 6, 1, 0x1234);
     *coef++ = opcode(MAC, 7, 1, 0x1111);
     *coef++ = noop();
+    *coef++ = noop();
     *coef++ = capture(5); // acc output
     *coef++ = halt();
     *coef++ = halt();
 
+    if (verbose)
+    {
+        print_hex(m1, 8);
+        print(" + ");
+        print_hex(m2, 8);
+        print(" = ");
+        print_hex(m1+m2, 8);
+        print("\n");
+    }
     run(m1 + m2);
 
     //  Check accumulator output 3
@@ -1132,10 +1154,22 @@ void cmd_dave()
     *coef++ = opcode(MAC, 7, 1, 0x1111);
     *coef++ = noop();
     *coef++ = noop();
+    *coef++ = noop();
     *coef++ = capture(5); // acc output
     *coef++ = halt();
     *coef++ = halt();
 
+    if (verbose)
+    {
+        print_hex(m1, 8);
+        print(" + ");
+        print_hex(m2, 8);
+        print(" - ");
+        print_hex(m3, 8);
+        print(" = ");
+        print_hex(m1+m2-m3, 8);
+        print("\n");
+    }
     run(m1 + m2 - m3);
 
     //  Check accumulator output 4
@@ -1151,6 +1185,7 @@ void cmd_dave()
     *coef++ = opcode(MAC, 5, 1, 0x89ab);
     *coef++ = opcode(MAC, 6, 1, 0x1234);
     *coef++ = opcode(MAC, 7, 1, 0x1111);
+    *coef++ = noop();
     *coef++ = noop();
     *coef++ = noop();
     *coef++ = noop();
@@ -1189,6 +1224,7 @@ void cmd_dave()
             *coef++ = opcode(MAC, 6, 1, 0x1234);
             *coef++ = opcode(MAC, 7, 1, 0x1111);
             *coef++ = opcode(SAVE, shift, 0, addr);
+            *coef++ = noop();
             *coef++ = noop();
             *coef++ = noop();
             *coef++ = noop();

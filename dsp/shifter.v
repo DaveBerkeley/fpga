@@ -12,7 +12,7 @@ module shifter
     output reg [15:0] out
 );
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         if (en) begin
             case (shift)
                  0 : out <= in[15:0];
