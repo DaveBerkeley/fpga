@@ -83,7 +83,7 @@ module sequencer(
     // Program Counter : fetch the opcodes / coefficients
  
     always @(posedge ck) begin
-        if (reset)
+        if (reset && !done_req)
             coef_addr <= coef_addr + 1;
         else
             coef_addr <= 0;
@@ -92,7 +92,9 @@ module sequencer(
     // Pipeline t1
     // Latch the op-code, offset, chan and gain
 
-    reg [6:0] op_code;
+    localparam OP_W = 16 - (CHAN_W + FRAME_W);
+
+    reg [(OP_W-1):0] op_code;
     reg [(FRAME_W-1):0] offset;
     reg [(CHAN_W-1):0] chan;
     reg [15:0] gain;
@@ -155,11 +157,14 @@ module sequencer(
         audio_raddr_0 <= audio_raddr;
     end
 
+    wire [(16-AUDIO_W-1):0] pad;
+    assign pad = 0;
+
     task capture(input [3:0] code);
         noop();
         case (code)
             0 : capture_out <= coef_data; // the next instructon
-            1 : capture_out <= { audio_in, 7'h0, audio_raddr_0 }; 
+            1 : capture_out <= { audio_in, pad, audio_raddr_0 }; 
             2 : capture_out <= { gain_2, audio }; // multiplier in
             3 : capture_out <= mul_out; // multiplier out
 
@@ -169,19 +174,28 @@ module sequencer(
         endcase
     endtask
 
+    localparam OP_NOOP      = 4'b0000;
+    localparam OP_CAPTURE   = 4'b0001;
+    localparam OP_SAVE      = 4'b0010;
+    localparam OP_MAC       = 4'b1000;
+    localparam OP_MACZ      = 4'b1001;
+    localparam OP_MACN      = 4'b1010;
+    localparam OP_MACNZ     = 4'b1011;
+    localparam OP_HALT      = 4'b1111;
+
     // Decode the instructions
     always @(posedge ck) begin
         if (reset) begin
             case (op_code)
-                7'b000_0000 : noop();       // No-op
-                7'b001_0000 : capture(offset[3:0]); // Capture
-                7'b100_0000 : mac(0, 1);    // MAC 
-                7'b100_0001 : mac(0, 0);    // MACN
-                7'b100_0010 : mac(1, 1);    // MACZ
-                7'b100_0011 : mac(1, 0);    // MACNZ
-                7'b101_0000 : save();       // shift / save / output the result
-                7'b111_1111 : halt();       // halt
-                default     : err();        // Error
+                OP_NOOP     : noop();
+                OP_CAPTURE  : capture(offset[3:0]);
+                OP_MAC      : mac(0, 1);
+                OP_MACN     : mac(0, 0);
+                OP_MACZ     : mac(1, 1);
+                OP_MACNZ    : mac(1, 0);
+                OP_SAVE     : save();
+                OP_HALT     : halt();
+                default     : err();
             endcase
         end else begin
             noop();

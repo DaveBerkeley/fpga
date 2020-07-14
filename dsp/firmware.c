@@ -708,18 +708,18 @@ void cmd_echo()
 #define AUDIO_ITEMS 512
 #define CHANNELS    8
 #define CHAN_W      3
-#define FRAMES      64
-#define OFFSET_W    6
+#define FRAMES      256
+#define OFFSET_W    8
 
 enum Opcode {
-    HALT    = 0x7f,
-    CAPTURE = 0x10,
-    MAC     = 0x40,
-    MACZ    = 0x42,
-    MACN    = 0x41,
-    MACNZ   = 0x43,
-    SAVE    = 0x50,
-    NOOP    = 0x00,
+    HALT    = 0xf,
+    CAPTURE = 0x1,
+    MAC     = 0x8,
+    MACZ    = 0x9,
+    MACN    = 0xa,
+    MACNZ   = 0xb,
+    SAVE    = 0x2,
+    NOOP    = 0x0,
 };
 
 bool verbose = false;
@@ -735,8 +735,21 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
     print_hex(value, 8);
     print(" ");
 
-    if ((opcode & 0x70) == CAPTURE) {
-        print("CAPT ");
+    switch (opcode)
+    {
+        case HALT   :   print("HALT "); break;
+        case CAPTURE:   print("CAPT "); break;
+        case MAC    :   print("MAC  "); break;
+        case MACZ   :   print("MACZ "); break;
+        case MACN   :   print("MACN "); break;
+        case MACNZ  :   print("MACNZ"); break;
+        case SAVE   :   print("SAVE "); break;
+        case NOOP   :   print("NOOP "); break;
+        default     :   print("ERROR"); break;
+    }
+
+    if (opcode == CAPTURE)
+    {
         print_hex(offset, 1);
         switch (offset)
         {
@@ -748,21 +761,7 @@ uint32_t opcode(uint8_t opcode, uint8_t offset, uint8_t chan, uint32_t gain)
             case 6 : print(" out addr / audio"); break;
             case 7 : print(" trace"); break;
         }
-    } else {
-        switch (opcode)
-        {
-            case HALT   :   print("HALT "); break;
-            //case CAPTURE:   print("CAPT "); break;
-            case MAC    :   print("MAC  "); break;
-            case MACZ   :   print("MACZ "); break;
-            case MACN   :   print("MACN "); break;
-            case MACNZ  :   print("MACNZ"); break;
-            case SAVE   :   print("SAVE "); break;
-            case NOOP   :   print("NOOP "); break;
-            default     :   print("ERROR"); break;
-        }
     }
-
     if ((opcode == MAC) || (opcode == MACZ) || (opcode == MACN) || (opcode == MACNZ))
     {
         print("offset=");

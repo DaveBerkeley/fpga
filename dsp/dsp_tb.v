@@ -126,14 +126,14 @@ module tb ();
         // Setup the coefficient RAM
         i = 32'h60000000;
 
-        write(i, 32'h84000004); i += 4;
-        write(i, 32'h80010004); i += 4;
-        write(i, 32'ha0180000); i += 4;
-        write(i, 32'h84010008); i += 4;
-        write(i, 32'h82000008); i += 4;
-        write(i, 32'ha0200001); i += 4;
-        write(i, 32'hfe000000); i += 4;
-        write(i, 32'hfe000000); i += 4;
+        write(i, 32'h48000004); i += 4;
+        write(i, 32'h40010004); i += 4;
+        write(i, 32'h10180000); i += 4;
+        write(i, 32'h48010008); i += 4;
+        write(i, 32'h50000008); i += 4;
+        write(i, 32'h10200001); i += 4;
+        write(i, 32'h78000000); i += 4;
+        write(i, 32'h78000000); i += 4;
 
         i = 32'h60000000;
         read(i);

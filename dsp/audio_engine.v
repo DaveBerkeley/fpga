@@ -33,7 +33,7 @@ module audio_engine (
     localparam ADDR_INPUT  = ADDR + 16'h0400;
 
     localparam CHANNELS = 8;
-    localparam FRAMES = 64;
+    localparam FRAMES = 256;
     localparam CODE = 256;
     localparam CHAN_W = $clog2(CHANNELS);
     localparam FRAME_W = $clog2(FRAMES);
@@ -218,7 +218,7 @@ module audio_engine (
 
     wire [31:0] capture;
 
-    sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W)) seq (
+    sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W), .AUDIO_W(AUDIO_W)) seq (
             .ck(ck), .rst(reset), .frame(frame),
             .coef_addr(coef_raddr), .coef_data(coef_rdata), 
             .audio_raddr(audio_raddr), .audio_in(audio_rdata),
