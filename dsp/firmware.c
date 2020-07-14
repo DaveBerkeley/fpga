@@ -1280,30 +1280,16 @@ void cmd_dave()
 
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 0, 0, 4);
-    *coef++ = opcode(MAC,  0, 1, 4);
-    *coef++ = opcode(SAVE, 3 + atten, 0, 0);
+    //*coef++ = opcode(MAC,  0, 1, 4);
+    *coef++ = opcode(SAVE, 2 + atten, 0, 0);
 
     *coef++ = opcode(MACZ, 0, 1, 8);
-    *coef++ = opcode(MACN, 0, 0, 8);
-    *coef++ = opcode(SAVE, 4 + atten, 0, 1);
+    //*coef++ = opcode(MACN, 0, 0, 8);
+    *coef++ = opcode(SAVE, 3 + atten, 0, 1);
 
     *coef++ = halt();
     *coef++ = halt();
  
-#if 0
-    for (int i = 0; i < FRAMES; i++)
-    {
-        set_audio(i, i * 64);
-    }
-
-    while (true)
-    {
-        verbose = 0;
-        reset_engine();
-        print(".");
-    }
-#endif
-
     set_control(0); // stop audio writes
     reset_engine();
     print("loop ..\n");

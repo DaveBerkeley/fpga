@@ -76,21 +76,13 @@ module audio_engine (
 
     wire i2s_clock;
 
-//`ifdef SIMULATION
-    // Divide the 12Mhz clock down to 2MHz
-    localparam I2S_DIVIDER = 6;
+    // Divide the 12Mhz clock down to 3MHz
+    localparam I2S_DIVIDER = 4;
     assign i2s_clock = ck;
-//`else
-//    // 45.16 MHz PLL clock derived from ck_12mhz clock input
-//    /* verilator lint_off PINCONNECTEMPTY */
-//    pll clock(.clock_in(ck), .clock_out(i2s_clock), .locked());
-//    /* verilator lint_on PINCONNECTEMPTY */
-//    localparam I2S_DIVIDER = 16;
-//`endif
 
     wire [5:0] frame_posn;
     wire i2s_en;
-    i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), .i2s_en(i2s_en),
+    i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), .en(i2s_en),
             .sck(sck), .ws(ws), .frame_posn(frame_posn));
 
     //  I2S Output

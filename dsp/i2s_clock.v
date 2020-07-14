@@ -2,10 +2,10 @@
 module i2s_clock
 # (parameter DIVIDER=12)
 (
-    input wire ck,      // system clock
-    output reg i2s_en,  // I2S enable
-    output reg sck,     // I2S clock
-    output reg ws,      // I2S WS
+    input wire ck,  // system clock
+    output reg en,  // I2S enable
+    output reg sck, // I2S clock
+    output reg ws,  // I2S WS
     output reg [5:0] frame_posn // 64 clock counter for complete L/R frame
 );
 
@@ -15,7 +15,7 @@ module i2s_clock
 
     // 64 clock counter for complete L/R frame
     initial frame_posn = 0;
-    initial i2s_en = 0;
+    initial en = 0;
     initial ws = 0;
     initial sck = 0;
 
@@ -24,10 +24,10 @@ module i2s_clock
         if (prescale == (DIVIDER-1)) begin
             prescale <= 0;
             frame_posn <= frame_posn + 1;
-            i2s_en <= 1;
+            en <= 1;
         end else begin
             prescale <= prescale + 1;
-            i2s_en <= 0;
+            en <= 0;
         end
 
         sck <= (prescale >= (DIVIDER/2)) ? 1 : 0;

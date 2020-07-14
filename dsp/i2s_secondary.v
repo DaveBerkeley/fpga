@@ -25,7 +25,7 @@ module i2s_secondary
 
     always @(posedge ck) begin
         prev_ws <= ws;
-        prev_sck = sck;
+        prev_sck <= sck;
     end    
 
     // These signals are both delayed by one clock
