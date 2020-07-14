@@ -174,14 +174,14 @@ module sequencer(
         endcase
     endtask
 
-    localparam OP_NOOP      = 4'b0000;
-    localparam OP_CAPTURE   = 4'b0001;
-    localparam OP_SAVE      = 4'b0010;
-    localparam OP_MAC       = 4'b1000;
-    localparam OP_MACZ      = 4'b1001;
-    localparam OP_MACN      = 4'b1010;
-    localparam OP_MACNZ     = 4'b1011;
-    localparam OP_HALT      = 4'b1111;
+    localparam OP_NOOP      = 5'b00000;
+    localparam OP_CAPTURE   = 5'b00001;
+    localparam OP_SAVE      = 5'b00010;
+    localparam OP_MAC       = 5'b01000;
+    localparam OP_MACZ      = 5'b01001;
+    localparam OP_MACN      = 5'b01010;
+    localparam OP_MACNZ     = 5'b01011;
+    localparam OP_HALT      = 5'b01111;
 
     // Decode the instructions
     always @(posedge ck) begin

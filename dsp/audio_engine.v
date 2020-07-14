@@ -17,10 +17,12 @@ module audio_engine (
     output wire sck, // I2S clock
     output wire ws,  // I2S word select
     output wire sd_out,  // I2S data out
-    output wire sd_in0,  // I2S data in
-    output wire sd_in1,  // I2S data in
-    output wire sd_in2,  // I2S data in
-    output wire sd_in3,  // I2S data in
+    input wire sd_in0,  // I2S data in
+    input wire sd_in1,  // I2S data in
+    /* verilator lint_off UNUSED */
+    input wire sd_in2,  // I2S data in
+    input wire sd_in3,  // I2S data in
+    /* verilator lint_off UNUSED */
     output wire [7:0] test
 );
 
@@ -76,8 +78,8 @@ module audio_engine (
 
     wire i2s_clock;
 
-    // Divide the 12Mhz clock down to 3MHz
-    localparam I2S_DIVIDER = 4;
+    // Divide the 12Mhz clock down to 2MHz
+    localparam I2S_DIVIDER = 6;
     assign i2s_clock = ck;
 
     wire [5:0] frame_posn;
@@ -151,10 +153,12 @@ module audio_engine (
                 chan_addr <= chan_addr + 1;
             end
 
+            /* verilator lint_off WIDTH */
             if (writing && (chan_addr == (CHANNELS-1))) begin
                 writing <= 0;
                 frame_reset_req <= 1;
             end
+            /* verilator lint_on WIDTH */
 
             if (frame_reset_req)
                 frame_reset_req <= 0;
@@ -162,7 +166,7 @@ module audio_engine (
         end
     end
 
-    assign test[0] = frame[0];
+    assign test = frame;
 
     //  Drive the engine
 

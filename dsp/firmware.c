@@ -901,17 +901,17 @@ void cmd_dave()
     uint32_t gain = 1024;
     uint32_t g1_3 = (1 * gain) / 4;
     uint32_t g2_3 = (1 * gain) / 2;
-    uint32_t shift = 11;
+    uint32_t shift = 11-2;
 
     *coef++ = opcode(MACZ, 0, 1, gain);
     *coef++ = opcode(MAC,  0, 0, g2_3);
     *coef++ = opcode(MAC,  0, 3, g1_3);
-    *coef++ = opcode(SAVE, shift, 0, 0);
+    *coef++ = opcode(SAVE, shift, 0, 1);
 
     *coef++ = opcode(MACZ, 0, 2, gain);
     *coef++ = opcode(MAC,  0, 3, g2_3);
     *coef++ = opcode(MAC,  0, 0, g1_3);
-    *coef++ = opcode(SAVE, shift, 0, 1);
+    *coef++ = opcode(SAVE, shift, 0, 0);
 
     *coef++ = halt();
     *coef++ = halt();
