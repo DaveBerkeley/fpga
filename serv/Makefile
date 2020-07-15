@@ -1,4 +1,6 @@
 
+CROSS=riscv32-unknown-elf-
+
 #SERV=/home/dave/Desktop/serv
 SERVANT=$(SERV)/servant
 CORE=$(SERV)/rtl
@@ -15,7 +17,7 @@ DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
 
-FILES=$(SERVANT)/servant.v
+FILES =$(SERVANT)/servant.v
 FILES+=$(SERVANT)/service.v
 FILES+=$(SERVANT)/servant_arbiter.v
 FILES+=$(SERVANT)/servant_mux.v
@@ -53,13 +55,11 @@ pll.v : Makefile
 	sed -i 's/SB_PLL40_CORE/SB_PLL40_PAD/g' pll.v
 	sed -i 's/.REFERENCECLK/.PACKAGEPIN/g' pll.v
 
-CROSS=riscv32-unknown-elf-
 # number of words in init ram
-# TOOD : what size?
-SIZE=256
+INIT_RAM_SIZE=2048
 
 serv.hex: firmware.bin
-	./makehex.py $^ $(SIZE) > $@
+	./makehex.py $^ $(INIT_RAM_SIZE) > $@
 
 firmware.bin: firmware.elf
 	$(CROSS)objcopy -S -O binary $^ $@
