@@ -15,7 +15,7 @@ SECTIONS {
         . = ALIGN(4);
         _etext = .;
         _sidata = _etext;
-    } >FLASH
+    } >RAM
     .data : AT ( _sidata )
     {
         . = ALIGN(4);

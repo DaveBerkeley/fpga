@@ -5,7 +5,7 @@ CORE=$(SERV)/rtl
 
 PROJ = serv
 ADD_SRC = pll.v 
-ADD_CLEAN = pll.v firmware.elf $(PROJ).bin serv.hex
+ADD_CLEAN = pll.v firmware.elf firmware.bin $(PROJ).bin serv.hex
 ADD_YOSYS = -dsp
 ADD_VERILATOR = config.vlt +incdir+$(CORE)
 ADD_DEPS = firmware.hex
@@ -55,15 +55,16 @@ pll.v : Makefile
 
 CROSS=riscv32-unknown-elf-
 # number of words in init ram
+# TOOD : what size?
 SIZE=256
 
 serv.hex: firmware.bin
 	./makehex.py $^ $(SIZE) > $@
 
 firmware.bin: firmware.elf
-	$(CROSS)objcopy -O binary $^ $@
+	$(CROSS)objcopy -S -O binary $^ $@
 
-firmware.elf: firmware.c start.s
+firmware.elf: firmware.c start.s Makefile
 	$(CROSS)gcc -DICEBREAKER -march=rv32ic -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o $@ start.s firmware.c
 
 #	FIN
