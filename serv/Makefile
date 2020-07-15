@@ -1,17 +1,18 @@
 
+#SERV=/home/dave/Desktop/serv
+SERVANT=$(SERV)/servant
+CORE=$(SERV)/rtl
+
 PROJ = serv
 ADD_SRC = pll.v 
-ADD_CLEAN = dsp_tb dsp_syntb dsp_syn.v *_tb *.vcd
+ADD_CLEAN = serv_tb serv_syntb serv_syn.v *_tb *.vcd pll.v
 ADD_YOSYS = -dsp
-ADD_VERILATOR = config.vlt
+ADD_VERILATOR = config.vlt +incdir+$(CORE)
 
 PACKAGE = sg48
 DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
-
-#SERV=/home/dave/Desktop/serv
-SERVANT=$(SERV)/servant
 
 FILES=$(SERVANT)/servant.v
 FILES+=$(SERVANT)/service.v
@@ -22,7 +23,6 @@ FILES+=$(SERVANT)/servant_timer.v
 FILES+=$(SERVANT)/servant_gpio.v
 FILES+=$(SERVANT)/servant_clock_gen.v
 
-CORE=$(SERV)/rtl
 FILES+=$(CORE)/serv_rf_top.v
 FILES+=$(CORE)/serv_rf_ram_if.v
 FILES+=$(CORE)/serv_rf_ram.v
@@ -40,6 +40,8 @@ FILES+=$(CORE)/serv_csr.v
 ADD_SRC+=$(FILES)
 
 #TB_SRC = $(filter-out pll.v, $(ADD_SRC)) i2s_secondary.v
+#VERILATOR_SRC = $(filter-out pll.v, $(ADD_SRC))
+VERILATOR_SRC = $(filter-out $(wildcard *servant*.c), $(ADD_SRC))
 
 include ../main.mk
 

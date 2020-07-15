@@ -1,15 +1,31 @@
 
 module top(input wire CLK, output wire TX);
 
-    wire ck;
-
     wire led;
     assign TX = led;
 
-    pll clock(.clock_in(CLK), .clock_out(ck));
+    parameter memfile = "my.hex";
+    parameter memsize = 8192;
 
-    parameter memfile = "zephyr_hello.hex";
+    // PLL
+    wire i_clk;
+    assign i_clk = CLK;
+    wire wb_clk;
+    wire locked;
+    pll clock(.clock_in(i_clk), .clock_out(wb_clk), .locked(locked));
+ 
+    // Reset generator
+    reg [4:0] rst_reg = 5'b11111;
 
-    service #(.memfile(memfile)) cpu(.i_clk(ck), .q(led));
+    always @(posedge wb_clk) begin
+        rst_reg <= {1'b0, rst_reg[4:1]};
+    end
+ 
+    wire o_rst;
+    assign o_rst = rst_reg[0];
+
+    // CPU
+    servant #(.memfile (memfile), .memsize (memsize))
+        servant (.wb_clk (wb_clk), .wb_rst (o_rst), .q(led));
 
 endmodule
