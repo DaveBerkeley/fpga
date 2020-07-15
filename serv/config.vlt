@@ -1,0 +1,6 @@
+`verilator_config
+lint_off -file "/home/dave/Desktop/serv-dev/serv/servant/servant.v"
+lint_off -file "/home/dave/Desktop/serv-dev/serv/rtl/serv_top.v"
+lint_off -file "/home/dave/Desktop/serv-dev/serv/rtl/serv_mem_if.v"
+lint_off -file "/home/dave/Desktop/serv-dev/serv/rtl/serv_mem_if.v"
+lint_off -rule DECLFILENAME
