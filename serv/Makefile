@@ -5,9 +5,10 @@ CORE=$(SERV)/rtl
 
 PROJ = serv
 ADD_SRC = pll.v 
-ADD_CLEAN = serv_tb serv_syntb serv_syn.v *_tb *.vcd pll.v
+ADD_CLEAN = pll.v firmware.elf $(PROJ).bin serv.hex
 ADD_YOSYS = -dsp
 ADD_VERILATOR = config.vlt +incdir+$(CORE)
+ADD_DEPS = firmware.hex
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -52,3 +53,17 @@ pll.v : Makefile
 	sed -i 's/SB_PLL40_CORE/SB_PLL40_PAD/g' pll.v
 	sed -i 's/.REFERENCECLK/.PACKAGEPIN/g' pll.v
 
+CROSS=riscv32-unknown-elf-
+# number of words in init ram
+SIZE=256
+
+serv.hex: firmware.bin
+	./makehex.py $^ $(SIZE) > $@
+
+firmware.bin: firmware.elf
+	$(CROSS)objcopy -O binary $^ $@
+
+firmware.elf: firmware.c start.s
+	$(CROSS)gcc -DICEBREAKER -march=rv32ic -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o $@ start.s firmware.c
+
+#	FIN

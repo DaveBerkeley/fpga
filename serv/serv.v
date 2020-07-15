@@ -1,10 +1,10 @@
 
-module top(input wire CLK, output wire TX);
+module top(input wire CLK, output wire P1A1);
 
     wire led;
-    assign TX = led;
+    assign P1A1 = led;
 
-    parameter memfile = "my.hex";
+    parameter memfile = "serv.hex";
     parameter memsize = 8192;
 
     // PLL
