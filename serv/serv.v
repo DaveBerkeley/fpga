@@ -1,5 +1,9 @@
 
-module top(input wire CLK, output wire TX);
+module top(
+    input wire CLK, 
+    output wire TX, 
+    output wire LED1
+);
 
     wire led;
     assign TX = led;
@@ -7,6 +11,8 @@ module top(input wire CLK, output wire TX);
     //parameter memfile = "firmware.hex";
     parameter memfile = "/home/dave/Desktop/serv/sw/zephyr_hello.hex";
     parameter memsize = 8192;
+
+    assign LED1 = 0;
 
     // PLL
     wire i_clk;

@@ -1,7 +1,10 @@
 
 CROSS=riscv32-unknown-elf-
 
-#SERV=/home/dave/Desktop/serv
+ifndef SERV
+$(error SERV is not set)
+endif
+
 SERVANT=$(SERV)/servant
 CORE=$(SERV)/rtl
 
@@ -14,7 +17,7 @@ ADD_YOSYS = -dsp
 ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE)
 ADD_DEPS = firmware.hex pll.v $(VCONFIG)
 ADD_IVERILOG = -I $(CORE)
-TB_DEPS = pll.v firmware.hex 
+TB_DEPS = pll.v firmware.hex $(VCONFIG)
 TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v
 
 PACKAGE = sg48
@@ -72,7 +75,7 @@ firmware.bin: firmware.elf
 firmware.elf: firmware.c start.s Makefile
 	$(CROSS)gcc -DICEBREAKER -march=rv32ic -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o $@ start.s firmware.c
 
-/tmp/config.vlt: config.vlt
+$(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
 #	FIN
