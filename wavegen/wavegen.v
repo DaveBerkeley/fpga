@@ -37,18 +37,19 @@ module top (
 
     // 44.1kHz audio * 64-bits per frame = 22.58/8 MHz
 
-    wire i2s_sck, i2s_ws;
+    wire i2s_sck, i2s_ws, i2s_en;
     /* verilator lint_off UNUSED */
     wire [5:0] posn;
+    wire nowt;
     /* verilator lint_on UNUSED */
 
-    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_sck), .ws(i2s_ws), .frame_posn(posn));
+    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_sck), .ws(i2s_ws), .en(nowt), .frame_posn(posn));
 
     //  Test the I2S Secondary
 
     wire i2s_sck_in, i2s_ws_in;
     wire [5:0] frame_posn;
-    i2s_secondary sec(.sck(i2s_sck_in), .ws(i2s_ws_in), .frame_posn(frame_posn));
+    i2s_secondary sec(.ck(ck), .en(i2s_en), .sck(i2s_sck_in), .ws(i2s_ws_in), .frame_posn(frame_posn));
 
     //  Generate sinewave
 
@@ -64,7 +65,7 @@ module top (
     end
 
     wire d0;
-    i2s_tx tx_0(.sck(i2s_sck_in), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
+    i2s_tx tx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
 
     //  UART
 

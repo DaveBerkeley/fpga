@@ -1,0 +1,27 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Jul 16 06:36:52 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
+[dumpfile_mtime] "Thu Jul 16 06:35:51 2020"
+[dumpfile_size] 1184890
+[savefile] "/home/dave/Desktop/git/fpga/serv/serv.gtkw"
+[timestart] 0
+[size] 1913 664
+[pos] -1 -1
+*-18.919157 15000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.servant.
+[treeopen] top.servant.cpu.
+[treeopen] top.servant.cpu.cpu.
+[treeopen] top.servant.cpu.cpu.state.
+[treeopen] top.servant.genblk1.
+[sst_width] 263
+[signals_width] 158
+[sst_expanded] 1
+[sst_vpaned_height] 178
+@28
+top.o_rst
+top.clock.clock_out
+[pattern_trace] 1
+[pattern_trace] 0

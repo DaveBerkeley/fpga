@@ -1,17 +1,20 @@
 
-module top(input wire CLK, output wire P1A1);
+module top(input wire CLK, output wire TX);
 
     wire led;
-    assign P1A1 = led;
+    assign TX = led;
 
-    parameter memfile = "serv.hex";
+    //parameter memfile = "firmware.hex";
+    parameter memfile = "/home/dave/Desktop/serv/sw/zephyr_hello.hex";
     parameter memsize = 8192;
 
     // PLL
     wire i_clk;
     assign i_clk = CLK;
     wire wb_clk;
+    /* verilator lint_off UNUSED */
     wire locked;
+    /* verilator lint_on UNUSED */
     pll clock(.clock_in(i_clk), .clock_out(wb_clk), .locked(locked));
  
     // Reset generator

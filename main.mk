@@ -4,8 +4,10 @@ all: $(PROJ).rpt $(PROJ).bin
 %.blif: %.v $(ADD_SRC) $(ADD_DEPS)
 	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 -top top -blif $@' $< $(ADD_SRC)
 
+VERILATOR_SRC?=$(ADD_SRC)
+
 %.json: %.v $(ADD_SRC) $(ADD_DEPS)
-	verilator --top-module top $(ADD_VERILATOR) $< $(ADD_SRC) /usr/share/yosys/ice40/cells_sim.v --lint-only -Wall 
+	verilator --top-module top $(ADD_VERILATOR) $< $(VERILATOR_SRC) /usr/share/yosys/ice40/cells_sim.v --lint-only -Wall 
 	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 $(ADD_YOSYS) -top top -json $@' $< $(ADD_SRC)
 
 ifeq ($(USE_ARACHNEPNR),)
@@ -23,9 +25,9 @@ endif
 %.rpt: %.asc
 	icetime $(if $(FREQ),-c $(FREQ)) -d $(DEVICE) -mtr $@ $<
 
-%_tb: %_tb.v %.v
-	verilator -DSIMULATION --top-module top $(PROJ).v $(TB_SRC) --lint-only -Wall -Wno-DECLFILENAME
-	iverilog -DSIMULATION -g2012 -o $@ $(TB_SRC) $^
+%_tb: %_tb.v %.v $(TB_DEPS)
+	verilator -DSIMULATION --top-module top $(ADD_VERILATOR) $(TB_VERILATOR) $(TB_SRC) $(PROJ).v --lint-only -Wall
+	iverilog -DSIMULATION -g2012 $(ADD_IVERILOG) -o $@ $(TB_SRC) $(PROJ)_tb.v
 	./$@
 	#gtkwave $(PROJ).vcd $(PROJ).gtkw &
 
@@ -46,7 +48,7 @@ prog: $(PROJ).bin
 	iceprog $<
 
 clean:
-	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin $(PROJ).json $(PROJ).log *.vvp *.vcd $(ADD_CLEAN)
+	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin $(PROJ).json $(PROJ).log *.vvp *.vcd $(ADD_CLEAN) *~
 
 .SECONDARY:
 .PHONY: all prog clean
