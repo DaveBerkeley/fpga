@@ -1,11 +1,13 @@
 Digital Audio Processor
 =======================
 
+[github](https://github.com/DaveBerkeley/fpga/tree/master/dsp)
+
 Experimental audio processor.
 It is intended as a run-time engine to control beam forming
 from a microphone phased array.
 
-It has 8 channels of 16-bit audio input, over I2S.
+It has 8 channels of 16-bit audio input, over [I2S](https://en.wikipedia.org/wiki/I%C2%B2S).
 Each channel is saved into a circular buffer, currently 256 words long.
 
 There is a simple engine which executes a series of commands stored in DPRAM.
@@ -15,18 +17,22 @@ The MAC uses the 16x16 multiply DSP on the FPGA, giving a 32-bit result,
 then a 40-bit accumulator.
 
 The output of the 40-bit accumulator is shifted by n bits and the output written
-to DPRAM or to the output I2S devices. This is done by the **SAVE** instruction.
+to DPRAM or to the output I2S devices.
+This is done by the **SAVE** instruction, which works on the last accumulator output.
+
+A typical sequence might be to sum the weighted gains of several channels,
+with different time delays, and output them to the left / right output channels.
 
 A simple example program might be :
 
     code : 48010400 MACZ offset=00 chan=1 gain=0400
-    code : 40000200 MAC  offset=00 chan=0 gain=0200
-    code : 40030100 MAC  offset=00 chan=3 gain=0100
+    code : 40000200 MAC  offset=02 chan=0 gain=0200
+    code : 40030100 MAC  offset=05 chan=3 gain=0100
     code : 10480001 SAVE  shift=09 addr=01
     ...
     code : 48020400 MACZ offset=00 chan=2 gain=0400
-    code : 40030200 MAC  offset=00 chan=3 gain=0200
-    code : 40000100 MAC  offset=00 chan=0 gain=0100
+    code : 40030200 MAC  offset=02 chan=3 gain=0200
+    code : 40000100 MAC  offset=05 chan=0 gain=0100
     code : 10480000 SAVE  shift=09 addr=00
     ...
     code : 78000000 HALT
@@ -53,8 +59,14 @@ Echo cancelation could be acheived by subtracting the signal with a longer time 
 
 Multiple taps can be added, so any FIR filter is possible, up to 256 taps.
 
+The 16x16 multiplier available on the FPGA does not support signed arithmetic,
+so any negative audio is inverted before the multiply stage.
+The sign is corrected at the accumulator stage, where any -ve gains are also applied.
+
+The processor uses a multi-stage pipelined architecture.
+This gives a throughtput of one MAC per clock cycle,
+allowing hundreds of calculations per audio frame.
+
 The development board I'm using is the [Icebreaker](https://1bitsquared.de/products/icebreaker).
 
 The host processor is currently Clifford Wolf's [picorv32](https://github.com/cliffordwolf/picorv32) but I aim to port it to Olof Kindgren's [SERV](https://github.com/olofk/serv).
-
-
