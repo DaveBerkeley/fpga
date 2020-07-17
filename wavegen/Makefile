@@ -1,9 +1,12 @@
 PROJ = wavegen
-ADD_SRC = uart.v ../dsp/i2s_clock.v ../dsp/i2s_tx.v pll.v ../dsp/i2s_secondary.v
-ADD_CLEAN = wave.v  pll.v
-ADD_DEPS = wave.v pll.v
+ADD_SRC = ../dsp/i2s_clock.v ../dsp/i2s_tx.v ../dsp/i2s_secondary.v
+ADD_CLEAN = wave.v  wavegen_tb
+ADD_DEPS = wave.v
 ADD_YOSYS = 
 ADD_VERILATOR = config.vlt
+ADD_IVERILOG = $(PROJ).v
+
+TB_SRC = ../dsp/i2s_clock.v ../dsp/i2s_tx.v ../dsp/i2s_secondary.v 
 
 PACKAGE = tq144:4k
 DEVICE = hx8k 
@@ -14,7 +17,4 @@ include ../main.mk
 
 wave.v : wave.py
 	./wave.py > wave.v
-
-pll.v : Makefile
-	icepll -o 45.16 -m -f pll.v
 

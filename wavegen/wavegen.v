@@ -15,42 +15,59 @@ module top (
     output wire LED5,
     output wire LED6,
     output wire LED7,
-    output wire TX,
     input wire D0,
     output wire D1,
     input wire D2,
     output wire D3,
     output wire D4,
     output wire D5,
-    output wire D6
+    output wire D6,
+    output wire D7,
+    input wire SW1
 );
 
-    wire ck_12mhz;
     wire ck;
+    assign ck = CLK; // 12MHz clock
 
-    assign ck_12mhz = CLK;
+    //  Prescaler
 
-    // 22.58 MHz PLL clock derived from ck_12mhz clock input
-    /* verilator lint_off PINCONNECTEMPTY */
-    pll clock(.clock_in(ck_12mhz), .clock_out(ck), .locked());
-    /* verilator lint_on PINCONNECTEMPTY */
+    reg [20:0] prescale = 0;
 
-    // 44.1kHz audio * 64-bits per frame = 22.58/8 MHz
+    always @(posedge ck) begin
+        prescale <= prescale + 1;
+    end
 
-    wire i2s_sck, i2s_ws, i2s_en;
+    // Debounce clock
+
+    wire debounce;
+    assign debounce = & prescale[19:0];
+
+    //  SCK/WS Output - may be looped back into input
+
+    wire i2s_sck_gen, i2s_ws_gen;
     /* verilator lint_off UNUSED */
-    wire [5:0] posn;
-    wire nowt;
+    wire [5:0] nowt_posn;
+    wire nowt_en;
     /* verilator lint_on UNUSED */
 
-    i2s_clock #(.DIVIDER(16)) i2sck(.ck(ck), .sck(i2s_sck), .ws(i2s_ws), .en(nowt), .frame_posn(posn));
+    // I2S local generator : output SCK and WS signals.
+    // These can be looped back into the SCK/WS inputs if the unit is a Primary.
+    i2s_clock #(.DIVIDER(6)) i2sck(.ck(ck), .sck(i2s_sck_gen), .ws(i2s_ws_gen), .en(nowt_en), .frame_posn(nowt_posn));
 
     //  Test the I2S Secondary
 
-    wire i2s_sck_in, i2s_ws_in;
+    wire sck, ws;
+    wire i2s_sck_in, i2s_ws_in, en;
     wire [5:0] frame_posn;
-    i2s_secondary sec(.ck(ck), .en(i2s_en), .sck(i2s_sck_in), .ws(i2s_ws_in), .frame_posn(frame_posn));
+    i2s_secondary sec(.ck(ck), .en(en), .sck(i2s_sck_in), .ws(i2s_ws_in), .frame_posn(frame_posn));
 
+    assign sck = i2s_sck_in;
+    assign ws = i2s_ws_in;
+
+    //  Different generation modes
+
+    reg [1:0] state = 0;
+    
     //  Generate sinewave
 
     reg [6:0] addr;
@@ -58,61 +75,86 @@ module top (
     reg signed [15:0] signal_l = 0;
     reg signed [15:0] signal_r = 0;
 
-    always @(negedge i2s_ws) begin
-        addr <= addr + 1;
-        signal_l <= sin(addr);
-        signal_r <= sin(addr << 1);
+    reg [7:0] pulse_period = 0;
+
+    always @(posedge ck) begin
+        if (en && (frame_posn == 0)) begin
+            addr <= addr + 1;
+            pulse_period <= pulse_period + 1;
+            case (state)
+                0 : begin
+                    signal_l <= sin(addr);
+                    signal_r <= sin(addr << 1);
+                end
+                1 : begin
+                    signal_l <= sin(addr << 1);
+                    signal_r <= sin(addr << 2);
+                end
+                2 : begin
+                    signal_l <= sin(addr << 2);
+                    signal_r <= sin(addr << 3);
+                end
+                3 : begin
+                    if (pulse_period == 0) begin
+                        signal_l <= 16'h7ff0;
+                        signal_r <= 16'h8010;
+                    end else begin
+                        signal_l <= 16'h0000;
+                        signal_r <= 16'h0000;
+                    end
+                end
+            endcase
+        end
     end
 
     wire d0;
-    i2s_tx tx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
+    i2s_tx tx_0(.ck(ck), .en(en), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
 
-    //  UART
+    //  User Switch
 
-    reg [7:0] tx_data = 8'h41;
-    /* verilator lint_off UNUSED */
-    wire tx_ready;
-    wire baud;
-    /* verilator lint_on UNUSED */
-    wire tx;
-    uart u(.ck(ck_12mhz), .tx_data(tx_data), .ready(tx_ready), .tx(tx), .baud(baud));
+    reg sw1 = 0;
 
-    reg [20:0] prescale = 0;
-
-    always @(negedge ck) begin
-        prescale <= prescale + 1;
+    always @(posedge ck) begin
+        if (debounce) begin
+            sw1 <= SW1;
+            if (SW1 && !sw1) begin
+                state <= state + 1;
+            end
+        end
     end
+
+    //  LEDS
  
-    reg [7:0] counter = 0;
+    reg [3:0] counter = 0;
 
     wire next;
     assign next = (counter == 0) ? 1 : 0;
 
-    always @(negedge ck) begin
+    always @(posedge ck) begin
         if (prescale == 0)
-            counter <= { counter[6:0], next };
+            counter <= { counter[2:0], next };
     end
 
-    assign LED0 = counter[0];
-    assign LED1 = counter[1];
-    assign LED2 = counter[2];
-    assign LED3 = counter[3];
-    assign LED4 = counter[4];
-    assign LED5 = counter[5];
-    assign LED6 = counter[6];
-    assign LED7 = counter[7];
-
-    assign TX = tx;
+    assign LED0 = state == 0;
+    assign LED1 = state == 1;
+    assign LED2 = state == 2;
+    assign LED3 = state == 3;
+    assign LED4 = counter[0];
+    assign LED5 = counter[1];
+    assign LED6 = counter[2];
+    assign LED7 = counter[3];
 
     // Sync Audio Input
     assign i2s_sck_in = D0;
-    assign D1 = i2s_sck;
+    assign D1 = i2s_sck_gen;
     assign i2s_ws_in = D2;
-    assign D3 = i2s_ws;
+    assign D3 = i2s_ws_gen;
 
     // Drive Audio Output
-    assign D4 = i2s_sck_in;
-    assign D5 = i2s_ws_in;
+    assign D4 = sck;
+    assign D5 = ws;
     assign D6 = d0;
+
+    assign D7 = pulse_period == 0;
 
 endmodule

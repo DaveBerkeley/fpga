@@ -901,7 +901,7 @@ void cmd_dave()
     uint32_t gain = 1024;
     uint32_t g1_3 = (1 * gain) / 4;
     uint32_t g2_3 = (1 * gain) / 2;
-    uint32_t shift = 11-2;
+    uint32_t shift = 11-1;
 
     *coef++ = opcode(MACZ, 0, 1, gain);
     *coef++ = opcode(MAC,  0, 0, g2_3);

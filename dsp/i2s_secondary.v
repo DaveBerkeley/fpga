@@ -15,6 +15,16 @@ module i2s_secondary
     initial frame_posn = 0;
     initial en = 0;
 
+    // need to align the input signals to the ck
+    // as they may be external async signals
+
+    reg ws0, sck0;
+
+    always @(posedge ck) begin
+        sck0 <= sck;
+        ws0  <= ws;
+    end
+
     // find the start of the frame using delayed ws
     reg prev_ws = 0;
     wire start_frame;
@@ -24,13 +34,13 @@ module i2s_secondary
     wire ck_in;
 
     always @(posedge ck) begin
-        prev_ws <= ws;
-        prev_sck <= sck;
+        prev_ws <= ws0;
+        prev_sck <= sck0;
     end    
 
     // These signals are both delayed by one clock
-    assign start_frame = prev_ws & !ws;
-    assign ck_in = prev_sck && !sck;
+    assign start_frame = prev_ws & !ws0;
+    assign ck_in = prev_sck && !sck0;
 
     // count the clocks in an sck period to see how long it is
     reg [(WIDTH-1):0] prescale = 0;
@@ -40,7 +50,7 @@ module i2s_secondary
 
         if (ck_in) begin 
             prescale <= 0;
-            match <= prescale - 2;
+            match <= prescale - 3;
         end else begin
             prescale <= prescale + 1;
         end

@@ -1,0 +1,68 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Fri Jul 17 14:37:27 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/wavegen/wavegen.vcd"
+[dumpfile_mtime] "Fri Jul 17 14:37:14 2020"
+[dumpfile_size] 465890
+[savefile] "/home/dave/Desktop/git/fpga/wavegen/wavegen.gtkw"
+[timestart] 191619000
+[size] 1856 635
+[pos] -1 -1
+*-19.026495 193578000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.top.
+[sst_width] 196
+[signals_width] 150
+[sst_expanded] 1
+[sst_vpaned_height] 168
+@28
+tb.top.CLK
+tb.top.D0
+tb.top.D1
+tb.top.D2
+tb.top.D3
+tb.top.D4
+tb.top.D5
+tb.top.D6
+@200
+-
+@28
+tb.top.i2sck.ck
+tb.top.i2sck.en
+@22
+tb.top.i2sck.frame_posn[5:0]
+@28
+tb.top.i2sck.sck
+tb.top.i2sck.ws
+@200
+-
+@28
+tb.top.sec.ck
+tb.top.sec.en
+@22
+tb.top.sec.frame_posn[5:0]
+tb.top.sec.match[4:0]
+@c00022
+tb.top.sec.prescale[4:0]
+@28
+(0)tb.top.sec.prescale[4:0]
+(1)tb.top.sec.prescale[4:0]
+(2)tb.top.sec.prescale[4:0]
+(3)tb.top.sec.prescale[4:0]
+(4)tb.top.sec.prescale[4:0]
+@1401200
+-group_end
+@28
+tb.top.sec.sck
+tb.top.sec.sck0
+tb.top.sec.prev_sck
+@29
+tb.top.sec.ws
+@28
+tb.top.sec.ws0
+tb.top.sec.prev_ws
+tb.top.sec.start_frame
+tb.top.sec.start_sck
+[pattern_trace] 1
+[pattern_trace] 0
