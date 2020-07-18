@@ -60,6 +60,8 @@ Echo cancelation could be acheived by subtracting the signal with a longer time 
 
 Multiple taps can be added, so any FIR filter is possible, up to 256 taps.
 
+Here is a screenshot of the audio output (
+
 The 16x16 multiplier available on the FPGA does not support signed arithmetic,
 so any negative audio is inverted before the multiply stage.
 The sign is corrected at the accumulator stage, where any -ve gains are also applied.

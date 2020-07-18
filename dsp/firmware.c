@@ -340,8 +340,18 @@ enum Opcode {
 
 bool verbose = false;
 
-uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, uint32_t gain)
+uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, int32_t gain)
 {
+    if (gain < 0)
+    {
+        switch (opcode)
+        {
+            case MACZ : opcode = MACNZ; break;
+            case MAC  : opcode = MACN;  break;
+            default   : ASSERT(0);
+        }
+        gain = -gain;
+    }
     const uint32_t value = gain + (chan << 16) + (offset << (16+CHAN_W)) + (opcode << (16+CHAN_W+OFFSET_W));
 
     if (!verbose)
@@ -902,6 +912,7 @@ void cmd_dave()
 
 //#define SLEW_TEST
 //#define PULSE_TEST
+#define BANDPASS
 
 #if defined(PULSE_TEST)
     #define TESTING
@@ -951,54 +962,63 @@ void cmd_dave()
     *coef++ = opcode(SAVE, 0, 0, 1);
 #endif // SLEW_TEST
 
+#if defined(BANDPASS)
+    #define TESTING
+    int offset = 0;
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, offset++, 0, 0);
+    *coef++ = opcode(MAC, offset++, 0, 75);
+    *coef++ = opcode(MAC, offset++, 0, 9);
+    *coef++ = opcode(MAC, offset++, 0, -1);
+    *coef++ = opcode(MAC, offset++, 0, -19);
+    *coef++ = opcode(MAC, offset++, 0, -39);
+    *coef++ = opcode(MAC, offset++, 0, -59);
+    *coef++ = opcode(MAC, offset++, 0, -72);
+    *coef++ = opcode(MAC, offset++, 0, -77);
+    *coef++ = opcode(MAC, offset++, 0, -68);
+    *coef++ = opcode(MAC, offset++, 0, -48);
+    *coef++ = opcode(MAC, offset++, 0, -18);
+    *coef++ = opcode(MAC, offset++, 0, 18);
+    *coef++ = opcode(MAC, offset++, 0, 53);
+    *coef++ = opcode(MAC, offset++, 0, 81);
+    *coef++ = opcode(MAC, offset++, 0, 96);
+    *coef++ = opcode(MAC, offset++, 0, 96);
+    *coef++ = opcode(MAC, offset++, 0, 81);
+    *coef++ = opcode(MAC, offset++, 0, 53);
+    *coef++ = opcode(MAC, offset++, 0, 18);
+    *coef++ = opcode(MAC, offset++, 0, -18);
+    *coef++ = opcode(MAC, offset++, 0, -48);
+    *coef++ = opcode(MAC, offset++, 0, -68);
+    *coef++ = opcode(MAC, offset++, 0, -77);
+    *coef++ = opcode(MAC, offset++, 0, -72);
+    *coef++ = opcode(MAC, offset++, 0, -59);
+    *coef++ = opcode(MAC, offset++, 0, -39);
+    *coef++ = opcode(MAC, offset++, 0, -19);
+    *coef++ = opcode(MAC, offset++, 0, -1);
+    *coef++ = opcode(MAC, offset++, 0, 9);
+    *coef++ = opcode(MAC, offset++, 0, 75);
+    *coef++ = opcode(SAVE, 10, 0, 0);
+    *coef++ = opcode(MACZ, 0, 0, 1024);
+    *coef++ = opcode(SAVE, 11, 0, 1);
+    *coef++ = halt();
+    *coef++ = halt();
+#endif // BANDPASS
+
 #if !defined(TESTING)
     *coef++ = opcode(MACZ, 0, 0, 0x1000);
     *coef++ = opcode(SAVE, 12, 0, 0);
 
     *coef++ = opcode(MACZ, 0, 1, 0x1000);
-    *coef++ = opcode(MAC,  0, 3, 0x1000);
-    *coef++ = opcode(SAVE, 13, 0, 1);
+    *coef++ = opcode(SAVE, 12, 0, 1);
+    *coef++ = halt();
+    *coef++ = halt();
 #endif
 
-    *coef++ = halt();
-    *coef++ = halt();
- 
     set_control(0); // stop audio writes
     reset_engine();
     print("loop ..\n");
-    uint32_t count = 0;
     while (true)
     {
-        uint32_t v = *status;
-        if (v & 0x01)
-            count = 100;
-
-        if (count)
-            count -= 1;
-
-        reg_leds = count ? 0xff : 0;
-
-        if ((v & 0x01))
-        {
-            static int8_t chan = 0;
-            verbose = 0;
-            coef = ADDR_COEF;
-            *coef++ = opcode(MACZ, 0, chan, 0x1000);
-            *coef++ = opcode(MAC,  1, chan, 0x1000);
-            *coef++ = opcode(MAC,  2, chan, 0x1000);
-            *coef++ = opcode(MAC,  3, chan, 0x1000);
-            *coef++ = opcode(SAVE, 14, 0, 0);
-            *coef++ = opcode(MACZ, 0, 0, 0x1000);
-            *coef++ = opcode(SAVE, 12, 0, 1);
-            *coef++ = halt();
-            *coef++ = halt();
-
-            chan = (chan + 1) & 0x03;
-            for (int i = 0; i < 10000; i++)
-            {
-                v = *status;
-            }
-        }
     }
 
 }
