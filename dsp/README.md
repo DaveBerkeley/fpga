@@ -5,7 +5,7 @@ Digital Audio Processor
 
 Experimental audio processor.
 It is intended as a run-time engine to control beam forming
-from a microphone phased array.
+for a microphone phased array.
 
 It has 8 channels of 16-bit audio input, over [I2S](https://en.wikipedia.org/wiki/I%C2%B2S).
 Each channel is saved into a circular buffer, currently 256 words long.
@@ -14,10 +14,11 @@ There is a simple engine which executes a series of commands stored in DPRAM.
 These commands are loaded by the host processor.
 The commands take an offset, a channel and a gain and apply the audio data to a MAC.
 The MAC uses the 16x16 multiply DSP on the FPGA, giving a 32-bit result,
-then a 40-bit accumulator.
+followed by a 40-bit accumulator.
 
-The output of the 40-bit accumulator is shifted by n bits and the output written
-to DPRAM or to the output I2S devices.
+The output of the 40-bit accumulator is shifted by n bits,
+to reduce the output width to 16-bits,
+and the output written to DPRAM and/or to the output I2S devices.
 This is done by the **SAVE** instruction, which works on the last accumulator output.
 
 A typical sequence might be to sum the weighted gains of several channels,
@@ -69,4 +70,5 @@ allowing hundreds of calculations per audio frame.
 
 The development board I'm using is the [Icebreaker](https://1bitsquared.de/products/icebreaker).
 
-The host processor is currently Clifford Wolf's [picorv32](https://github.com/cliffordwolf/picorv32) but I aim to port it to Olof Kindgren's [SERV](https://github.com/olofk/serv).
+The host processor is currently Clifford Wolf's [picorv32](https://github.com/cliffordwolf/picorv32)
+but I aim to port it to Olof Kindgren's [SERV](https://github.com/olofk/serv).

@@ -18,8 +18,8 @@ module audio_engine (
     output wire ws,  // I2S word select
     output wire sd_out,  // I2S data out
     input wire sd_in0,  // I2S data in
-    input wire sd_in1,  // I2S data in
     /* verilator lint_off UNUSED */
+    input wire sd_in1,  // I2S data in
     input wire sd_in2,  // I2S data in
     input wire sd_in3,  // I2S data in
     /* verilator lint_off UNUSED */
@@ -80,19 +80,13 @@ module audio_engine (
 
     // Divide the 12Mhz clock down to 2MHz
     localparam I2S_DIVIDER = 6;
+    localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
     assign i2s_clock = ck;
 
     wire [5:0] frame_posn;
     wire i2s_en;
     i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), .en(i2s_en),
             .sck(sck), .ws(ws), .frame_posn(frame_posn));
-
-    //  I2S Output
-
-    reg [15:0] left = 0;
-    reg [15:0] right = 0;
-
-    i2s_tx tx(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .left(left), .right(right), .sd(sd_out));
 
     //  I2S Input
 
@@ -109,17 +103,24 @@ module audio_engine (
 
     wire [15:0] mic_0;
     wire [15:0] mic_1;
-    wire [15:0] mic_2;
-    wire [15:0] mic_3;
+    //wire [15:0] mic_2;
+    //wire [15:0] mic_3;
     //wire [15:0] mic_4;
     //wire [15:0] mic_5;
     //wire [15:0] mic_6;
     //wire [15:0] mic_7;
 
-    i2s_rx rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
-    i2s_rx rx_1(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
+    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
+    //i2s_rx rx_1(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
     //i2s_rx rx_2(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
     //i2s_rx rx_3(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
+
+    //  I2S Output
+
+    reg [15:0] left = 0;
+    reg [15:0] right = 0;
+
+    i2s_tx tx(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .left(left), .right(right), .sd(sd_out));
 
     //  Write Input data to the Audio RAM
 
@@ -129,8 +130,8 @@ module audio_engine (
             case (chan)
                 0   :   mic_source = mic_0;
                 1   :   mic_source = mic_1;
-                2   :   mic_source = mic_2;
-                3   :   mic_source = mic_3;
+                //2   :   mic_source = mic_2;
+                //3   :   mic_source = mic_3;
                 //4   :   mic_source = mic_4;
                 //5   :   mic_source = mic_5;
                 //6   :   mic_source = mic_6;
@@ -148,7 +149,7 @@ module audio_engine (
             if (ws && (frame_posn == 0)) begin
                 chan_addr <= 0;
                 writing <= 1;
-                frame_counter <= frame_counter + 1;
+                frame_counter <= frame_counter - 1;
             end else begin
                 chan_addr <= chan_addr + 1;
             end
@@ -166,7 +167,8 @@ module audio_engine (
         end
     end
 
-    assign test = frame;
+    assign test[0] = i2s_en;
+    assign test[7:1] = 0;
 
     //  Drive the engine
 

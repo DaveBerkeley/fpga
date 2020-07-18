@@ -558,8 +558,10 @@ void cmd_dave()
     *coef++ = halt();
 
     run(opcode(MACZ, 1, 0, 0x1234));
+
+//#define ALL_TESTS
     
-#if 0
+#ifdef ALL_TESTS
     //  Check reading all channels
     print("Writing to audio input\n");
 
@@ -816,7 +818,7 @@ void cmd_dave()
 
     //  Check write output
     verbose = 0;
-#if 0
+#ifdef ALL_TESTS
     print("Check write shift/output\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
@@ -898,20 +900,38 @@ void cmd_dave()
 
     coef = ADDR_COEF;
 
-    uint32_t gain = 1024;
-    uint32_t g1_3 = (1 * gain) / 4;
-    uint32_t g2_3 = (1 * gain) / 2;
-    uint32_t shift = 11-1;
+#if 0
+    int gain = 1024;
+    int op = MACZ;
+    for (int i = 20; i >= 0; i += 1)
+    {
+        *coef++ = opcode(op, i, 0, gain);
+        gain = (gain / 2) + (gain / 4) + (gain / 8) + (gain / 16);
+        if (!gain)
+            break;
+        op = MAC;
+    }
+    gain = 512;
+    op = MAC;
+    for (int i = 40; i >= 0; i += 1)
+    {
+        *coef++ = opcode(op, i, 0, gain);
+        gain = (gain / 2) + (gain / 4) + (gain / 8) + (gain / 16);
+        if (!gain)
+            break;
+        op = MAC;
+    }
 
-    *coef++ = opcode(MACZ, 0, 1, gain);
-    *coef++ = opcode(MAC,  0, 0, g2_3);
-    *coef++ = opcode(MAC,  0, 3, g1_3);
-    *coef++ = opcode(SAVE, shift, 0, 1);
+    *coef++ = opcode(SAVE, 10, 0, 1);
+#else
 
-    *coef++ = opcode(MACZ, 0, 2, gain);
-    *coef++ = opcode(MAC,  0, 3, g2_3);
-    *coef++ = opcode(MAC,  0, 0, g1_3);
-    *coef++ = opcode(SAVE, shift, 0, 0);
+    *coef++ = opcode(MACZ, 0, 0, 1);
+    *coef++ = opcode(SAVE, 0, 0, 0);
+
+#endif
+
+    *coef++ = opcode(MACZ, 0, 1, 1);
+    *coef++ = opcode(SAVE, 0, 0, 1);
 
     *coef++ = halt();
     *coef++ = halt();

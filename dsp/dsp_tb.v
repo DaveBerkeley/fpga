@@ -176,7 +176,6 @@ module tb ();
     reg [15:0] right = 16'habcd;
 
     wire sd_gen;
-    //i2s_rx rxx(.ck(ck), .en(sen), .frame_posn(frame_posn), .sd(sd_out), .left(left), .right(right));
     i2s_tx txx(.ck(ck), .en(sen), .frame_posn(frame_posn), .sd(sd_gen), .left(left), .right(right));
 
     audio_engine engine(.ck(ck), .rst(rst),
