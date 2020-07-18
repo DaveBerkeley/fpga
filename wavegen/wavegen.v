@@ -76,10 +76,28 @@ module top (
     reg signed [15:0] signal_r = 0;
 
     reg [7:0] pulse_period = 0;
+    reg [1:0] frame = 0;
+
+    function signed [(16-1):0] test_signal(input left);
+        begin
+            if (left) begin
+                if (frame == 0) test_signal = 16'haaaa;
+                if (frame == 1) test_signal = 16'h5555;
+                if (frame == 2) test_signal = 16'hffff;
+                if (frame == 3) test_signal = 16'h0000;
+            end else begin
+                if (frame == 0) test_signal = 16'h8001;
+                if (frame == 1) test_signal = 16'h7ffe;
+                if (frame == 2) test_signal = 16'h8111;
+                if (frame == 3) test_signal = 16'heee1;
+            end
+        end
+    endfunction
 
     always @(posedge ck) begin
         if (en && (frame_posn == 0)) begin
             addr <= addr + 1;
+            frame <= frame + 1;
             pulse_period <= pulse_period + 1;
             case (state)
                 0 : begin
@@ -91,10 +109,11 @@ module top (
                     signal_r <= sin(addr << 2);
                 end
                 2 : begin
-                    signal_l <= sin(addr << 2);
-                    signal_r <= sin(addr << 3);
+                    signal_l <= test_signal(1);
+                    signal_r <= test_signal(0);
                 end
                 3 : begin
+                    // Unit impulse
                     if (pulse_period == 0) begin
                         signal_l <= 16'h7ff0;
                         signal_r <= 16'h8010;
