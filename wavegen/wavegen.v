@@ -72,27 +72,13 @@ module top (
 
     reg [6:0] addr;
 
-    reg signed [15:0] signal_l = 0;
-    reg signed [15:0] signal_r = 0;
+    reg signed [15:0] signal_0 = 0;
+    reg signed [15:0] signal_1 = 0;
+    reg signed [15:0] signal_2 = 0;
+    reg signed [15:0] signal_3 = 0;
 
     reg [7:0] pulse_period = 0;
     reg [1:0] frame = 0;
-
-    function signed [(16-1):0] test_signal(input left);
-        begin
-            if (left) begin
-                if (frame == 0) test_signal = 16'haaaa;
-                if (frame == 1) test_signal = 16'h5555;
-                if (frame == 2) test_signal = 16'hffff;
-                if (frame == 3) test_signal = 16'h0000;
-            end else begin
-                if (frame == 0) test_signal = 16'h8001;
-                if (frame == 1) test_signal = 16'h7ffe;
-                if (frame == 2) test_signal = 16'h8111;
-                if (frame == 3) test_signal = 16'heee1;
-            end
-        end
-    endfunction
 
     always @(posedge ck) begin
         if (en && (frame_posn == 0)) begin
@@ -101,33 +87,44 @@ module top (
             pulse_period <= pulse_period + 1;
             case (state)
                 0 : begin
-                    signal_l <= sin(addr);
-                    signal_r <= sin(addr << 1);
+                    signal_0 <= sin(addr);
+                    signal_1 <= sin(addr << 1);
+                    signal_2 <= sin(addr << 2);
+                    signal_3 <= sin(addr << 3);
                 end
                 1 : begin
-                    signal_l <= sin(addr << 1);
-                    signal_r <= sin(addr << 2);
+                    signal_0 <= sin(addr << 2);
+                    signal_1 <= sin(addr << 3);
+                    signal_2 <= sin(addr << 4);
+                    signal_3 <= sin(addr << 5);
                 end
                 2 : begin
-                    signal_l <= test_signal(1);
-                    signal_r <= test_signal(0);
+                    signal_0 <= sin(addr << 3);
+                    signal_1 <= sin(addr << 4);
+                    signal_2 <= sin(addr << 5);
+                    signal_3 <= sin(addr << 6);
                 end
                 3 : begin
                     // Unit impulse
                     if (pulse_period == 0) begin
-                        signal_l <= 16'h7ff0;
-                        signal_r <= 16'h8010;
+                        signal_0 <= 16'h7ff0;
+                        signal_1 <= 16'h8010;
+                        signal_2 <= 16'h7ff0;
+                        signal_3 <= 16'h8010;
                     end else begin
-                        signal_l <= 16'h0000;
-                        signal_r <= 16'h0000;
+                        signal_0 <= 16'h0000;
+                        signal_1 <= 16'h0000;
+                        signal_2 <= 16'h0000;
+                        signal_3 <= 16'h0000;
                     end
                 end
             endcase
         end
     end
 
-    wire d0;
-    i2s_tx tx_0(.ck(ck), .en(en), .frame_posn(frame_posn), .left(signal_l), .right(signal_r), .sd(d0));
+    wire d0, d1;
+    i2s_tx tx_0(.ck(ck), .en(en), .frame_posn(frame_posn), .left(signal_0), .right(signal_1), .sd(d0));
+    i2s_tx tx_1(.ck(ck), .en(en), .frame_posn(frame_posn), .left(signal_2), .right(signal_3), .sd(d1));
 
     //  User Switch
 
@@ -173,7 +170,6 @@ module top (
     assign D4 = sck;
     assign D5 = ws;
     assign D6 = d0;
-
-    assign D7 = pulse_period == 0;
+    assign D7 = d1;
 
 endmodule

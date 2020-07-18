@@ -18,8 +18,8 @@ module audio_engine (
     output wire ws,  // I2S word select
     output wire sd_out,  // I2S data out
     input wire sd_in0,  // I2S data in
-    /* verilator lint_off UNUSED */
     input wire sd_in1,  // I2S data in
+    /* verilator lint_off UNUSED */
     input wire sd_in2,  // I2S data in
     input wire sd_in3,  // I2S data in
     /* verilator lint_off UNUSED */
@@ -103,17 +103,17 @@ module audio_engine (
 
     wire [15:0] mic_0;
     wire [15:0] mic_1;
-    //wire [15:0] mic_2;
-    //wire [15:0] mic_3;
+    wire [15:0] mic_2;
+    wire [15:0] mic_3;
     //wire [15:0] mic_4;
     //wire [15:0] mic_5;
     //wire [15:0] mic_6;
     //wire [15:0] mic_7;
 
-    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
-    //i2s_rx rx_1(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
-    //i2s_rx rx_2(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
-    //i2s_rx rx_3(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
+    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+        rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
+    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+        rx_1(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
 
     //  I2S Output
 
@@ -130,13 +130,13 @@ module audio_engine (
             case (chan)
                 0   :   mic_source = mic_0;
                 1   :   mic_source = mic_1;
-                //2   :   mic_source = mic_2;
-                //3   :   mic_source = mic_3;
+                2   :   mic_source = mic_2;
+                3   :   mic_source = mic_3;
                 //4   :   mic_source = mic_4;
                 //5   :   mic_source = mic_5;
                 //6   :   mic_source = mic_6;
                 //7   :   mic_source = mic_7;
-                default : mic_source = 16'h7fff;
+                default : mic_source = 16'h0;
             endcase
         end
 
