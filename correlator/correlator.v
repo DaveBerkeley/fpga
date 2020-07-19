@@ -3,9 +3,11 @@ module top (
     input wire ck,
     input wire en,
     input wire clr,
+    input wire req,
     input wire [15:0] x,
     input wire [15:0] y,
-    output wire [39:0] acc_out
+    output wire [39:0] out,
+    output wire done
 );
 
     wire neg_x;
@@ -28,19 +30,27 @@ module top (
 
     // pipeline t=3 : accumulate the data
 
-    wire acc_rst, acc_en;
-    pipe #(.LENGTH(2)) p_clr(.ck(ck), .rst(1'b1), .in(clr), .out(acc_rst));
+    wire acc_en, acc_rst;
+
     pipe #(.LENGTH(2)) p_en (.ck(ck), .rst(1'b1), .in(en),  .out(acc_en));
+    pipe #(.LENGTH(2)) p_clr(.ck(ck), .rst(1'b1), .in(clr), .out(acc_rst));
 
     reg acc_add;
 
+    // add / sub depending on the signs of the x/y inputs
     always @(posedge ck) begin
         acc_add <= !(neg_x ^ neg_y);
     end
 
-    accumulator acc(.ck(ck), .en(acc_en), .rst(acc_rst), .add(acc_add), .in(mul_xy), .out(acc_out));
+    accumulator #(.OUT_W(40)) 
+        acc(.ck(ck), .en(acc_en), .rst(acc_rst), .add(acc_add), .in(mul_xy), .out(out));
 
     // pipeline t=4 : data ready
+
+    wire acc_done;
+    pipe #(.LENGTH(2)) p_done(.ck(ck), .rst(1'b1), .in(!req), .out(acc_done));
+
+    assign done = acc_done && !req;
 
 endmodule
 

@@ -1,27 +1,27 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jul 19 09:08:20 2020
+[*] Sun Jul 19 09:56:28 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/correlator/correlator.vcd"
-[dumpfile_mtime] "Sun Jul 19 09:07:59 2020"
-[dumpfile_size] 142375
+[dumpfile_mtime] "Sun Jul 19 09:55:24 2020"
+[dumpfile_size] 143606
 [savefile] "/home/dave/Desktop/git/fpga/correlator/correlator.gtkw"
 [timestart] 0
 [size] 1908 649
 [pos] -1 -1
-*-18.000000 288000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.000000 522000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
+[treeopen] tb.xx.
 [sst_width] 196
 [signals_width] 134
 [sst_expanded] 1
 [sst_vpaned_height] 173
 @28
 tb.xx.ck
-@29
 tb.rst
 @22
-tb.xx.data_x[15:0]
-tb.xx.data_y[15:0]
+tb.xx.x[15:0]
+tb.xx.y[15:0]
 @28
 tb.xx.neg_x
 tb.xx.neg_y
@@ -30,10 +30,15 @@ tb.xx.ux[15:0]
 tb.xx.uy[15:0]
 tb.xx.mul_xy[31:0]
 @28
+tb.xx.en
 tb.xx.acc_en
 tb.xx.acc_add
+tb.xx.clr
 tb.xx.acc_rst
-@22
-tb.xx.acc_out[39:0]
+tb.xx.req
+@23
+tb.acc_out[39:0]
+@28
+tb.xx.done
 [pattern_trace] 1
 [pattern_trace] 0
