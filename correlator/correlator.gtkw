@@ -1,44 +1,54 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jul 19 09:56:28 2020
+[*] Sun Jul 19 12:14:06 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/correlator/correlator.vcd"
-[dumpfile_mtime] "Sun Jul 19 09:55:24 2020"
-[dumpfile_size] 143606
+[dumpfile_mtime] "Sun Jul 19 12:03:34 2020"
+[dumpfile_size] 316128
 [savefile] "/home/dave/Desktop/git/fpga/correlator/correlator.gtkw"
 [timestart] 0
 [size] 1908 649
 [pos] -1 -1
-*-18.000000 522000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.000000 798000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
-[treeopen] tb.xx.
+[treeopen] tb.mac.
 [sst_width] 196
 [signals_width] 134
 [sst_expanded] 1
 [sst_vpaned_height] 173
 @28
-tb.xx.ck
+tb.ck
 tb.rst
+tb.clr
+tb.req
 @22
-tb.xx.x[15:0]
-tb.xx.y[15:0]
+tb.raddr_x[7:0]
+tb.data_x[15:0]
+tb.data_y[15:0]
+tb.mac.ux[15:0]
+tb.mac.uy[15:0]
+tb.mac.mul_xy[31:0]
 @28
-tb.xx.neg_x
-tb.xx.neg_y
+tb.mac.acc_add
+tb.mac.acc_en
+tb.mac.acc_rst
 @22
-tb.xx.ux[15:0]
-tb.xx.uy[15:0]
-tb.xx.mul_xy[31:0]
-@28
-tb.xx.en
-tb.xx.acc_en
-tb.xx.acc_add
-tb.xx.clr
-tb.xx.acc_rst
-tb.xx.req
-@23
 tb.acc_out[39:0]
 @28
-tb.xx.done
+tb.acc_done
+@22
+tb.audio[15:0]
+@c00022
+tb.shifter.shift[4:0]
+@28
+(0)tb.shifter.shift[4:0]
+(1)tb.shifter.shift[4:0]
+(2)tb.shifter.shift[4:0]
+(3)tb.shifter.shift[4:0]
+(4)tb.shifter.shift[4:0]
+@1401200
+-group_end
+@28
+tb.overflow
 [pattern_trace] 1
 [pattern_trace] 0

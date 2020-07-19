@@ -259,7 +259,13 @@ module sequencer(
     wire shift_en;
     pipe #(.LENGTH(3)) pipe_shift_en (.ck(ck), .rst(reset), .in(out_en_req), .out(shift_en));
  
-    shifter #(.SHIFT_W(FRAME_W)) shift_data (.ck(ck), .en(shift_en), .shift(shift_3), .in(acc_out), .out(shift_out));
+    /* verilator lint_off UNUSED */
+    // TODO : pass this back to control reg?
+    wire overflow;
+    /* verilator lint_on UNUSED */
+    shifter #(.SHIFT_W(FRAME_W)) 
+        shift_data (.ck(ck), .en(shift_en), 
+            .shift(shift_3), .in(acc_out), .out(shift_out), .overflow(overflow));
 
     // Pipeline t7
     // Write output
