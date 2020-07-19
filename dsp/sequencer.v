@@ -3,46 +3,6 @@
     *
     */
 
-module pipe(input wire ck, input wire rst, input wire in, output wire out);
-
-    parameter LENGTH=1;
-
-    reg [(LENGTH-1):0] delay;
-
-    /* verilator lint_off WIDTH */
-    always @(posedge ck) begin
-        if (rst)
-            delay <= (delay << 1) | in;
-        else
-            delay <= 0;
-    end
-    /* verilator lint_on WIDTH */
-
-    assign out = delay[LENGTH-1];
-
-endmodule
-
-   /*
-    *
-    */
-
-module twos_complement(input wire ck, input wire inv, input wire [15:0] in, output reg [15:0] out);
-
-    initial out = 0;
-
-    always @(posedge ck) begin
-        if (inv)
-            out <= (~in) + 1'b1;
-        else
-            out <= in;
-    end
-
-endmodule
-
-   /*
-    *
-    */
-
 module sequencer(
     input wire ck,
     input wire rst,
