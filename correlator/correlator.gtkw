@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jul 19 12:14:06 2020
+[*] Mon Jul 20 06:43:55 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/correlator/correlator.vcd"
-[dumpfile_mtime] "Sun Jul 19 12:03:34 2020"
-[dumpfile_size] 316128
+[dumpfile_mtime] "Mon Jul 20 06:43:40 2020"
+[dumpfile_size] 148120
 [savefile] "/home/dave/Desktop/git/fpga/correlator/correlator.gtkw"
-[timestart] 0
+[timestart] 336000
 [size] 1908 649
 [pos] -1 -1
-*-18.000000 798000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.000000 1470000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.mac.
 [sst_width] 196
@@ -20,9 +20,15 @@
 tb.ck
 tb.rst
 tb.clr
-tb.req
+tb.start
+tb.fetch_done
+tb.fetching
 @22
 tb.raddr_x[7:0]
+@28
+tb.req
+tb.acc_en
+@22
 tb.data_x[15:0]
 tb.data_y[15:0]
 tb.mac.ux[15:0]
@@ -31,10 +37,14 @@ tb.mac.mul_xy[31:0]
 @28
 tb.mac.acc_add
 tb.mac.acc_en
+tb.mac.clr
 tb.mac.acc_rst
 @22
 tb.acc_out[39:0]
 @28
+tb.mac.en
+tb.mac.req
+@29
 tb.acc_done
 @22
 tb.audio[15:0]
@@ -48,7 +58,5 @@ tb.shifter.shift[4:0]
 (4)tb.shifter.shift[4:0]
 @1401200
 -group_end
-@28
-tb.overflow
 [pattern_trace] 1
 [pattern_trace] 0

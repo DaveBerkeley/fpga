@@ -7,7 +7,7 @@ module mac (
     input wire [15:0] x,
     input wire [15:0] y,
     output wire [39:0] out,
-    output wire done
+    output reg done
 );
 
     wire neg_x;
@@ -49,13 +49,17 @@ module mac (
 
     // pipeline t=4 : data ready
 
-    reg [1:0] done_x = 0;
+    wire req_t1;
+    pipe #(.LENGTH(1)) p_req(.ck(ck), .rst(1'b1), .in(req), .out(req_t1));
+
+    initial done = 0;
 
     always @(posedge ck) begin
-        done_x <= { done_x[0], req };
+        if (clr || req || req_t1)
+            done <= 0;
+        else
+            done <= 1;
     end
-
-    assign done = (done_x == 0) && !req;
 
 endmodule
 
