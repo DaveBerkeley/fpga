@@ -49,6 +49,33 @@ endmodule
     *
     */
 
+module level
+    #(parameter WIDTH=40, parameter LEVEL_W=$clog2(WIDTH))
+   (input wire ck,
+    input wire [(WIDTH-1):0] in,
+    output reg [(LEVEL_W-1):0] out
+);
+
+    wire [(WIDTH-1):0] normal;
+
+    assign normal = in[WIDTH-1] ? ~in : in;
+
+    integer i;
+
+    always @(posedge ck) begin
+        out = 0;
+        for (i = 0; i < (WIDTH-1); i = i + 1) begin
+            if (normal[i] && (out == 0))
+                out = WIDTH - i;
+        end
+    end
+
+endmodule
+
+   /*
+    *
+    */
+
 module tb ();
 
     reg ck = 0;
@@ -101,6 +128,9 @@ module tb ();
  
     mac mac(.ck(ck), .en(acc_en), .clr(clr), .req(req), 
         .x(data_x), .y(data_y), .out(acc_out), .done(acc_done));
+
+    wire [5:0] agc;
+    level level(.ck(ck), .in(acc_out), .out(agc));
 
     wire [4:0] shift;
     assign shift = 14;
