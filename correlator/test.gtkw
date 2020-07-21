@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue Jul 21 04:35:23 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/correlator/correlator.vcd"
+[dumpfile_mtime] "Tue Jul 21 04:34:34 2020"
+[dumpfile_size] 510076
+[savefile] "/home/dave/Desktop/git/fpga/correlator/test.gtkw"
+[timestart] 0
+[size] 1851 653
+[pos] -1 -1
+*-18.000000 140000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[sst_width] 196
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 174
+@28
+tb.level_test.ck
+@22
+tb.level_test.in[39:0]
+tb.level_test.normal[39:0]
+tb.level_test.bit_1[39:0]
+tb.level_test.bit_2[39:0]
+tb.level_test.bit_4[39:0]
+tb.level_test.bit_8[39:0]
+tb.level_test.bit_16[39:0]
+tb.level_test.bit_32[39:0]
+tb.level_test.bit_64[39:0]
+tb.level_test.hi_bit[39:0]
+tb.level_test.out[5:0]
+[pattern_trace] 1
+[pattern_trace] 0

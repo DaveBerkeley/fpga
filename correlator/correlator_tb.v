@@ -2,6 +2,18 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
+task assert_x(input test);
+
+    begin
+        if (test !== 1)
+        begin
+            $display("ASSERTION FAILED in %m");
+            $finish;
+        end
+    end
+
+endtask
+
 module corr_fetch
     #(parameter ADDR_W=8, parameter COUNT_W=4)
    (input wire ck,
@@ -46,13 +58,14 @@ module corr_fetch
 endmodule
 
    /*
-    *
+    *   Returns the index of the highest set bit,
+    *   first normalising -vew numbers
     */
 
-module level
+module highest_bit
     #(parameter WIDTH=40, parameter LEVEL_W=$clog2(WIDTH))
    (input wire ck,
-    input wire [(WIDTH-1):0] in,
+    input wire signed [(WIDTH-1):0] in,
     output reg [(LEVEL_W-1):0] out
 );
 
@@ -60,13 +73,33 @@ module level
 
     assign normal = in[WIDTH-1] ? ~in : in;
 
+    wire [(WIDTH-1):0] bit_1;
+    wire [(WIDTH-1):0] bit_2;
+    wire [(WIDTH-1):0] bit_4;
+    wire [(WIDTH-1):0] bit_8;
+    wire [(WIDTH-1):0] bit_16;
+    wire [(WIDTH-1):0] bit_32;
+    wire [(WIDTH-1):0] bit_64;
+
+    assign bit_1  = normal | (normal >> 1);
+    assign bit_2  = bit_1  | (bit_1 >> 2);
+    assign bit_4  = bit_2  | (bit_2 >> 4);
+    assign bit_8  = bit_4  | (bit_4 >> 8);
+    assign bit_16 = bit_8  | (bit_8 >> 16);
+    assign bit_32 = bit_16 | (bit_16 >> 32);
+    assign bit_64 = bit_32 | (bit_32 >> 64);
+
+    wire [(WIDTH-1):0] hi_bit;
+
+    assign hi_bit = bit_64 ^ (bit_64 >> 1);
+
     integer i;
 
     always @(posedge ck) begin
-        out = 0;
-        for (i = 0; i < (WIDTH-1); i = i + 1) begin
-            if (normal[i] && (out == 0))
-                out = WIDTH - i;
+        out <= 0;
+        for (i = 0; i < WIDTH; i = i + 1) begin
+            if (hi_bit[i])
+                out <= i;
         end
     end
 
@@ -130,12 +163,62 @@ module tb ();
         .x(data_x), .y(data_y), .out(acc_out), .done(acc_done));
 
     wire [5:0] agc;
-    level level(.ck(ck), .in(acc_out), .out(agc));
+    highest_bit level(.ck(ck), .in(acc_out), .out(agc));
 
     wire [4:0] shift;
     assign shift = 14;
     wire [15:0] audio;
     shifter shifter(.ck(ck), .en(1'b1), .shift(shift), .in(acc_out), .out(audio));
+
+    //  highest_bit() test
+
+    wire [5:0] level_out;
+    reg [39:0] level_in = 0;
+    highest_bit level_test(.ck(ck), .in(level_in), .out(level_out));
+
+    task test_level(input [39:0] in, input [5:0] result);
+
+        begin
+            level_in <= in;
+            @(posedge ck);
+            @(posedge ck);
+            //$display("level_test '%x' '%d', expect '%d'", in, level_out, result);
+            assert_x(level_out == result);
+        end
+
+    endtask
+
+    integer ii;
+
+    initial begin
+
+        $display("test highest_bit()");
+
+        level_in <= 0;
+        @(posedge ck);
+
+        test_level(40'h0000000000, 0);
+        test_level(40'h0000000001, 0);
+        test_level(40'h0000000003, 1);
+        test_level(40'h1000000001, 36);
+        test_level(40'h2002222001, 37);
+        test_level(40'h7002222001, 38);
+        test_level(40'h7fffffffff, 38);
+
+        for (ii = 0; ii < 39; ii = ii + 1) begin
+            test_level(1 << ii, ii);
+        end
+
+        test_level(40'h8000000000, 38);
+        test_level(40'hA000000000, 38);
+        test_level(40'hA123456789, 38);
+        test_level(40'hffffffffff, 0);
+        test_level(40'hffffffffef, 4);
+        test_level(40'hfeffffffef, 32);
+
+    end
+
+    //  Test
 
     always @(posedge ck) begin
         acc_en <= fetching;
