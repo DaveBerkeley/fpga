@@ -20,8 +20,8 @@ module mac (
 
     // pipeline t=1 : conditionally invert / latch the input data
 
-    twos_complement x2c(.ck(ck), .inv(neg_x), .in(x), .out(ux));
-    twos_complement y2c(.ck(ck), .inv(neg_y), .in(y), .out(uy));
+    twos_complement #(.WIDTH(16)) x2c(.ck(ck), .inv(neg_x), .in(x), .out(ux));
+    twos_complement #(.WIDTH(16)) y2c(.ck(ck), .inv(neg_y), .in(y), .out(uy));
 
     // pipeline t=2 : multiply the unsigned x & y values
 

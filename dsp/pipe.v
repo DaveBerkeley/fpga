@@ -3,11 +3,15 @@
     *
     */
 
-module pipe(input wire ck, input wire rst, input wire in, output wire out);
+module pipe
+    #(parameter LENGTH=1, parameter INIT=0)
+   (input wire ck, 
+    input wire rst, 
+    input wire in, 
+    output wire out
+);
 
-    parameter LENGTH=1;
-
-    reg [(LENGTH-1):0] delay;
+    reg [(LENGTH-1):0] delay = INIT;
 
     /* verilator lint_off WIDTH */
     always @(posedge ck) begin

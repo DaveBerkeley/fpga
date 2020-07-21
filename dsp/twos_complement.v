@@ -3,13 +3,19 @@
     *
     */
 
-module twos_complement(input wire ck, input wire inv, input wire [15:0] in, output reg [15:0] out);
+module twos_complement
+    #(parameter WIDTH=16)
+   (input wire ck, 
+    input wire inv, 
+    input wire [(WIDTH-1):0] in, 
+    output reg [(WIDTH-1):0] out
+);
 
     initial out = 0;
 
     always @(posedge ck) begin
         if (inv)
-            out <= (~in) + 1'b1;
+            out <= 1'b1 + ~in;
         else
             out <= in;
     end

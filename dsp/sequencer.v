@@ -198,7 +198,7 @@ module sequencer(
 
     wire [15:0] audio;
 
-    twos_complement neg(.ck(ck), .inv(neg_audio), .in(audio_in), .out(audio));
+    twos_complement #(.WIDTH(16)) neg(.ck(ck), .inv(neg_audio), .in(audio_in), .out(audio));
 
     // pipeline the sign change to apply at the accumulator stage
     reg negative = 0;
