@@ -2,10 +2,10 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
-task assert_x(input test);
+task tb_assert(input test);
 
     begin
-        if (test !== 1)
+        if (!test)
         begin
             $display("ASSERTION FAILED in %m");
             $finish;
@@ -183,7 +183,7 @@ module tb ();
             @(posedge ck);
             @(posedge ck);
             //$display("level_test '%x' '%d', expect '%d'", in, level_out, result);
-            assert_x(level_out == result);
+            tb_assert(level_out == result);
         end
 
     endtask

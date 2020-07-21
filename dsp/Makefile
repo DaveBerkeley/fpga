@@ -13,8 +13,3 @@ TB_SRC = $(filter-out pll.v, $(ADD_SRC)) i2s_secondary.v
 
 include ../main.mk
 
-iomem_tb: iomem.v iomem_tb.v
-	# verilator --top-module top $^ --lint-only -Wall -Wno-DECLFILENAME -Wno-STMTDLY
-	iverilog -DSIMULATION -g2012 -o $@ $^
-	./$@
-
