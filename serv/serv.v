@@ -16,8 +16,8 @@ module top(
     wire led;
     assign LED1 = led;
 
-    //parameter memfile = "firmware.hex";
-    parameter memfile = "/home/dave/Desktop/serv/sw/zephyr_hello.hex";
+    parameter memfile = "firmware.hex";
+    //parameter memfile = "/home/dave/Desktop/serv/sw/zephyr_hello.hex";
     parameter memsize = 8192;
 
     assign TX = led;
@@ -31,45 +31,8 @@ module top(
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(i_clk), .clock_out(o_clk), .locked(locked));
  
-    /*
-    reg [3:0] prescale = 0;
-
-    always @(posedge o_clk) begin
-        prescale <= prescale + 1;
-    end
-
     wire wb_clk;
-    assign wb_clk = prescale[3];
-
-    // Reset generator
-    reg [4:0] rst_reg = 5'b11111;
-    reg reset_req = 0;
-
-    always @(posedge wb_clk) begin
-        if (reset_req)
-            rst_reg <= 5'b11111;
-        else
-            rst_reg <= {1'b0, rst_reg[4:1]};
-    end
- 
-    wire o_rst;
-    assign o_rst = rst_reg[0];
-
-    reg [10:0] reset_count = 0;
-
-    always @(posedge wb_clk) begin
-        reset_count <= reset_count + 1;
-        if (reset_count == 0) begin
-            reset_req <= 1;
-        end
-        if (reset_req) begin
-            reset_req <= 0;
-        end
-
-    end
-    */
-   wire wb_clk;
-   assign wb_clk = o_clk;
+    assign wb_clk = o_clk;
 
     // Reset generator
     reg [4:0] rst_reg = 5'b11111;

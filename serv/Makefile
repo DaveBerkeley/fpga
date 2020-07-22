@@ -73,7 +73,7 @@ firmware.bin: firmware.elf
 	$(CROSS)objcopy -S -O binary $^ $@
 
 firmware.elf: firmware.c start.s Makefile
-	$(CROSS)gcc -DICEBREAKER -march=rv32ic -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o $@ start.s firmware.c
+	$(CROSS)gcc -DICEBREAKER -march=rv32i -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o $@ start.s firmware.c
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
