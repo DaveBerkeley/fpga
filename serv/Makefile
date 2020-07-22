@@ -28,8 +28,7 @@ PIN_DEF = ../icebreaker.pcf
 TB_SRC = $(ADD_SRC)
 
 FILES =  pll.v
-FILES += $(SERVANT)/servant.v
-#FILES += $(SERVANT)/service.v
+FILES += servant.v
 FILES += $(SERVANT)/servant_arbiter.v
 FILES += $(SERVANT)/servant_mux.v
 FILES += $(SERVANT)/servant_ram.v

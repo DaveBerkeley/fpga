@@ -17,7 +17,6 @@ module top(
     assign LED1 = led;
 
     parameter memfile = "firmware.hex";
-    //parameter memfile = "/home/dave/Desktop/serv/sw/zephyr_hello.hex";
     parameter memsize = 8192;
 
     assign TX = led;
@@ -44,9 +43,11 @@ module top(
     wire o_rst;
     assign o_rst = rst_reg[0];
 
+    /* verilator lint_off UNUSED */
     wire [7:0] test;
+    /* verilator lint_on UNUSED */
 
-    assign P1A1 = test[0];
+    assign P1A1 = led;
     assign P1A2 = test[1];
     assign P1A3 = test[2];
     assign P1A4 = test[3];

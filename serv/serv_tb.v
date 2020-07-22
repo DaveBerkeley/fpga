@@ -46,8 +46,7 @@ module top (output wire TX);
 
     always #7 ck <= !ck;
 
-    //parameter memfile = "firmware.hex";
-    parameter memfile = "/home/dave/Desktop/serv/sw/zephyr_hello.hex";
+    parameter memfile = "firmware.hex";
     parameter memsize = 8192;
 
     // PLL
@@ -69,8 +68,10 @@ module top (output wire TX);
     wire o_rst;
     assign o_rst = rst_reg[0];
 
+    wire [7:0] test;
+
     // CPU
-    servant #(.memfile (memfile), .memsize (memsize), .sim(1))
-        servant (.wb_clk (wb_clk), .wb_rst (o_rst), .q(led));
+    servant #(.memfile (memfile), .memsize (memsize))
+        servant (.wb_clk (wb_clk), .wb_rst (o_rst), .q(led), .test(test));
 
 endmodule
