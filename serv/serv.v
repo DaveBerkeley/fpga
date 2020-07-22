@@ -47,7 +47,7 @@ module top(
     wire [7:0] test;
     /* verilator lint_on UNUSED */
 
-    assign P1A1 = led;
+    assign P1A1 = test[0];
     assign P1A2 = test[1];
     assign P1A3 = test[2];
     assign P1A4 = test[3];

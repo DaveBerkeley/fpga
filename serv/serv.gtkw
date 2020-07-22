@@ -1,27 +1,50 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul 16 06:36:52 2020
+[*] Wed Jul 22 14:41:36 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
-[dumpfile_mtime] "Thu Jul 16 06:35:51 2020"
-[dumpfile_size] 1184890
+[dumpfile_mtime] "Wed Jul 22 14:40:28 2020"
+[dumpfile_size] 2278431
 [savefile] "/home/dave/Desktop/git/fpga/serv/serv.gtkw"
 [timestart] 0
 [size] 1913 664
 [pos] -1 -1
-*-18.919157 15000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-26.076664 70063000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
-[treeopen] top.servant.
-[treeopen] top.servant.cpu.
 [treeopen] top.servant.cpu.cpu.
 [treeopen] top.servant.cpu.cpu.state.
 [treeopen] top.servant.genblk1.
 [sst_width] 263
-[signals_width] 158
+[signals_width] 190
 [sst_expanded] 1
 [sst_vpaned_height] 178
 @28
-top.o_rst
-top.clock.clock_out
+top.uart_tx.ck
+top.uart_tx.baud_ck
+top.uart_tx.baud_ck
+@22
+top.uart_tx.in[7:0]
+@c00022
+top.uart_tx.shift[9:0]
+@28
+(0)top.uart_tx.shift[9:0]
+(1)top.uart_tx.shift[9:0]
+(2)top.uart_tx.shift[9:0]
+(3)top.uart_tx.shift[9:0]
+(4)top.uart_tx.shift[9:0]
+(5)top.uart_tx.shift[9:0]
+(6)top.uart_tx.shift[9:0]
+(7)top.uart_tx.shift[9:0]
+(8)top.uart_tx.shift[9:0]
+(9)top.uart_tx.shift[9:0]
+@1401200
+-group_end
+@28
+top.uart_tx.tx
+top.uart_tx.ready
+@29
+top.uart_tx.we
+@22
+top.uart_tx.count[3:0]
 [pattern_trace] 1
 [pattern_trace] 0
