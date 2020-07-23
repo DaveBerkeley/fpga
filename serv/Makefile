@@ -29,6 +29,7 @@ TB_SRC = $(ADD_SRC)
 
 FILES =  pll.v
 FILES += servant.v
+FILES += soc.v
 FILES += uart.v
 FILES += $(SERVANT)/servant_arbiter.v
 FILES += servant_mux.v
