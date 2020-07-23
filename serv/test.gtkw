@@ -1,0 +1,53 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Jul 23 14:58:11 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
+[dumpfile_mtime] "Thu Jul 23 14:55:59 2020"
+[dumpfile_size] 2699106
+[savefile] "/home/dave/Desktop/git/fpga/serv/test.gtkw"
+[timestart] 0
+[size] 1918 746
+[pos] -1 -1
+*-17.000000 679000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.soc.
+[sst_width] 196
+[signals_width] 182
+[sst_expanded] 1
+[sst_vpaned_height] 206
+@28
+top.wb_clk
+top.o_rst
+top.wb_dbus_cyc
+@22
+top.wb_dbus_adr[31:0]
+@28
+top.wb_ibus_cyc
+@22
+top.wb_ibus_adr[31:0]
+top.wb_dbus_dat[31:0]
+top.wb_dbus_sel[3:0]
+@28
+top.wb_dbus_we
+top.wb_dbus_ack
+top.wb_dbus_ack_2
+@22
+top.wb_dbus_rdt[31:0]
+top.wb_dbus_rdt_2[31:0]
+@28
+top.wb_ibus_ack
+top.wb_ibus_ack_2
+@22
+top.wb_ibus_rdt[31:0]
+@23
+top.wb_ibus_rdt_2[31:0]
+@200
+-
+@28
+top.led
+@22
+top.soc.wb_dmem_rdt[31:0]
+top.soc_2.ram_rdt[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

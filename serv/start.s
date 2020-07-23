@@ -67,7 +67,7 @@ addi x31, zero, 0
 
 # call main
 call main
-
 loop:
 j loop
 
+# FIN

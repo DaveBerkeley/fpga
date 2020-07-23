@@ -29,9 +29,16 @@ module top(
     wire locked;
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(i_clk), .clock_out(o_clk), .locked(locked));
+
+    reg [2:0] prescale = 0;
+
+    always @(posedge o_clk) begin
+        prescale <= prescale + 1;
+    end
  
     wire wb_clk;
-    assign wb_clk = o_clk;
+    //assign wb_clk = o_clk;
+    assign wb_clk = prescale[2];
 
     // Reset generator
     reg [4:0] rst_reg = 5'b11111;

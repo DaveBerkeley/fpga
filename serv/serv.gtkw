@@ -1,49 +1,131 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul 23 09:13:44 2020
+[*] Thu Jul 23 13:41:41 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
-[dumpfile_mtime] "Thu Jul 23 09:13:35 2020"
-[dumpfile_size] 2279695
+[dumpfile_mtime] "Thu Jul 23 13:41:18 2020"
+[dumpfile_size] 2261917
 [savefile] "/home/dave/Desktop/git/fpga/serv/serv.gtkw"
-[timestart] 0
+[timestart] 384500
 [size] 1913 664
 [pos] -1 -1
-*-18.076664 287000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.076664 539000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
-[treeopen] top.servant.cpu.cpu.
-[treeopen] top.servant.cpu.cpu.state.
-[treeopen] top.servant.genblk1.
+[treeopen] top.soc.
 [sst_width] 263
 [signals_width] 214
 [sst_expanded] 1
-[sst_vpaned_height] 178
+[sst_vpaned_height] 166
 @28
-top.uart.ck
-top.uart.baud_ck
+top.soc.wb_clk
+top.soc.wb_rst
+top.soc.wb_ibus_cyc
 @22
-top.uart.in[7:0]
+top.soc.wb_ibus_adr[31:0]
 @28
-top.uart.we
-@22
-top.uart.count[3:0]
-top.uart.shift[9:0]
+top.soc.wb_ibus_ack
+@c00022
+top.soc.wb_ibus_rdt[31:0]
 @28
-top.uart.tx
-top.uart.ready
-top.servant.wb_clk
-top.servant.wb_rst
-@22
-top.servant.wb_mem_adr[31:0]
-top.servant.wb_ibus_adr[31:0]
-@23
-top.servant.wb_ibus_rdt[31:0]
+(0)top.soc.wb_ibus_rdt[31:0]
+(1)top.soc.wb_ibus_rdt[31:0]
+(2)top.soc.wb_ibus_rdt[31:0]
+(3)top.soc.wb_ibus_rdt[31:0]
+(4)top.soc.wb_ibus_rdt[31:0]
+(5)top.soc.wb_ibus_rdt[31:0]
+(6)top.soc.wb_ibus_rdt[31:0]
+(7)top.soc.wb_ibus_rdt[31:0]
+(8)top.soc.wb_ibus_rdt[31:0]
+(9)top.soc.wb_ibus_rdt[31:0]
+(10)top.soc.wb_ibus_rdt[31:0]
+(11)top.soc.wb_ibus_rdt[31:0]
+(12)top.soc.wb_ibus_rdt[31:0]
+(13)top.soc.wb_ibus_rdt[31:0]
+(14)top.soc.wb_ibus_rdt[31:0]
+(15)top.soc.wb_ibus_rdt[31:0]
+(16)top.soc.wb_ibus_rdt[31:0]
+(17)top.soc.wb_ibus_rdt[31:0]
+(18)top.soc.wb_ibus_rdt[31:0]
+(19)top.soc.wb_ibus_rdt[31:0]
+(20)top.soc.wb_ibus_rdt[31:0]
+(21)top.soc.wb_ibus_rdt[31:0]
+(22)top.soc.wb_ibus_rdt[31:0]
+(23)top.soc.wb_ibus_rdt[31:0]
+(24)top.soc.wb_ibus_rdt[31:0]
+(25)top.soc.wb_ibus_rdt[31:0]
+(26)top.soc.wb_ibus_rdt[31:0]
+(27)top.soc.wb_ibus_rdt[31:0]
+(28)top.soc.wb_ibus_rdt[31:0]
+(29)top.soc.wb_ibus_rdt[31:0]
+(30)top.soc.wb_ibus_rdt[31:0]
+(31)top.soc.wb_ibus_rdt[31:0]
+@1401200
+-group_end
+@200
+-
 @28
-top.servant.wb_dbus_ack
-top.servant.wb_dbus_cyc
+top.soc.wb_dbus_cyc
+top.soc.wb_dbus_ack
+@c00022
+top.soc.wb_dbus_sel[3:0]
+@28
+(0)top.soc.wb_dbus_sel[3:0]
+(1)top.soc.wb_dbus_sel[3:0]
+(2)top.soc.wb_dbus_sel[3:0]
+(3)top.soc.wb_dbus_sel[3:0]
+@1401200
+-group_end
 @22
-top.servant.wb_dbus_dat[31:0]
-top.servant.wb_dbus_rdt[31:0]
-top.servant.wb_dbus_sel[3:0]
+top.soc.wb_dbus_adr[31:0]
+top.soc.wb_dbus_dat[31:0]
+@28
+top.soc.wb_dbus_we
+@c00022
+top.soc.wb_dbus_rdt[31:0]
+@28
+(0)top.soc.wb_dbus_rdt[31:0]
+(1)top.soc.wb_dbus_rdt[31:0]
+(2)top.soc.wb_dbus_rdt[31:0]
+(3)top.soc.wb_dbus_rdt[31:0]
+(4)top.soc.wb_dbus_rdt[31:0]
+(5)top.soc.wb_dbus_rdt[31:0]
+(6)top.soc.wb_dbus_rdt[31:0]
+(7)top.soc.wb_dbus_rdt[31:0]
+(8)top.soc.wb_dbus_rdt[31:0]
+(9)top.soc.wb_dbus_rdt[31:0]
+(10)top.soc.wb_dbus_rdt[31:0]
+(11)top.soc.wb_dbus_rdt[31:0]
+(12)top.soc.wb_dbus_rdt[31:0]
+(13)top.soc.wb_dbus_rdt[31:0]
+(14)top.soc.wb_dbus_rdt[31:0]
+(15)top.soc.wb_dbus_rdt[31:0]
+(16)top.soc.wb_dbus_rdt[31:0]
+(17)top.soc.wb_dbus_rdt[31:0]
+(18)top.soc.wb_dbus_rdt[31:0]
+(19)top.soc.wb_dbus_rdt[31:0]
+(20)top.soc.wb_dbus_rdt[31:0]
+(21)top.soc.wb_dbus_rdt[31:0]
+(22)top.soc.wb_dbus_rdt[31:0]
+(23)top.soc.wb_dbus_rdt[31:0]
+(24)top.soc.wb_dbus_rdt[31:0]
+(25)top.soc.wb_dbus_rdt[31:0]
+(26)top.soc.wb_dbus_rdt[31:0]
+(27)top.soc.wb_dbus_rdt[31:0]
+(28)top.soc.wb_dbus_rdt[31:0]
+(29)top.soc.wb_dbus_rdt[31:0]
+(30)top.soc.wb_dbus_rdt[31:0]
+(31)top.soc.wb_dbus_rdt[31:0]
+@1401200
+-group_end
+@22
+top.soc.ram.o_wb_rdt[31:0]
+top.soc.ram.i_wb_adr[12:2]
+top.soc.wb_dbus_adr[31:0]
+top.soc.wb_ibus_rdt[31:0]
+top.soc.wb_dbus_rdt[31:0]
+top.test_idat[31:0]
+top.test_ddat[31:0]
+@29
+top.soc.q
 [pattern_trace] 1
 [pattern_trace] 0
