@@ -1,5 +1,5 @@
 
-module uart(
+module uart_tx(
     input wire ck,
     input wire baud_ck,
     input wire [7:0] in,

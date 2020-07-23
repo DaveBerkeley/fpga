@@ -1,4 +1,35 @@
 `default_nettype none
+
+   /*
+    *
+    */
+
+module arb
+    #(parameter ADDR=0, WIDTH=8)
+    (input wire wb_ck, 
+    input wire [(WIDTH-1):0] addr, 
+    input wire wb_cyc, 
+    input wire wb_rst,
+    output reg ack, output wire en);
+
+    wire match;
+    assign match = addr == ADDR;
+    assign en = match & wb_cyc;
+
+    always @(posedge wb_ck) begin
+        ack <= 0;
+        if (wb_cyc && match)
+            ack <= 1;
+        if (wb_rst)
+            ack <= 0;
+    end
+
+endmodule
+
+   /*
+    *
+    */
+
 module servant
 (
  input wire  wb_clk,
@@ -74,6 +105,49 @@ module servant
       .o_wb_cpu_cyc (wb_mem_cyc),
       .i_wb_cpu_rdt (wb_mem_rdt),
       .i_wb_cpu_ack (wb_mem_ack));
+
+    wire [3:0] arb_addr;
+    assign arb_addr = wb_dbus_adr[31:28];
+
+    wire rom_en;
+    wire rom_ack;
+    arb #(.ADDR(4'h0), .WIDTH(4)) rom_arb
+            (.wb_ck(wb_clk),
+            .addr(arb_addr),
+            .wb_cyc(wb_ibus_cyc),
+            .wb_rst(wb_rst),
+            .ack(rom_ack), 
+            .en(rom_en));
+
+    wire ram_en;
+    wire ram_ack_nowt;
+    arb #(.ADDR(4'h0), .WIDTH(4)) ram_arb
+            (.wb_ck(wb_clk),
+            .addr(arb_addr),
+            .wb_cyc(wb_dbus_cyc),
+            .wb_rst(wb_rst),
+            .ack(ram_ack_nowt), 
+            .en(ram_en));
+
+    wire gpio_en;
+    wire gpio_ack;
+    arb #(.ADDR(4'h4), .WIDTH(4)) gpio_arb
+            (.wb_ck(wb_clk),
+            .addr(arb_addr),
+            .wb_cyc(wb_dbus_cyc),
+            .wb_rst(wb_rst),
+            .ack(gpio_ack), 
+            .en(gpio_en));
+
+    wire timer_en;
+    wire timer_ack;
+    arb #(.ADDR(4'h8), .WIDTH(4)) timer_arb
+            (.wb_ck(wb_clk),
+            .addr(arb_addr),
+            .wb_cyc(wb_dbus_cyc),
+            .wb_rst(wb_rst),
+            .ack(timer_ack), 
+            .en(timer_en));
 
    servant_mux #(sim) servant_mux
      (

@@ -8,8 +8,8 @@ int main(void)
 {
     while (true)
     {
-        *LEDS = 1;
-        *LEDS = 0;
+        *LEDS = '\32';
+        *LEDS = '\35';
     }
     return 0;
 }

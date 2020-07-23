@@ -106,7 +106,7 @@ module top (output wire TX);
     wire baud_ck;
     assign baud_ck = baud == 0;
 
-    uart uart_tx(.ck(ck), .baud_ck(baud_ck), .in(data_in), .we(uart_we), .ready(ready), .tx(tx));
+    uart_tx uart(.ck(ck), .baud_ck(baud_ck), .in(data_in), .we(uart_we), .ready(ready), .tx(tx));
 
     integer i;
 
