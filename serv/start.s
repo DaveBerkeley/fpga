@@ -67,6 +67,7 @@ addi x31, zero, 0
 
 # Toggle LEDs
 led_loop:
+
 li a0, 0x40000000
 li a1, 0
 sw a1, 0(a0)

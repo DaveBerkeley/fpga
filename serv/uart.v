@@ -10,6 +10,9 @@ module uart_tx(
     reg [9:0] shift = 10'h3ff;
     reg [3:0] count = 0;
 
+    initial ready = 1;
+    initial tx = 1;
+
     always @(posedge ck) begin
 
         if (baud_ck) begin
@@ -22,7 +25,7 @@ module uart_tx(
             tx <= shift[0];
         end
 
-        if (we) begin
+        if (we & ready) begin
             shift <= { 1'b1, in, 1'b0 };
             count <= 9;
             ready <= 0;
@@ -38,10 +41,14 @@ endmodule
 
 module uart_baud
     #(parameter DIVIDE=16)
-    (input wire ck, output reg baud_ck);
+    (input wire ck, 
+    output reg baud_ck
+);
 
     localparam WIDTH = $clog2(DIVIDE);
     reg [(WIDTH-1):0] baud = 0;
+
+    initial baud_ck = 0;
 
     always @(posedge ck) begin
         /* verilator lint_off WIDTH */
