@@ -51,8 +51,10 @@ module servant
 
     localparam ADDR_W = $clog2(memsize/4);
     wire [(ADDR_W-1):0] ram_adr;
+    wire [(ADDR_W-1):0] rom_adr;
 
-    assign ram_adr = rom_cyc ? wb_ibus_adr[(ADDR_W+2-1):2] : wb_dbus_adr[(ADDR_W+2-1):2];
+    assign ram_adr = wb_dbus_adr[(ADDR_W+2-1):2];
+    assign rom_adr = wb_ibus_adr[(ADDR_W+2-1):2];
 
     wire [31:0] ram_rdt;
     /* verilator lint_off UNUSED */
@@ -60,18 +62,36 @@ module servant
     /* verilator lint_on UNUSED */
 
    servant_ram
-     #(.memfile (memfile),
-       .depth (memsize))
+     #(.depth (memsize))
    ram
      (// Wishbone interface
       .i_wb_clk (wb_clk),
       .i_wb_adr (ram_adr),
-      .i_wb_cyc (rom_cyc | ram_cyc),
-      .i_wb_we  (ram_cyc & wb_dbus_we) ,
-      .i_wb_sel ({4{ram_cyc}} & wb_dbus_sel),
+      .i_wb_cyc (ram_cyc),
+      .i_wb_we  (wb_dbus_we) ,
+      .i_wb_sel (wb_dbus_sel),
       .i_wb_dat (wb_dbus_dat),
       .o_wb_rdt (ram_rdt),
       .o_wb_ack (nowt));
+
+    wire [31:0] rom_rdt;
+    /* verilator lint_off UNUSED */
+    wire nowt2;
+    /* verilator lint_on UNUSED */
+
+   servant_ram
+     #(.memfile (memfile),
+       .depth (memsize))
+   rom
+     (// Wishbone interface
+      .i_wb_clk (wb_clk),
+      .i_wb_adr (rom_adr),
+      .i_wb_cyc (rom_cyc),
+      .i_wb_we  (1'b0),
+      .i_wb_sel (4'b0),
+      .i_wb_dat (32'h0),
+      .o_wb_rdt (rom_rdt),
+      .o_wb_ack (nowt2));
 
    // SoC signals have priority
 
@@ -80,7 +100,7 @@ module servant
   
     assign wb_dbus_rdt = wb_xbus_ack ? wb_xbus_rdt : ram_rdt;
     assign wb_dbus_ack = wb_xbus_ack | ram_ack;
-    assign wb_ibus_rdt = ram_rdt;
+    assign wb_ibus_rdt = rom_rdt;
     assign wb_ibus_ack = rom_ack;
 
    serv_rf_top
