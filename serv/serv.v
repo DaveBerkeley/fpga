@@ -31,14 +31,22 @@ module top(
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(CLK), .clock_out(pll_ck), .locked(locked));
 
-    reg [3:0] prescale = 0;
+    localparam prescale = 1;
 
-    always @(posedge pll_ck) begin
-        prescale <= prescale + 1;
-    end
+    generate
+        wire ck;
+        if (prescale) begin
+            reg [3:0] scale = 0;
 
-    wire ck;
-    assign ck = prescale[3];
+            always @(posedge pll_ck) begin
+                scale <= scale + 1;
+            end
+
+        assign ck = scale[3];
+        end else begin
+            assign ck = pll_ck;
+        end
+    endgenerate
 
     // Reset generator
     reg [4:0] rst_reg = 5'b11111;
@@ -56,13 +64,21 @@ module top(
 
     //  Continually Reset the cpu
 
-    reg [11:0] reseter = 0;
+    localparam reset_loop = 1;
 
-    always @(posedge ck) begin
-        reseter <= reseter + 1;
-    end
+    generate 
+        if (reset_loop) begin
+            reg [11:0] reseter = 0;
 
-    assign reset_req = reseter == 0;
+            always @(posedge ck) begin
+                reseter <= reseter + 1;
+            end
+
+            assign reset_req = reseter == 0;
+        end else begin
+            assign reset_req = 0;
+        end
+    endgenerate
 
     soc soc(
         .clk(ck),

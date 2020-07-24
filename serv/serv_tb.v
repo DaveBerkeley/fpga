@@ -76,12 +76,10 @@ module top (output wire TX);
     always @(posedge wb_clk) begin
         rst_reg <= {1'b0, rst_reg[4:1]};
     end
+
+    wire wb_rst;
+    assign wb_rst = rst_reg[0];
  
-    wire o_rst;
-    assign o_rst = rst_reg[0];
-
-    wire [7:0] test;
-
    /*
     *   UART Test
     */
@@ -178,133 +176,29 @@ module top (output wire TX);
         tb_assert(tx == 1); // stop bit
     end
 
-    reg [31:0] wb_ibus_adr = 32'hZ;
-    reg wb_ibus_cyc = 0;
-    wire [31:0] wb_ibus_rdt;
-    wire wb_ibus_ack;
+   /*
+    *
+    */
 
-    reg [31:0] wb_dbus_adr = 32'hZ;
-    reg [31:0] wb_dbus_dat = 32'hZ;
-    reg wb_dbus_cyc = 0;
-    reg wb_dbus_we = 0;
-    reg [3:0] wb_dbus_sel = 4'hZ;
+    wire [31:0] wb_dbus_adr;
+    wire [31:0] wb_dbus_dat;
+    wire wb_dbus_cyc;
+    wire wb_dbus_we;
+    wire [3:0] wb_dbus_sel;
     wire wb_dbus_ack;
     wire [31:0] wb_dbus_rdt;
 
-    wire [31:0] wb_ibus_rdt_2;
-    wire wb_ibus_ack_2;
-    wire wb_dbus_ack_2;
-    wire [31:0] wb_dbus_rdt_2;
-
     // CPU
-    soc #(.memfile (memfile), .memsize (memsize))
-        soc (.wb_clk (wb_clk), .wb_rst (o_rst), 
-
-        .wb_ibus_adr(wb_ibus_adr),
-        .wb_ibus_rdt(wb_ibus_rdt),
-        .wb_ibus_cyc(wb_ibus_cyc),
-        .wb_ibus_ack(wb_ibus_ack),
-
+    servant #(.memfile (memfile), .memsize (memsize))
+    soc (.wb_clk (wb_clk), 
+        .wb_rst (wb_rst), 
         .wb_dbus_adr(wb_dbus_adr),
         .wb_dbus_dat(wb_dbus_dat),
-        .wb_dbus_rdt(wb_dbus_rdt),
+        .wb_xbus_rdt(wb_dbus_rdt),
         .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_dbus_ack(wb_dbus_ack),
+        .wb_xbus_ack(wb_dbus_ack),
         .wb_dbus_sel(wb_dbus_sel),
         .wb_dbus_we(wb_dbus_we)
     );
-
-    reg [31:0] test_idat = 0;
-    reg [31:0] test_ddat = 0;
-
-    task ifetch(input [31:0] addr);
-        begin
-            wb_ibus_adr <= addr;
-            wb_ibus_cyc <= 1;
-            @(posedge ck);
-            tb_assert(wb_ibus_ack == 0);
-            @(posedge ck);
-            tb_assert(wb_ibus_ack == 1);
-            test_idat <= wb_ibus_rdt;
-                //@(posedge ck); // longer
-            wb_ibus_cyc <= 0;
-            wb_ibus_adr <= 32'hZ;
-            @(posedge ck);
-        end
-    endtask
-
-    task dfetch(input [31:0] addr);
-        begin
-            wb_dbus_adr <= addr;
-            wb_dbus_cyc <= 1;
-            @(posedge ck);
-            tb_assert(wb_dbus_ack == 0);
-            @(posedge ck);
-            tb_assert(wb_dbus_ack == 1);
-            test_ddat <= wb_dbus_rdt;
-                //@(posedge ck); // longer
-            wb_dbus_cyc <= 0;
-            wb_dbus_adr <= 32'hZ;
-            @(posedge ck);
-        end
-    endtask
-
-    task dwrite(input [31:0] addr, input [31:0] data);
-        begin
-            wb_dbus_adr <= addr;
-            wb_dbus_dat <= data;
-            wb_dbus_cyc <= 1;
-            wb_dbus_we <= 1;
-            wb_dbus_sel <= 4'b1111;
-            @(posedge ck);
-            tb_assert(wb_dbus_ack == 0);
-            @(posedge ck);
-            tb_assert(wb_dbus_ack == 1);
-                //@(posedge ck); // longer
-            wb_dbus_cyc <= 0;
-            wb_dbus_sel <= 0;
-            wb_dbus_we <= 0;
-            wb_dbus_adr <= 32'hZ;
-            wb_dbus_adr <= 32'hZ;
-            @(posedge ck);
-        end
-    endtask
-
-    initial begin
-        // wait for reset
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-
-        ifetch(0);
-        tb_assert(test_idat == 32'h0000_0093);
-        ifetch(4);
-        tb_assert(test_idat == 32'h0000_0193);
-        ifetch(8);
-        tb_assert(test_idat == 32'h0000_0213);
-        ifetch(12);
-        tb_assert(test_idat == 32'h0000_0293);
-
-        tb_assert(led == 0);
-        dwrite(32'h4000_0000, 32'h0000_0001);
-        tb_assert(led == 1);
-        dwrite(32'h4000_0000, 32'h0000_0001);
-        dwrite(32'h4000_0000, 32'h0000_0001);
-    
-        dfetch(4);
-        tb_assert(test_ddat == 32'h0000_0193);
-        dfetch(8);
-        tb_assert(test_ddat == 32'h0000_0213);
-
-        //dwrite(32'h4000_0000, 32'h0000_0000);
-        //tb_assert(led == 0);
-
-        dwrite(32'h8, 32'h1234_5678);
-        dfetch(8);
-        tb_assert(test_ddat == 32'h1234_5678);
-    end
 
 endmodule

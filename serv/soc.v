@@ -39,7 +39,7 @@ module soc (
         .wb_cyc(wb_dbus_cyc), 
         .wb_rst(wb_rst),
         .ack(gpio_ack), 
-        .en(gpio_cyc)
+        .cyc(gpio_cyc)
     );
 
     wire uart_cyc;
@@ -52,7 +52,7 @@ module soc (
         .wb_cyc(wb_dbus_cyc), 
         .wb_rst(wb_rst),
         .ack(uart_ack), 
-        .en(uart_cyc)
+        .cyc(uart_cyc)
     );
 
     //  UART
@@ -90,13 +90,13 @@ module soc (
 
     assign led = gpio[0];
 
-    //
+    //  Data Bus Reads
 
-    function [31:0] rdt();
+    function [31:0] rdt(input gpio_en, input uart_en);
         begin
-            if (gpio_cyc)
+            if (gpio_en)
                 rdt = { 24'h0, gpio };
-            else if (uart_cyc)
+            else if (uart_en)
                 rdt = { 31'h0, uart_rdt };
             else
                 rdt = 0;
@@ -104,23 +104,18 @@ module soc (
     endfunction
 
     assign wb_dbus_ack = gpio_ack | uart_ack;
-    assign wb_dbus_rdt = rdt();
+    assign wb_dbus_rdt = rdt(gpio_cyc, uart_cyc);
 
     //  Test outputs
 
-    reg toggle = 0;
-
-    always @(posedge wb_clk)
-        toggle <= !toggle;
- 
     assign test[0] = wb_clk;
     assign test[1] = wb_rst;
     assign test[2] = tx;
     assign test[3] = led;
     assign test[4] = gpio_cyc;
     assign test[5] = uart_cyc;
-    assign test[6] = gpio[0];
-    assign test[7] = toggle;
+    assign test[6] = 0;
+    assign test[7] = 0;
 
     // CPU
     servant #(.memfile (memfile), .memsize (memsize))

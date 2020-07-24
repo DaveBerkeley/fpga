@@ -6,11 +6,11 @@ module arb
     input wire wb_cyc, 
     input wire wb_rst,
     output wire ack, 
-    output wire en);
+    output wire cyc);
 
     wire match;
     assign match = addr == ADDR;
-    assign en = match & wb_cyc;
+    assign cyc = match & wb_cyc;
 
     reg [1:0] state = 0;
 

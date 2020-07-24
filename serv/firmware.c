@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #define LEDS ((uint32_t*) 0x40000000)
+#define UART ((uint32_t*) 0x60000000)
 
 uint32_t v;
 uint32_t i;
@@ -10,24 +11,35 @@ uint32_t ram[256/4];
 uint32_t stack;
 uint32_t ram_hi[256/4];
 
+#define PV (uint32_t)(& v)
+
 int main(void)
 {
-    uint32_t x;
-
-#define ADDR(x) ((uint32_t)((char*) & (x)))
-
     while (true)
     {
-        *LEDS = ADDR(i);
-        v += 1;
-        *LEDS = ADDR(i)>>8;
-        v += 1;
-        *LEDS = ADDR(i)>>16;
-        v += 1;
-        *LEDS = ADDR(i)>>24;
+        *UART = PV;
+        *LEDS = 0;
+        *UART = PV >> 8;
+        *LEDS = 0;
+        *UART = PV >> 16;
+        *LEDS = 0;
+        *UART = PV >> 24;
+        *LEDS = 1;
+        *UART = v;
+        *LEDS = 1;
+        *UART = v >> 8;
+
         v += 1;
     }
     return 0;
+}
+
+void another()
+{
+    while (true)
+    {
+        *UART = 'Q';
+    }
 }
 
 //  FIN
