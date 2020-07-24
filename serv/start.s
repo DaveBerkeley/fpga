@@ -66,8 +66,15 @@ addi x31, zero, 0
 #end_init_bss:
 
 # call main
+
+# set the stack pointer TODO
+    .global stack
+la sp, stack
+
 call main
 loop:
 j loop
+
+ramstart:
 
 # FIN

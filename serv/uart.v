@@ -32,3 +32,27 @@ module uart_tx(
 
 endmodule
 
+   /*
+    *
+    */
+
+module uart_baud
+    #(parameter DIVIDE=16)
+    (input wire ck, output reg baud_ck);
+
+    localparam WIDTH = $clog2(DIVIDE);
+    reg [(WIDTH-1):0] baud = 0;
+
+    always @(posedge ck) begin
+        /* verilator lint_off WIDTH */
+        if (baud == (DIVIDE - 1)) begin
+            baud <= 0;
+            baud_ck <= 1;
+        end else begin
+            baud <= baud + 1;
+            baud_ck <= 0;
+        end
+        /* verilator lint_on WIDTH */
+    end
+
+endmodule
