@@ -73,6 +73,12 @@ sw a1, 0(a0)
 li a0, 0x40000000
 li a1, 255
 sw a1, 0(a0)
+
+# UART
+li a0, 0x60000000
+li a1, 'A'
+sw a1, 0(a0)
+
 j led_loop
 
 

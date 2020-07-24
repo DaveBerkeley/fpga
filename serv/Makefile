@@ -29,7 +29,7 @@ TB_SRC = $(ADD_SRC)
 
 FILES =  pll.v
 FILES += servant.v
-#FILES += soc.v
+FILES += soc.v
 FILES += uart.v
 FILES += arb.v
 FILES += servant_arbiter.v
