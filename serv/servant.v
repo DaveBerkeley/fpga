@@ -18,72 +18,46 @@ module servant
    parameter sim = 0;
    parameter with_csr = 1;
 
+   /* verilator lint_off UNUSED */
    wire [31:0] 	wb_ibus_adr;
+   /* verilator lint_on UNUSED */
    wire 	wb_ibus_cyc;
    wire [31:0] 	wb_ibus_rdt;
    wire 	wb_ibus_ack;
 
-   wire [31:0] 	wb_sbus_rdt;
-   wire 	wb_sbus_ack;
+    wire ram_ack;
+    wire ram_cyc;
 
-   wire [31:0] 	wb_dmem_adr;
-   wire [31:0] 	wb_dmem_dat;
-   wire [3:0] 	wb_dmem_sel;
-   wire 	wb_dmem_we;
-   wire 	wb_dmem_cyc;
-   wire [31:0] 	wb_dmem_rdt;
-   /* verilator lint_off UNUSED */
-   wire [31:0] 	wb_mem_adr;
-   wire 	wb_dmem_ack;
-   /* verilator lint_on UNUSED */
+    arb #(.ADDR(0), .WIDTH(2))
+        arb_ram (
+            .wb_ck(wb_clk),
+            .addr(wb_dbus_adr[31:30]),
+            .wb_cyc(wb_dbus_cyc),
+            .wb_rst(wb_rst),
+            .ack(ram_ack),
+            .cyc(ram_cyc));
+  
+    wire rom_ack;
+    wire rom_cyc;
 
-   wire [31:0] 	wb_mem_dat;
-   wire [3:0] 	wb_mem_sel;
-   wire 	wb_mem_we;
-   wire 	wb_mem_cyc;
-   wire [31:0] 	wb_mem_rdt;
-   wire 	wb_mem_ack;
+    arb #(.ADDR(0), .WIDTH(2))
+        arb_rom (
+            .wb_ck(wb_clk),
+            .addr(wb_ibus_adr[31:30]),
+            .wb_cyc(wb_ibus_cyc),
+            .wb_rst(wb_rst),
+            .ack(rom_ack),
+            .cyc(rom_cyc));
 
-   servant_arbiter arbiter
-     (.i_wb_cpu_dbus_adr (wb_dmem_adr),
-      .i_wb_cpu_dbus_dat (wb_dmem_dat),
-      .i_wb_cpu_dbus_sel (wb_dmem_sel),
-      .i_wb_cpu_dbus_we  (wb_dmem_we ),
-      .i_wb_cpu_dbus_cyc (wb_dmem_cyc),
-      .o_wb_cpu_dbus_rdt (wb_dmem_rdt),
-      .o_wb_cpu_dbus_ack (wb_dmem_ack),
+    localparam ADDR_W = $clog2(memsize/4);
+    wire [(ADDR_W-1):0] ram_adr;
 
-      .i_wb_cpu_ibus_adr (wb_ibus_adr),
-      .i_wb_cpu_ibus_cyc (wb_ibus_cyc),
-      .o_wb_cpu_ibus_rdt (wb_ibus_rdt),
-      .o_wb_cpu_ibus_ack (wb_ibus_ack),
+    assign ram_adr = rom_cyc ? wb_ibus_adr[(ADDR_W+2-1):2] : wb_dbus_adr[(ADDR_W+2-1):2];
 
-      .o_wb_cpu_adr (wb_mem_adr),
-      .o_wb_cpu_dat (wb_mem_dat),
-      .o_wb_cpu_sel (wb_mem_sel),
-      .o_wb_cpu_we  (wb_mem_we ),
-      .o_wb_cpu_cyc (wb_mem_cyc),
-      .i_wb_cpu_rdt (wb_mem_rdt),
-      .i_wb_cpu_ack (wb_mem_ack));
-
-   servant_mux #(sim) servant_mux
-     (
-      .i_clk (wb_clk),
-      .i_rst (wb_rst),
-      .i_wb_cpu_adr (wb_dbus_adr),
-      .i_wb_cpu_dat (wb_dbus_dat),
-      .i_wb_cpu_sel (wb_dbus_sel),
-      .i_wb_cpu_we  (wb_dbus_we),
-      .i_wb_cpu_cyc (wb_dbus_cyc),
-      .o_wb_cpu_rdt (wb_sbus_rdt),
-      .o_wb_cpu_ack (wb_sbus_ack),
-
-      .o_wb_mem_adr (wb_dmem_adr),
-      .o_wb_mem_dat (wb_dmem_dat),
-      .o_wb_mem_sel (wb_dmem_sel),
-      .o_wb_mem_we  (wb_dmem_we),
-      .o_wb_mem_cyc (wb_dmem_cyc),
-      .i_wb_mem_rdt (wb_dmem_rdt));
+    wire [31:0] ram_rdt;
+    /* verilator lint_off UNUSED */
+    wire nowt;
+    /* verilator lint_on UNUSED */
 
    servant_ram
      #(.memfile (memfile),
@@ -91,21 +65,23 @@ module servant
    ram
      (// Wishbone interface
       .i_wb_clk (wb_clk),
-      .i_wb_adr (wb_mem_adr[$clog2(memsize)-1:2]),
-      .i_wb_cyc (wb_mem_cyc),
-      .i_wb_we  (wb_mem_we) ,
-      .i_wb_sel (wb_mem_sel),
-      .i_wb_dat (wb_mem_dat),
-      .o_wb_rdt (wb_mem_rdt),
-      .o_wb_ack (wb_mem_ack));
+      .i_wb_adr (ram_adr),
+      .i_wb_cyc (rom_cyc | ram_cyc),
+      .i_wb_we  (ram_cyc & wb_dbus_we) ,
+      .i_wb_sel ({4{ram_cyc}} & wb_dbus_sel),
+      .i_wb_dat (wb_dbus_dat),
+      .o_wb_rdt (ram_rdt),
+      .o_wb_ack (nowt));
 
    // SoC signals have priority
 
-   wire [31:0] 	wb_dbus_rdt;
-   wire 	wb_dbus_ack;
+    wire [31:0] wb_dbus_rdt;
+    wire wb_dbus_ack;
   
-    assign wb_dbus_rdt = wb_xbus_ack ? wb_xbus_rdt : wb_sbus_rdt;
-    assign wb_dbus_ack = wb_xbus_ack | wb_sbus_ack;
+    assign wb_dbus_rdt = wb_xbus_ack ? wb_xbus_rdt : ram_rdt;
+    assign wb_dbus_ack = wb_xbus_ack | ram_ack;
+    assign wb_ibus_rdt = ram_rdt;
+    assign wb_ibus_ack = rom_ack;
 
    serv_rf_top
      #(.RESET_PC (32'h0000_0000),
