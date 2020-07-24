@@ -10,10 +10,7 @@ module servant
    output 	wb_dbus_we,
    output 	wb_dbus_cyc,
    input [31:0] 	wb_xbus_rdt,
-   input 	wb_xbus_ack,
-
- output wire q,
- output wire [7:0] test
+   input 	wb_xbus_ack
 );
 
    parameter memfile = "";
@@ -49,10 +46,12 @@ module servant
    wire [31:0] 	wb_mem_rdt;
    wire 	wb_mem_ack;
 
+   /* verilator lint_off UNUSED */
    wire 	wb_gpio_dat;
    wire 	wb_gpio_we;
    wire 	wb_gpio_cyc;
-   wire 	wb_gpio_rdt;
+   /* verilator lint_on UNUSED */
+   reg 	wb_gpio_rdt = 0;
 
    wire [31:0] 	wb_timer_dat;
    wire 	wb_timer_we;
@@ -141,13 +140,7 @@ module servant
       end
    endgenerate
 
-   servant_gpio gpio
-     (.i_wb_clk (wb_clk),
-      .i_wb_dat (wb_gpio_dat),
-      .i_wb_we  (wb_gpio_we),
-      .i_wb_cyc (wb_gpio_cyc),
-      .o_wb_rdt (wb_gpio_rdt),
-      .o_gpio   (q));
+   // SoC signals have priority
 
    wire [31:0] 	wb_dbus_rdt;
    wire 	wb_dbus_ack;
@@ -199,14 +192,5 @@ module servant
       .o_dbus_cyc   (wb_dbus_cyc),
       .i_dbus_rdt   (wb_dbus_rdt),
       .i_dbus_ack   (wb_dbus_ack));
-
-  assign test[0] = wb_clk;
-  assign test[1] = wb_rst;
-  assign test[2] = q;
-  assign test[3] = 0;
-  assign test[4] = 0;
-  assign test[5] = 0;
-  assign test[6] = 0;
-  assign test[7] = wb_dbus_ack;
 
 endmodule

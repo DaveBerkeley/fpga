@@ -31,6 +31,7 @@ FILES =  pll.v
 FILES += servant.v
 #FILES += soc.v
 FILES += uart.v
+FILES += arb.v
 FILES += servant_arbiter.v
 FILES += servant_mux.v
 FILES += $(SERVANT)/servant_ram.v
