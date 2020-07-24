@@ -21,18 +21,15 @@ module servant_mux
    output wire [3:0]  o_wb_mem_sel,
    output wire 	      o_wb_mem_we,
    output wire 	      o_wb_mem_cyc,
-   input wire [31:0]  i_wb_mem_rdt,
+   input wire [31:0]  i_wb_mem_rdt
 
-   output wire [31:0] o_wb_timer_dat,
-   output wire 	      o_wb_timer_we,
-   output wire 	      o_wb_timer_cyc,
-   input wire [31:0]  i_wb_timer_rdt);
+   );
 
    parameter sim = 0;
 
    wire [1:0] 	  s = i_wb_cpu_adr[31:30];
 
-   assign o_wb_cpu_rdt = s[1] ? i_wb_timer_rdt : (s[0] ? 0 : i_wb_mem_rdt);
+   assign o_wb_cpu_rdt = s[1] ? 0 : (s[0] ? 0 : i_wb_mem_rdt);
    always @(posedge i_clk) begin
       o_wb_cpu_ack <= 1'b0;
       if (i_wb_cpu_cyc & !o_wb_cpu_ack)
@@ -46,10 +43,6 @@ module servant_mux
    assign o_wb_mem_sel = i_wb_cpu_sel;
    assign o_wb_mem_we  = i_wb_cpu_we;
    assign o_wb_mem_cyc = i_wb_cpu_cyc & (s == 2'b00);
-
-   assign o_wb_timer_dat = i_wb_cpu_dat;
-   assign o_wb_timer_we  = i_wb_cpu_we;
-   assign o_wb_timer_cyc = i_wb_cpu_cyc & s[1];
 
    generate
       if (sim) begin

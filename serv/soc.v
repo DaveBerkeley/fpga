@@ -8,7 +8,7 @@ module soc (
 );
 
     parameter memfile = "firmware.hex";
-    parameter memsize = 8192;
+    parameter memsize = 4096; // 8192;
 
     //  Interface with the CPU's Wishbone bus
 

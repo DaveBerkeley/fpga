@@ -35,7 +35,6 @@ FILES += arb.v
 FILES += servant_arbiter.v
 FILES += servant_mux.v
 FILES += $(SERVANT)/servant_ram.v
-FILES += $(SERVANT)/servant_timer.v
 
 FILES += $(CORE)/serv_rf_top.v
 FILES += $(CORE)/serv_rf_ram_if.v

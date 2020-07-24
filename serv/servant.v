@@ -18,8 +18,6 @@ module servant
    parameter sim = 0;
    parameter with_csr = 1;
 
-   wire 	timer_irq;
-
    wire [31:0] 	wb_ibus_adr;
    wire 	wb_ibus_cyc;
    wire [31:0] 	wb_ibus_rdt;
@@ -45,11 +43,6 @@ module servant
    wire 	wb_mem_cyc;
    wire [31:0] 	wb_mem_rdt;
    wire 	wb_mem_ack;
-
-   wire [31:0] 	wb_timer_dat;
-   wire 	wb_timer_we;
-   wire 	wb_timer_cyc;
-   wire [31:0] 	wb_timer_rdt;
 
    servant_arbiter arbiter
      (.i_wb_cpu_dbus_adr (wb_dmem_adr),
@@ -90,12 +83,7 @@ module servant
       .o_wb_mem_sel (wb_dmem_sel),
       .o_wb_mem_we  (wb_dmem_we),
       .o_wb_mem_cyc (wb_dmem_cyc),
-      .i_wb_mem_rdt (wb_dmem_rdt),
-
-      .o_wb_timer_dat (wb_timer_dat),
-      .o_wb_timer_we  (wb_timer_we),
-      .o_wb_timer_cyc (wb_timer_cyc),
-      .i_wb_timer_rdt (wb_timer_rdt));
+      .i_wb_mem_rdt (wb_dmem_rdt));
 
    servant_ram
      #(.memfile (memfile),
@@ -110,23 +98,6 @@ module servant
       .i_wb_dat (wb_mem_dat),
       .o_wb_rdt (wb_mem_rdt),
       .o_wb_ack (wb_mem_ack));
-
-   generate
-      if (with_csr) begin
-	 servant_timer
-	   #(.WIDTH (32))
-	 timer
-	   (.i_clk    (wb_clk),
-	    .o_irq    (timer_irq),
-	    .i_wb_cyc (wb_timer_cyc),
-	    .i_wb_we  (wb_timer_we) ,
-	    .i_wb_dat (wb_timer_dat),
-	    .o_wb_dat (wb_timer_rdt));
-      end else begin
-	 assign wb_timer_rdt = 32'd0;
-	 assign timer_irq = 1'b0;
-      end
-   endgenerate
 
    // SoC signals have priority
 
@@ -143,7 +114,7 @@ module servant
      (
       .clk      (wb_clk),
       .i_rst    (wb_rst),
-      .i_timer_irq  (timer_irq),
+      .i_timer_irq  (1'b0),
 `ifdef RISCV_FORMAL
       .rvfi_valid     (),
       .rvfi_order     (),
