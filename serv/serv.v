@@ -30,25 +30,33 @@ module top(
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(i_clk), .clock_out(o_clk), .locked(locked));
 
-    reg [2:0] prescale = 0;
-
-    always @(posedge o_clk) begin
-        prescale <= prescale + 1;
-    end
- 
     wire wb_clk;
-    //assign wb_clk = o_clk;
-    assign wb_clk = prescale[2];
-
+    assign wb_clk = o_clk;
+ 
     // Reset generator
     reg [4:0] rst_reg = 5'b11111;
+    wire reset_req;
 
     always @(posedge wb_clk) begin
-        rst_reg <= {1'b0, rst_reg[4:1]};
+        if (reset_req)
+            rst_reg <= 5'b11111;
+        else
+            rst_reg <= {1'b0, rst_reg[4:1]};
     end
 
     wire o_rst;
     assign o_rst = rst_reg[0];
+
+
+    //  Continually Reset the cpu
+
+    reg [11:0] reseter = 0;
+
+    always @(posedge wb_clk) begin
+        reseter <= reseter + 1;
+    end
+
+    assign reset_req = reseter == 0;
 
     /* verilator lint_off UNUSED */
     wire [7:0] test;
@@ -63,8 +71,26 @@ module top(
     assign P1B3 = test[6];
     assign P1B4 = test[7];
 
+    /* verilator lint_off UNUSED */
+   wire [31:0] 	wb_dbus_adr;
+   wire [31:0] 	wb_dbus_dat;
+   wire [3:0] 	wb_dbus_sel;
+   wire 	wb_dbus_we;
+   wire 	wb_dbus_cyc;
+   reg [31:0] 	wb_dbus_rdt = 0;
+   reg 	wb_dbus_ack = 0;
+   /* verilator lint_on UNUSED */
+    
     // CPU
     servant #(.memfile (memfile), .memsize (memsize))
-        servant (.wb_clk (wb_clk), .wb_rst (o_rst), .q(led), .test(test));
+        servant (.wb_clk (wb_clk), .wb_rst (o_rst), 
+           .wb_dbus_adr(wb_dbus_adr),
+           .wb_dbus_dat(wb_dbus_dat),
+           .wb_dbus_sel(wb_dbus_sel),
+           .wb_dbus_we(wb_dbus_we),
+           .wb_dbus_cyc(wb_dbus_cyc),
+           .wb_xbus_rdt(wb_dbus_rdt),
+           .wb_xbus_ack(wb_dbus_ack),
+           .q(led), .test(test));
 
 endmodule

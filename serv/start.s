@@ -65,6 +65,17 @@ addi x31, zero, 0
 #blt a0, a1, loop_init_bss
 #end_init_bss:
 
+# Toggle LEDs
+led_loop:
+li a0, 0x40000000
+li a1, 0
+sw a1, 0(a0)
+li a0, 0x40000000
+li a1, 255
+sw a1, 0(a0)
+j led_loop
+
+
 # call main
 
 # set the stack pointer TODO
