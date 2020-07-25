@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #define LEDS ((uint32_t*) 0x40000000)
+#define SPI  ((uint32_t*) 0x50000000)
 #define uart ((uint32_t*) 0x60000000)
 
 uint32_t i;
@@ -20,18 +21,34 @@ int main(void)
     while (true)
     {
         *LEDS = 0;
-        *uart = PV(v);
-        *uart = PV(v) >> 8;
+        //*uart = PV(v);
+        //*uart = PV(v) >> 8;
         //*uart = PV(v) >> 16;
         //*uart = PV(v) >> 24;
 
         *LEDS = 1;
+        //*uart = v;
+        //*uart = v >> 8;
+        //*uart = x;
+
+        //v += 1;
+        //x += 1;
+
+        SPI[1] = 0x123456; // set read addr
+        *LEDS = 1;
+        v = SPI[1];
+        *LEDS = 1;
+        SPI[0] = (3 << 8) + 0x03; // READ command +incr
+        *LEDS = 1;
+        SPI[0] = (1 << 8) + 0x03; // READ command
+        *LEDS = 1;
+        SPI[0] = (3 << 8) + 0x03; // READ command +incr
+        *LEDS = 1;
+        v = SPI[1];
         *uart = v;
         *uart = v >> 8;
-        *uart = x;
-
-        v += 1;
-        x += 1;
+        *uart = v >> 16;
+        *uart = v >> 24;
     }
     return 0;
 }

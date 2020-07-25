@@ -2,6 +2,12 @@
 module top(
     input wire CLK, 
     output wire TX, 
+    output wire FLASH_SCK,
+    output wire FLASH_SSB,
+    output wire FLASH_IO0,
+    output wire FLASH_IO1,
+    output wire FLASH_IO2,
+    output wire FLASH_IO3,
     output wire LED1,
     output wire P1A1,
     output wire P1A2,
@@ -12,6 +18,9 @@ module top(
     output wire P1B3,
     output wire P1B4
 );
+
+    parameter memfile = "firmware.hex";
+    parameter memsize = 4096; // 8192;
 
     wire [7:0] test;
 
@@ -80,12 +89,64 @@ module top(
         end
     endgenerate
 
+    /* verilator lint_off UNUSED */
+    wire spi_cs;
+    wire spi_sck;
+    reg spi_miso = 0;
+    wire spi_mosi;
+    /* verilator lint_on UNUSED */
+
+    // TODO : connect to the flash chip
+    assign FLASH_SCK = 1;
+    assign FLASH_SSB = 1;
+    assign FLASH_IO0 = 1;
+    assign FLASH_IO3 = 1;
+    assign FLASH_IO1 = 1;
+    assign FLASH_IO2 = 1;
+
+    // connect the soc to the cpu
+    wire [31:0] wb_dbus_adr;
+    wire [31:0] wb_dbus_dat;
+    wire [3:0] wb_dbus_sel;
+    wire wb_dbus_we;
+    wire wb_dbus_cyc;
+    wire [31:0] wb_dbus_rdt;
+    wire wb_dbus_ack;
+
     soc soc(
-        .clk(ck),
+        .ck(ck),
         .rst(rst),
         .test(test),
+        // cpu
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_xbus_rdt(wb_dbus_rdt),
+        .wb_xbus_ack(wb_dbus_ack),
+        // SPI
+        .spi_cs(spi_cs),
+        .spi_sck(spi_sck),
+        .spi_miso(spi_miso),
+        .spi_mosi(spi_mosi),
+        // IO
         .led(LED1),
         .tx(TX)
     );
+
+    // CPU
+    servant #(.memfile (memfile), .memsize (memsize))
+        servant (
+            .wb_clk (ck), 
+            .wb_rst (rst), 
+            .wb_dbus_adr(wb_dbus_adr),
+            .wb_dbus_dat(wb_dbus_dat),
+            .wb_dbus_sel(wb_dbus_sel),
+            .wb_dbus_we(wb_dbus_we),
+            .wb_dbus_cyc(wb_dbus_cyc),
+            .wb_xbus_rdt(wb_dbus_rdt),
+            .wb_xbus_ack(wb_dbus_ack)
+    );    
 
 endmodule

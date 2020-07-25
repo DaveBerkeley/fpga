@@ -180,25 +180,77 @@ module top (output wire TX);
     *
     */
 
-    wire [31:0] wb_dbus_adr;
-    wire [31:0] wb_dbus_dat;
-    wire wb_dbus_cyc;
-    wire wb_dbus_we;
-    wire [3:0] wb_dbus_sel;
-    wire wb_dbus_ack;
-    wire [31:0] wb_dbus_rdt;
-
     // CPU
-    servant #(.memfile (memfile), .memsize (memsize))
-    soc (.wb_clk (wb_clk), 
-        .wb_rst (wb_rst), 
+
+    wire [7:0] test;
+
+    wire spi_cs;
+    wire spi_sck;
+    wire spi_mosi;
+    reg  spi_miso = 0;
+
+    reg [1:0] miso = 0;
+
+    always @(posedge wb_clk) begin
+        miso <= miso + 1;
+        if (!miso[0])
+            spi_miso = !spi_miso;
+    end
+
+    reg  [31:0] wb_dbus_adr = 0;
+    reg  [31:0] wb_dbus_dat = 0;
+    reg  [3:0] wb_dbus_sel = 0;
+    reg  wb_dbus_we = 0;
+    reg  wb_dbus_cyc = 0;
+    wire [31:0] wb_dbus_rdt;
+    wire wb_dbus_ack;
+
+    soc soc (
+        .ck (wb_clk), 
+        .rst (wb_rst), 
+        // cpu
         .wb_dbus_adr(wb_dbus_adr),
         .wb_dbus_dat(wb_dbus_dat),
-        .wb_xbus_rdt(wb_dbus_rdt),
-        .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_xbus_ack(wb_dbus_ack),
         .wb_dbus_sel(wb_dbus_sel),
-        .wb_dbus_we(wb_dbus_we)
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_xbus_rdt(wb_dbus_rdt),
+        .wb_xbus_ack(wb_dbus_ack),
+        // SPI
+        .spi_cs(spi_cs),
+        .spi_sck(spi_sck),
+        .spi_mosi(spi_mosi),
+        .spi_miso(spi_miso),
+        .test(test),
+        .led(led),
+        .tx(tx)
     );
+
+    task write (input [31:0] data, input [31:0] addr);
+
+        wb_dbus_adr <= addr;
+        wb_dbus_dat <= data;
+        wb_dbus_cyc <= 1;
+        wb_dbus_we <= 1;
+        wb_dbus_sel <= 4'b1111;
+        @(posedge ck);
+        wb_dbus_cyc <= 0;
+        wb_dbus_we <= 0;
+        wb_dbus_sel <= 4'b0;
+        @(posedge ck);
+
+    endtask
+
+    initial begin
+        // wait for reset
+        for (i = 0; i < 10; i = i + 1) begin
+            @(posedge ck);
+        end
+
+        write(32'h00123456, 32'h50000004); // SPI addr
+        write(32'h00000303, 32'h50000000); // SPI control
+
+        // write to 
+    end
 
 endmodule
