@@ -1,5 +1,6 @@
 MEMORY
 {
+    ROM (xrw) : ORIGIN = 0x00000000, LENGTH = 0x20000
     RAM (xrw) : ORIGIN = 0x00000000, LENGTH = 0x20000
 }
 SECTIONS {
@@ -15,7 +16,7 @@ SECTIONS {
         . = ALIGN(4);
         _etext = .;
         _sidata = _etext;
-    } >RAM
+    } >ROM
     .data : AT ( _sidata )
     {
         . = ALIGN(4);

@@ -69,7 +69,7 @@ addi x31, zero, 0
 
 # set the stack pointer TODO
     .global stack
-la sp, stack
+la sp, stack+0x100
 
 call main
 loop:

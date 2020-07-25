@@ -1,4 +1,44 @@
+
 `default_nettype none
+
+module sp_ram 
+# (parameter SIZE=256, AWIDTH=$clog2(SIZE))
+(   
+    input wire ck,
+    input wire cyc,
+    input wire we,
+    input wire [3:0] sel,
+    input wire [AWIDTH-1:0] addr,
+    input wire [31:0] wdata,
+ 
+    output reg [31:0] rdata
+);
+
+    reg [31:0] sram [0:SIZE-1];
+
+    always @(posedge ck) begin
+        if (cyc) begin
+            if (we) begin
+                if (sel[0])
+                    sram[addr][7:0] <= wdata[7:0];
+                if (sel[1])
+                    sram[addr][15:8] <= wdata[15:8];
+                if (sel[2])
+                    sram[addr][23:16] <= wdata[23:16];
+                if (sel[3])
+                    sram[addr][31:24] <= wdata[31:24];
+            end
+
+            rdata <= sram[addr];
+        end
+    end
+
+endmodule 
+
+   /*
+    *
+    */
+
 module servant
 (
  input wire  wb_clk,
@@ -14,8 +54,9 @@ module servant
 );
 
    parameter memfile = "";
-   parameter memsize = 8192;
-   parameter sim = 0;
+   // Size of the ROM/RAM storage in bytes
+   parameter memsize = 8 * 1024;
+   //parameter sim = 0;
    parameter with_csr = 1;
 
    /* verilator lint_off UNUSED */
@@ -49,36 +90,38 @@ module servant
             .ack(rom_ack),
             .cyc(rom_cyc));
 
-    localparam ADDR_W = $clog2(memsize/4);
-    wire [(ADDR_W-1):0] ram_adr;
-    wire [(ADDR_W-1):0] rom_adr;
+    //  Dbus RAM
 
-    assign ram_adr = wb_dbus_adr[(ADDR_W+2-1):2];
-    assign rom_adr = wb_ibus_adr[(ADDR_W+2-1):2];
+    localparam RAM_ADDR_W = $clog2(memsize/4);
+
+    wire [(RAM_ADDR_W-1):0] ram_adr;
+    assign ram_adr = wb_dbus_adr[(RAM_ADDR_W+2-1):2];
 
     wire [31:0] ram_rdt;
-    /* verilator lint_off UNUSED */
-    wire nowt;
-    /* verilator lint_on UNUSED */
 
-   servant_ram
-     #(.depth (memsize))
-   ram
-     (// Wishbone interface
-      .i_wb_clk (wb_clk),
-      .i_wb_adr (ram_adr),
-      .i_wb_cyc (ram_cyc),
-      .i_wb_we  (wb_dbus_we) ,
-      .i_wb_sel (wb_dbus_sel),
-      .i_wb_dat (wb_dbus_dat),
-      .o_wb_rdt (ram_rdt),
-      .o_wb_ack (nowt));
+    sp_ram #(.SIZE(memsize/4))
+    ram (
+        .ck(wb_clk),
+        .addr(ram_adr),
+        .cyc(ram_cyc),
+        .we(wb_dbus_we),
+        .sel(wb_dbus_sel),
+        .wdata(wb_dbus_dat),
+        .rdata(ram_rdt)
+    );
+
+    //  Ibus ROM
+ 
+    localparam ROM_ADDR_W = $clog2(memsize/4);
+
+    wire [(ROM_ADDR_W-1):0] rom_adr;
+    assign rom_adr = wb_ibus_adr[(ROM_ADDR_W+2-1):2];
 
     wire [31:0] rom_rdt;
+
     /* verilator lint_off UNUSED */
     wire nowt2;
     /* verilator lint_on UNUSED */
-
    servant_ram
      #(.memfile (memfile),
        .depth (memsize))

@@ -32,6 +32,7 @@ FILES += servant.v
 FILES += soc.v
 FILES += uart.v
 FILES += arb.v
+FILES += ../dsp/dpram.v
 FILES += $(SERVANT)/servant_ram.v
 
 FILES += $(CORE)/serv_rf_top.v
@@ -69,7 +70,7 @@ firmware.hex: firmware.bin
 firmware.bin: firmware.elf
 	$(CROSS)objcopy -S -O binary $^ $@
 
-firmware.elf: firmware.c start.s Makefile
+firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
 	$(CROSS)gcc -DICEBREAKER -march=rv32i -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o $@ start.s firmware.c
 
 $(VCONFIG): config.vlt

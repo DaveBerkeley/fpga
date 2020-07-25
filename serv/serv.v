@@ -68,7 +68,7 @@ module top(
 
     generate 
         if (reset_loop) begin
-            reg [11:0] reseter = 0;
+            reg [12:0] reseter = 0;
 
             always @(posedge ck) begin
                 reseter <= reseter + 1;

@@ -59,7 +59,7 @@ module soc (
     
     wire baud_en;
 
-    uart_baud #(.DIVIDE(32)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
+    uart_baud #(.DIVIDE(16)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
 
     wire uart_we;
     assign uart_we = uart_cyc & wb_dbus_we;
