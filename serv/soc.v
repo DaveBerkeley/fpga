@@ -119,19 +119,19 @@ module soc (
 
     assign led = gpio_reg[0];
 
-    //  Data Bus Reads
+    //  Data Bus IO
 
     assign wb_xbus_ack = gpio_ack | uart_ack | spi_ack;
     assign wb_xbus_rdt = gpio_rdt | uart_rdt | spi_rdt;
 
     //  Test outputs
 
-    assign test[0] = spi_sck;
+    assign test[0] = tx;
     assign test[1] = spi_cs;
     assign test[2] = spi_mosi;
     assign test[3] = spi_miso;
     assign test[4] = spi_ack;
-    assign test[5] = tx;
+    assign test[5] = spi_sck;
     assign test[6] = wb_dbus_cyc;
     assign test[7] = 0;
 

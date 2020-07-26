@@ -266,8 +266,16 @@ module top (output wire TX);
         end
     end
 
-    localparam SPI_ADDR = 32'h50000004;
+    task spi_wait_ready;
+        begin
+            poll_addr <= SPI_ADDR;
+            wait (wb_dbus_rdt[0]);
+            poll_addr <= 0;
+        end
+    endtask
+
     localparam SPI_CTRL = 32'h50000000;
+    localparam SPI_ADDR = 32'h50000004;
 
     initial begin
         // wait for reset
@@ -275,15 +283,26 @@ module top (output wire TX);
             @(posedge ck);
         end
 
+        spi_wait_ready();
         write(SPI_ADDR, 32'h00123456);
         write(SPI_CTRL, 32'h00000303);
 
-        // Wait for 'ready' signal
-        poll_addr <= SPI_ADDR;
-        wait (wb_dbus_rdt[0]);
-        poll_addr <= 0;
+        spi_wait_ready();
+        tb_assert(wb_dbus_rdt == 32'h1);
 
-        // write to 
+        write(SPI_CTRL, 32'h00000003);
+
+        spi_wait_ready();
+        tb_assert(wb_dbus_rdt == 32'h1);
+
+        read(SPI_CTRL);
+        tb_assert(wb_dbus_rdt == 32'haaaaaaaa);
+
+        write(SPI_CTRL, 32'h00000403); // no read
+
+        spi_wait_ready();
+        tb_assert(wb_dbus_rdt == 32'h1);
+
     end
 
 endmodule

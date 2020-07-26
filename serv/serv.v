@@ -5,7 +5,7 @@ module top(
     output wire FLASH_SCK,
     output wire FLASH_SSB,
     output wire FLASH_IO0,
-    output wire FLASH_IO1,
+    input  wire FLASH_IO1,
     output wire FLASH_IO2,
     output wire FLASH_IO3,
     output wire LED1,
@@ -92,17 +92,17 @@ module top(
     /* verilator lint_off UNUSED */
     wire spi_cs;
     wire spi_sck;
-    reg spi_miso = 0;
+    wire spi_miso;
     wire spi_mosi;
     /* verilator lint_on UNUSED */
 
     // TODO : connect to the flash chip
-    assign FLASH_SCK = 1;
-    assign FLASH_SSB = 1;
-    assign FLASH_IO0 = 1;
-    assign FLASH_IO3 = 1;
-    assign FLASH_IO1 = 1;
+    assign FLASH_SCK = spi_sck;
+    assign FLASH_SSB = spi_cs;
+    assign FLASH_IO0 = spi_mosi;
+    assign spi_miso = FLASH_IO1;
     assign FLASH_IO2 = 1;
+    assign FLASH_IO3 = 1;
 
     // connect the soc to the cpu
     wire [31:0] wb_dbus_adr;

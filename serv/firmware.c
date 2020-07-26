@@ -34,21 +34,24 @@ int main(void)
         //v += 1;
         //x += 1;
 
-        SPI[1] = 0x123456; // set read addr
-        *LEDS = 1;
-        v = SPI[1];
-        *LEDS = 1;
-        SPI[0] = (3 << 8) + 0x03; // READ command +incr
-        *LEDS = 1;
-        SPI[0] = (1 << 8) + 0x03; // READ command
-        *LEDS = 1;
-        SPI[0] = (3 << 8) + 0x03; // READ command +incr
-        *LEDS = 1;
-        v = SPI[1];
+        SPI[1] = 0; // set read addr
+        //SPI[0] = (1 << 8) + 0x4b; // read manufacturer id +add
+        //SPI[0] = 0x05; // read status reg-1
+        SPI[0] = (1 << 10) + 0x66; // enable reset
+        *LEDS = 0;
+        SPI[0] = (1 << 10) + 0x99; // reset
+        *LEDS = 0;
+        SPI[0] = 0x9f; // jedec id
+        *LEDS = 0;
+
+        v = SPI[0];
         *uart = v;
         *uart = v >> 8;
         *uart = v >> 16;
         *uart = v >> 24;
+
+        while (true)
+            ;
     }
     return 0;
 }

@@ -9,6 +9,7 @@ module spi_tx(
     input wire [7:0] code,
     input wire [23:0] addr,
     input wire tx_addr,
+    input wire no_read,
     input wire req,
     output reg [31:0] rdata,
     output wire ready
@@ -33,16 +34,21 @@ module spi_tx(
 
     endfunction
 
+    /* verilator lint_off UNUSED */
     reg [31:0] rx = 32'b0;
+    /* verilator lint_on UNUSED */
 
     always @(posedge ck) begin
 
         clock <= !clock;
 
         if (req) begin
-            tx <= { reverse(addr[7:0]), reverse(addr[15:8]), reverse(addr[23:16]), reverse(code) };
+            if (tx_addr)
+                tx <= { reverse(addr[7:0]), reverse(addr[15:8]), reverse(addr[23:16]), reverse(code) };
+            else
+                tx <= { 24'h0, reverse(code) };
 
-            bit_count <= tx_addr ? (1 + 32 + 32) : (1 + 8 + 32);
+            bit_count <= 8 + (tx_addr ? 24 : 0) + (no_read ? 0 : 32);
 
             clock <= 0;
         end
@@ -51,7 +57,7 @@ module spi_tx(
             if (sending) begin
 
                 if (bit_count == 1) begin
-                    rdata <= rx;
+                    rdata <= { rx[30:0], miso };
                 end
 
                 bit_count <= bit_count - 1;
@@ -107,15 +113,21 @@ module spi
         .cyc(cyc)
     );
 
-    localparam SPI_CTRL_W = 8 + 1 + 1;
+    // Control Register :
+    //
+    // not_used[22], incr_addr, tx_addr, command[8]
+
+    localparam SPI_CTRL_W = 8 + 1 + 1 + 1;
     reg [(SPI_CTRL_W-1):0] spi_cmd;
     wire [7:0] spi_code;
     wire spi_inc;
     wire spi_tx_addr;
+    wire spi_no_read;
 
-    assign spi_code   = spi_cmd[7:0];
-    assign spi_tx_addr = spi_cmd[8];
-    assign spi_inc    = spi_cmd[9];
+    assign spi_code     = spi_cmd[7:0];
+    assign spi_tx_addr  = spi_cmd[8];
+    assign spi_inc      = spi_cmd[9];
+    assign spi_no_read  = spi_cmd[10];
 
     reg [23:0] spi_addr;
     reg spi_req = 0;
@@ -152,6 +164,7 @@ module spi
         .code(spi_code),
         .addr(spi_addr),
         .tx_addr(spi_tx_addr),
+        .no_read(spi_no_read),
         .req(spi_req),
         .rdata(spi_rdata),
         .ready(spi_ready)
