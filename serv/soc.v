@@ -26,7 +26,11 @@ module soc (
 );
 
     parameter memfile = "firmware.hex";
-    parameter memsize = 4096; // 8192;
+    parameter memsize = 8192;
+
+    localparam GPIO_ADDR = 8'h40;
+    localparam SPI_ADDR  = 8'h50;
+    localparam UART_ADDR = 8'h60;
 
     //  Interface with the CPU's Wishbone bus
 
@@ -36,25 +40,12 @@ module soc (
     assign wb_clk = ck;
     assign wb_rst = rst;
  
-    //  Chip Selects
-
-    wire gpio_cyc;
-    wire gpio_ack;
-
-    arb #(.ADDR(8'h40), .WIDTH(8))
-        arb_gpio (
-        .wb_ck(wb_clk), 
-        .addr(wb_dbus_adr[31:31-7]), 
-        .wb_cyc(wb_dbus_cyc), 
-        .wb_rst(wb_rst),
-        .ack(gpio_ack), 
-        .cyc(gpio_cyc)
-    );
+    //  SPI
 
     wire spi_ack;
     wire [31:0] spi_rdt;
 
-    spi #(.ADDR(8'h50), .AWIDTH(8))
+    spi #(.ADDR(SPI_ADDR), .AWIDTH(8))
     spi_io(
         // cpu bus
         .wb_clk(wb_clk),
@@ -73,71 +64,65 @@ module soc (
         .miso(spi_miso)
     );
 
-    wire uart_cyc;
-    wire uart_ack;
-
-    arb #(.ADDR(8'h60), .WIDTH(8))
-        arb_uart (
-        .wb_ck(wb_clk), 
-        .addr(wb_dbus_adr[31:31-7]), 
-        .wb_cyc(wb_dbus_cyc), 
-        .wb_rst(wb_rst),
-        .ack(uart_ack), 
-        .cyc(uart_cyc)
-    );
-
     //  UART
-    
+
     wire baud_en;
 
     uart_baud #(.DIVIDE(8)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
 
-    wire uart_we;
-    assign uart_we = uart_cyc & wb_dbus_we;
-    wire uart_ready;
-
-    wire [0:0] uart_rdt;
-
-    uart_tx uart(
-        .ck(wb_clk),
-        .baud_ck(baud_en),
-        .in(wb_dbus_dat[7:0]),
-        .we(uart_we),
-        .ready(uart_ready),
-        .tx(tx));
-
-    assign uart_rdt = { uart_ready };
+    wire [31:0] uart_rdt;
+    wire uart_ack;
+    
+    uart
+        #(.ADDR(UART_ADDR), .AWIDTH(8))
+        uart_io (
+        // cpu bus
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .rdt(uart_rdt),
+        .ack(uart_ack),
+        // IO
+        .baud_en(baud_en),
+        .tx(tx)
+    );
 
     //  GPIO
 
-    reg [7:0] gpio = 0;
+    wire [31:0] gpio_rdt;
+    wire gpio_ack;
 
-    always @(posedge wb_clk) begin
-        if (gpio_cyc) begin
-            if (wb_dbus_we)
-                gpio <= wb_dbus_dat[7:0];
-        end
-    end
+    /* verilator lint_off UNUSED */
+    wire [7:0] gpio_reg;
+    /* verilator lint_on UNUSED */
+    
+    gpio
+        #(.ADDR(GPIO_ADDR), .AWIDTH(8))
+        gpio_io (
+        // cpu bus
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .rdt(gpio_rdt),
+        .ack(gpio_ack),
+        // IO
+        .gpio(gpio_reg)
+    );
 
-    assign led = gpio[0];
+    assign led = gpio_reg[0];
 
     //  Data Bus Reads
 
-    /* verilator lint_off UNUSED */
-    function [31:0] rdt(input [1:0] addr);
-        begin
-            if (gpio_cyc)
-                rdt = { 24'h0, gpio };
-            else if (uart_cyc)
-                rdt = { 31'h0, uart_rdt };
-            else
-                rdt = 0;
-        end
-    endfunction
-    /* verilator lint_on UNUSED */
-
     assign wb_xbus_ack = gpio_ack | uart_ack | spi_ack;
-    assign wb_xbus_rdt = rdt(wb_dbus_adr[3:2]) | spi_rdt;
+    assign wb_xbus_rdt = gpio_rdt | uart_rdt | spi_rdt;
 
     //  Test outputs
 

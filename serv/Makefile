@@ -33,6 +33,7 @@ FILES += soc.v
 FILES += uart.v
 FILES += arb.v
 FILES += spi.v
+FILES += gpio.v
 FILES += ../dsp/dpram.v
 FILES += $(SERVANT)/servant_ram.v
 
