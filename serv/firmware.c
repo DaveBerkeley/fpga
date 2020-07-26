@@ -42,16 +42,6 @@ int main(void)
             *uart = 'A';
             *LEDS = 0;
             *LEDS = 1;
-            *LEDS = 0;
-            *LEDS = 1;
-            *LEDS = 0;
-            *LEDS = 1;
-            *LEDS = 0;
-            *LEDS = 1;
-            *LEDS = 0;
-            *LEDS = 1;
-            *LEDS = 0;
-            *LEDS = 1;
         }
     }
     return 0;

@@ -13,58 +13,19 @@ module ibus
     output wire spi_cs,
     output wire spi_sck,
     output wire spi_mosi,
-    /* verilator lint_off UNUSED */
     input  wire spi_miso
-    /* verilator lint_on UNUSED */
 );
 
     parameter memfile = "";
     parameter memsize = 1 * 1024;
  
-    wire rom_cyc;
-    /* verilator lint_off UNUSED */
-    wire nowt_ack;
-    /* verilator lint_on UNUSED */
-
-    arb #(.ADDR(0), .WIDTH(2))
-        arb_rom (
-            .wb_ck(wb_clk),
-            .addr(wb_ibus_adr[31:30]),
-            .wb_cyc(wb_ibus_cyc),
-            .wb_rst(wb_rst),
-            .ack(nowt_ack),
-            .cyc(rom_cyc));
-
     localparam ROM_ADDR_W = $clog2(memsize/4);
-
-    wire [(ROM_ADDR_W-1):0] rom_adr;
-    assign rom_adr = wb_ibus_adr[(ROM_ADDR_W+2-1):2];
-
-    /* verilator lint_off UNUSED */
-    wire nowt2;
-    wire [31:0] nowt_rdt;
-    /* verilator lint_on UNUSED */
-   servant_ram
-     #(.memfile (memfile),
-       .depth (memsize))
-   rom
-     (// Wishbone interface
-      .i_wb_clk (wb_clk),
-      .i_wb_adr (rom_adr),
-      .i_wb_cyc (rom_cyc),
-      .i_wb_we  (1'b0),
-      .i_wb_sel (4'b0),
-      .i_wb_dat (32'h0),
-      .o_wb_rdt (nowt_rdt),
-      .o_wb_ack (nowt2));
 
     // SPI : add SPI to ibus fetch
 
     wire spi_ready;
     wire start;
-    /* verilator lint_off UNUSED */
     wire ack;
-    /* verilator lint_on UNUSED */
     reg fetching = 0;
 
     assign ack = fetching & spi_ready;
@@ -80,7 +41,7 @@ module ibus
     end
 
     wire [31:0] rdata = { spi_rdata[7:0], spi_rdata[15:8], spi_rdata[23:16], spi_rdata[31:24] };
-    assign wb_ibus_rdt = rom_cyc ? rdata : 0;
+    assign wb_ibus_rdt = wb_ibus_cyc ? rdata : 0;
 
     reg [7:0] spi_code;
     reg spi_tx_addr;
@@ -159,7 +120,7 @@ module ibus
 
     end
 
-    assign start = (state == RUNNING) ? (rom_cyc & spi_ready & !fetching) : rst_start;
+    assign start = (state == RUNNING) ? (wb_ibus_cyc & spi_ready & !fetching) : rst_start;
 
     spi_tx spi(
         .ck(wb_clk),
