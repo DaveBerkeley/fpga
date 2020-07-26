@@ -1,5 +1,5 @@
 
-module spi(
+module spi_tx(
     input wire ck,
     output wire cs,
     output wire sck,
@@ -66,5 +66,106 @@ module spi(
     assign sck   = sending ? clock : 0;
     assign cs    = !sending;
     assign ready = !sending;
+
+endmodule
+
+   /*
+    *
+    */
+
+module spi
+    #(parameter ADDR=0, AWIDTH=8)
+    (
+    // cpu bus
+    input wire wb_clk,
+    input wire wb_rst,
+    /* verilator lint_off UNUSED */
+    input [31:0] wb_dbus_adr,
+    input [31:0] wb_dbus_dat,
+    input [3:0] wb_dbus_sel,
+    /* verilator lint_on UNUSED */
+    input wb_dbus_we,
+    input wb_dbus_cyc,
+    output wire [31:0] rdt,
+    output wire ack,
+    // IO
+    output wire cs,
+    output wire sck,
+    output wire mosi,
+    input wire miso
+);
+
+    wire cyc;
+
+    arb #(.ADDR(ADDR), .WIDTH(AWIDTH))
+        arb_spi (
+        .wb_ck(wb_clk), 
+        .addr(wb_dbus_adr[31:24]), 
+        .wb_cyc(wb_dbus_cyc), 
+        .wb_rst(wb_rst),
+        .ack(ack), 
+        .cyc(cyc)
+    );
+
+    localparam SPI_CTRL_W = 8 + 1 + 1;
+    reg [(SPI_CTRL_W-1):0] spi_cmd;
+    wire [7:0] spi_code;
+    wire spi_inc;
+    wire spi_tx_addr;
+
+    assign spi_code   = spi_cmd[7:0];
+    assign spi_tx_addr = spi_cmd[8];
+    assign spi_inc    = spi_cmd[9];
+
+    reg [23:0] spi_addr;
+    reg spi_req = 0;
+    
+    wire [31:0] spi_rdata;
+    wire spi_ready;
+
+    // Allow programatic writes to SPI tx regs
+    always @(posedge wb_clk) begin
+        if (cyc) begin
+            if (wb_dbus_we) begin
+                if (!wb_dbus_adr[2]) begin
+                    spi_cmd <= wb_dbus_dat[(SPI_CTRL_W-1):0];
+                    spi_req <= 1;
+                end else begin
+                    spi_addr <= wb_dbus_dat[23:0];
+                end
+            end
+        end
+        if (spi_req) begin
+            spi_req <= 0;
+            if (spi_inc) begin
+                spi_addr <= spi_addr + 1;
+            end
+        end
+    end
+
+    spi_tx spi(
+        .ck(wb_clk),
+        .cs(cs),
+        .sck(sck),
+        .mosi(mosi),
+        .miso(miso),
+        .code(spi_code),
+        .addr(spi_addr),
+        .tx_addr(spi_tx_addr),
+        .req(spi_req),
+        .rdata(spi_rdata),
+        .ready(spi_ready)
+    );
+
+    function [31:0] make_rdt(input [1:0] addr);
+        begin
+            if (cyc)
+                make_rdt = (addr == 0) ? spi_rdata : { 31'b0, spi_ready };
+            else
+                make_rdt = 0;
+        end
+    endfunction
+
+    assign rdt = make_rdt(wb_dbus_adr[3:2]);
 
 endmodule

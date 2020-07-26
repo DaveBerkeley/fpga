@@ -226,7 +226,7 @@ module top (output wire TX);
         .tx(tx)
     );
 
-    task write (input [31:0] data, input [31:0] addr);
+    task write (input [31:0] addr, input [31:0] data);
 
         wb_dbus_adr <= addr;
         wb_dbus_dat <= data;
@@ -234,12 +234,40 @@ module top (output wire TX);
         wb_dbus_we <= 1;
         wb_dbus_sel <= 4'b1111;
         @(posedge ck);
+        @(posedge ck);
         wb_dbus_cyc <= 0;
         wb_dbus_we <= 0;
         wb_dbus_sel <= 4'b0;
         @(posedge ck);
+        wb_dbus_adr <= 0;
+        wb_dbus_dat <= 0;
 
     endtask
+
+    task read (input [31:0] addr);
+
+        wb_dbus_adr <= addr;
+        wb_dbus_cyc <= 1;
+        wb_dbus_we <= 0;
+        wb_dbus_sel <= 4'b0000;
+        @(posedge ck);
+        @(posedge ck);
+        wb_dbus_cyc <= 0;
+        @(posedge ck);
+        wb_dbus_adr <= 0;
+
+    endtask
+
+    reg [31:0] poll_addr = 0;
+
+    always @(posedge ck) begin
+        if (poll_addr) begin
+            read(poll_addr);
+        end
+    end
+
+    localparam SPI_ADDR = 32'h50000004;
+    localparam SPI_CTRL = 32'h50000000;
 
     initial begin
         // wait for reset
@@ -247,8 +275,13 @@ module top (output wire TX);
             @(posedge ck);
         end
 
-        write(32'h00123456, 32'h50000004); // SPI addr
-        write(32'h00000303, 32'h50000000); // SPI control
+        write(SPI_ADDR, 32'h00123456);
+        write(SPI_CTRL, 32'h00000303);
+
+        // Wait for 'ready' signal
+        poll_addr <= SPI_ADDR;
+        wait (wb_dbus_rdt[0]);
+        poll_addr <= 0;
 
         // write to 
     end
