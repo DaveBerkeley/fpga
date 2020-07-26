@@ -42,6 +42,7 @@ module soc (
  
     //  SPI
 
+`ifdef SPI
     wire spi_ack;
     wire [31:0] spi_rdt;
 
@@ -63,6 +64,15 @@ module soc (
         .mosi(spi_mosi),
         .miso(spi_miso)
     );
+`else
+    wire [31:0] spi_rdt;
+    wire spi_ack;
+    assign spi_rdt = 32'h0;
+    assign spi_ack = 1'b0;
+    assign spi_cs = 1'b1;
+    assign spi_sck = 1'b1;
+    assign spi_mosi = 1'b1;
+`endif // SPI
 
     //  UART
 

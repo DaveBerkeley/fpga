@@ -188,6 +188,10 @@ module top (output wire TX);
     wire spi_sck;
     wire spi_mosi;
     reg  spi_miso = 0;
+    wire xspi_cs;
+    wire xspi_sck;
+    wire xspi_mosi;
+    reg  xspi_miso = 0;
 
     reg [1:0] miso = 0;
 
@@ -217,15 +221,34 @@ module top (output wire TX);
         .wb_xbus_rdt(wb_dbus_rdt),
         .wb_xbus_ack(wb_dbus_ack),
         // SPI
-        .spi_cs(spi_cs),
-        .spi_sck(spi_sck),
-        .spi_mosi(spi_mosi),
-        .spi_miso(spi_miso),
+        .spi_cs(xspi_cs),
+        .spi_sck(xspi_sck),
+        .spi_mosi(xspi_mosi),
+        .spi_miso(xspi_miso),
         .test(test),
         .led(led),
         .tx(tx)
     );
 
+    reg [31:0] wb_ibus_adr = 0;
+    reg wb_ibus_cyc = 0;
+    wire [31:0] wb_ibus_rdt;
+    wire wb_ibus_ack;
+    
+    ibus  #(.memfile (memfile), .memsize (memsize))
+    ibus (
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_ibus_adr(wb_ibus_adr),
+        .wb_ibus_rdt(wb_ibus_rdt),
+        .wb_ibus_cyc(wb_ibus_cyc),
+        .wb_ibus_ack(wb_ibus_ack),
+        .spi_cs(spi_cs),
+        .spi_sck(spi_sck),
+        .spi_miso(spi_miso),
+        .spi_mosi(spi_mosi)
+    );
+    
     task write (input [31:0] addr, input [31:0] data);
 
         wb_dbus_adr <= addr;
@@ -274,14 +297,29 @@ module top (output wire TX);
         end
     endtask
 
+    reg [31:0] i_rdt = 0;
+
+    task iread (input [31:0] addr);
+
+        wb_ibus_adr <= addr;
+        wb_ibus_cyc <= 1;
+        wait (wb_ibus_ack);
+        @(posedge ck);
+        // Latch the result
+        i_rdt <= wb_ibus_rdt;
+        wb_ibus_cyc <= 0;
+        wb_ibus_adr <= 32'hZ;
+
+    endtask
+
     localparam SPI_CTRL = 32'h50000000;
     localparam SPI_ADDR = 32'h50000004;
 
+`ifdef XXXX
     initial begin
-        // wait for reset
-        for (i = 0; i < 10; i = i + 1) begin
-            @(posedge ck);
-        end
+
+        wait (wb_rst == 0);
+        @(posedge ck);
 
         spi_wait_ready();
         write(SPI_ADDR, 32'h00123456);
@@ -302,6 +340,16 @@ module top (output wire TX);
 
         spi_wait_ready();
         tb_assert(wb_dbus_rdt == 32'h1);
+
+    end
+`endif
+
+    initial begin
+
+        wait (wb_rst == 0);
+        @(posedge ck);
+
+        iread(32'h00100000);
 
     end
 

@@ -1,24 +1,25 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Jul 25 18:46:17 2020
+[*] Sun Jul 26 18:00:25 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
-[dumpfile_mtime] "Sat Jul 25 18:44:06 2020"
-[dumpfile_size] 2083942
+[dumpfile_mtime] "Sun Jul 26 17:58:45 2020"
+[dumpfile_size] 1936282
 [savefile] "/home/dave/Desktop/git/fpga/serv/serv.gtkw"
 [timestart] 0
 [size] 1913 664
 [pos] -1 -1
-*-20.101377 287000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.101376 1155000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.clock.
+[treeopen] top.ibus.
 [treeopen] top.soc.
-[treeopen] top.soc.spi.
 [sst_width] 263
 [signals_width] 214
 [sst_expanded] 1
 [sst_vpaned_height] 166
 @28
+top.soc.wb_clk
 top.wb_rst
 @22
 top.soc.wb_dbus_adr[31:0]
@@ -36,99 +37,106 @@ top.soc.wb_dbus_sel[3:0]
 -group_end
 @28
 top.soc.wb_dbus_we
-top.soc.wb_xbus_ack
+top.soc.spi_ack
 @c00022
-top.soc.wb_xbus_rdt[31:0]
+top.soc.spi_rdt[31:0]
 @28
-(0)top.soc.wb_xbus_rdt[31:0]
-(1)top.soc.wb_xbus_rdt[31:0]
-(2)top.soc.wb_xbus_rdt[31:0]
-(3)top.soc.wb_xbus_rdt[31:0]
-(4)top.soc.wb_xbus_rdt[31:0]
-(5)top.soc.wb_xbus_rdt[31:0]
-(6)top.soc.wb_xbus_rdt[31:0]
-(7)top.soc.wb_xbus_rdt[31:0]
-(8)top.soc.wb_xbus_rdt[31:0]
-(9)top.soc.wb_xbus_rdt[31:0]
-(10)top.soc.wb_xbus_rdt[31:0]
-(11)top.soc.wb_xbus_rdt[31:0]
-(12)top.soc.wb_xbus_rdt[31:0]
-(13)top.soc.wb_xbus_rdt[31:0]
-(14)top.soc.wb_xbus_rdt[31:0]
-(15)top.soc.wb_xbus_rdt[31:0]
-(16)top.soc.wb_xbus_rdt[31:0]
-(17)top.soc.wb_xbus_rdt[31:0]
-(18)top.soc.wb_xbus_rdt[31:0]
-(19)top.soc.wb_xbus_rdt[31:0]
-(20)top.soc.wb_xbus_rdt[31:0]
-(21)top.soc.wb_xbus_rdt[31:0]
-(22)top.soc.wb_xbus_rdt[31:0]
-(23)top.soc.wb_xbus_rdt[31:0]
-(24)top.soc.wb_xbus_rdt[31:0]
-(25)top.soc.wb_xbus_rdt[31:0]
-(26)top.soc.wb_xbus_rdt[31:0]
-(27)top.soc.wb_xbus_rdt[31:0]
-(28)top.soc.wb_xbus_rdt[31:0]
-(29)top.soc.wb_xbus_rdt[31:0]
-(30)top.soc.wb_xbus_rdt[31:0]
-(31)top.soc.wb_xbus_rdt[31:0]
+(0)top.soc.spi_rdt[31:0]
+(1)top.soc.spi_rdt[31:0]
+(2)top.soc.spi_rdt[31:0]
+(3)top.soc.spi_rdt[31:0]
+(4)top.soc.spi_rdt[31:0]
+(5)top.soc.spi_rdt[31:0]
+(6)top.soc.spi_rdt[31:0]
+(7)top.soc.spi_rdt[31:0]
+(8)top.soc.spi_rdt[31:0]
+(9)top.soc.spi_rdt[31:0]
+(10)top.soc.spi_rdt[31:0]
+(11)top.soc.spi_rdt[31:0]
+(12)top.soc.spi_rdt[31:0]
+(13)top.soc.spi_rdt[31:0]
+(14)top.soc.spi_rdt[31:0]
+(15)top.soc.spi_rdt[31:0]
+(16)top.soc.spi_rdt[31:0]
+(17)top.soc.spi_rdt[31:0]
+(18)top.soc.spi_rdt[31:0]
+(19)top.soc.spi_rdt[31:0]
+(20)top.soc.spi_rdt[31:0]
+(21)top.soc.spi_rdt[31:0]
+(22)top.soc.spi_rdt[31:0]
+(23)top.soc.spi_rdt[31:0]
+(24)top.soc.spi_rdt[31:0]
+(25)top.soc.spi_rdt[31:0]
+(26)top.soc.spi_rdt[31:0]
+(27)top.soc.spi_rdt[31:0]
+(28)top.soc.spi_rdt[31:0]
+(29)top.soc.spi_rdt[31:0]
+(30)top.soc.spi_rdt[31:0]
+(31)top.soc.spi_rdt[31:0]
 @1401200
 -group_end
 @28
-top.soc.spi.sck
-top.soc.spi.cs
-top.soc.spi.req
-@22
-top.soc.spi.code[7:0]
-top.soc.spi.addr[23:0]
-top.soc.spi.tx[31:0]
-@28
-top.soc.spi.mosi
-top.soc.spi.miso
+top.soc.spi_cs
+top.soc.spi_sck
+top.soc.spi_mosi
+top.soc.spi_miso
+top.wb_ibus_ack
 @c00022
-top.soc.spi.rx[31:0]
+top.wb_ibus_adr[31:0]
 @28
-(0)top.soc.spi.rx[31:0]
-(1)top.soc.spi.rx[31:0]
-(2)top.soc.spi.rx[31:0]
-(3)top.soc.spi.rx[31:0]
-(4)top.soc.spi.rx[31:0]
-(5)top.soc.spi.rx[31:0]
-(6)top.soc.spi.rx[31:0]
-(7)top.soc.spi.rx[31:0]
-(8)top.soc.spi.rx[31:0]
-(9)top.soc.spi.rx[31:0]
-(10)top.soc.spi.rx[31:0]
-(11)top.soc.spi.rx[31:0]
-(12)top.soc.spi.rx[31:0]
-(13)top.soc.spi.rx[31:0]
-(14)top.soc.spi.rx[31:0]
-(15)top.soc.spi.rx[31:0]
-(16)top.soc.spi.rx[31:0]
-(17)top.soc.spi.rx[31:0]
-(18)top.soc.spi.rx[31:0]
-(19)top.soc.spi.rx[31:0]
-(20)top.soc.spi.rx[31:0]
-(21)top.soc.spi.rx[31:0]
-(22)top.soc.spi.rx[31:0]
-(23)top.soc.spi.rx[31:0]
-(24)top.soc.spi.rx[31:0]
-(25)top.soc.spi.rx[31:0]
-(26)top.soc.spi.rx[31:0]
-(27)top.soc.spi.rx[31:0]
-(28)top.soc.spi.rx[31:0]
-(29)top.soc.spi.rx[31:0]
-(30)top.soc.spi.rx[31:0]
-(31)top.soc.spi.rx[31:0]
+(0)top.wb_ibus_adr[31:0]
+(1)top.wb_ibus_adr[31:0]
+(2)top.wb_ibus_adr[31:0]
+(3)top.wb_ibus_adr[31:0]
+(4)top.wb_ibus_adr[31:0]
+(5)top.wb_ibus_adr[31:0]
+(6)top.wb_ibus_adr[31:0]
+(7)top.wb_ibus_adr[31:0]
+(8)top.wb_ibus_adr[31:0]
+(9)top.wb_ibus_adr[31:0]
+(10)top.wb_ibus_adr[31:0]
+(11)top.wb_ibus_adr[31:0]
+(12)top.wb_ibus_adr[31:0]
+(13)top.wb_ibus_adr[31:0]
+(14)top.wb_ibus_adr[31:0]
+(15)top.wb_ibus_adr[31:0]
+(16)top.wb_ibus_adr[31:0]
+(17)top.wb_ibus_adr[31:0]
+(18)top.wb_ibus_adr[31:0]
+(19)top.wb_ibus_adr[31:0]
+(20)top.wb_ibus_adr[31:0]
+(21)top.wb_ibus_adr[31:0]
+(22)top.wb_ibus_adr[31:0]
+(23)top.wb_ibus_adr[31:0]
+(24)top.wb_ibus_adr[31:0]
+(25)top.wb_ibus_adr[31:0]
+(26)top.wb_ibus_adr[31:0]
+(27)top.wb_ibus_adr[31:0]
+(28)top.wb_ibus_adr[31:0]
+(29)top.wb_ibus_adr[31:0]
+(30)top.wb_ibus_adr[31:0]
+(31)top.wb_ibus_adr[31:0]
 @1401200
 -group_end
-@22
-top.soc.spi.bit_count[6:0]
 @28
-top.soc.spi.req
+top.wb_ibus_cyc
 @22
-top.soc.spi.rdata[31:0]
+top.wb_ibus_rdt[31:0]
+@28
+top.ibus.fetching
+top.ibus.spi.req
+top.ibus.spi_ready
+@22
+top.ibus.spi.bit_count[6:0]
+@28
+top.ibus.spi_mosi
+top.ibus.spi_ready
 @29
-top.soc.spi_ready
+top.ibus.state[2:0]
+@28
+top.spi_miso
+@22
+top.ibus.spi.rx[31:0]
+top.i_rdt[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

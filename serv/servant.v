@@ -41,30 +41,29 @@ endmodule
 
 module servant
 (
- input wire  wb_clk,
- input wire  wb_rst,
+    input wire  wb_clk,
+    input wire  wb_rst,
 
-   output [31:0] 	wb_dbus_adr,
-   output [31:0] 	wb_dbus_dat,
-   output [3:0] 	wb_dbus_sel,
-   output 	wb_dbus_we,
-   output 	wb_dbus_cyc,
-   input [31:0] 	wb_xbus_rdt,
-   input 	wb_xbus_ack
+    // wishbone data bus
+    output [31:0] wb_dbus_adr,
+    output [31:0] wb_dbus_dat,
+    output [3:0] wb_dbus_sel,
+    output wb_dbus_we,
+    output wb_dbus_cyc,
+    input [31:0] wb_xbus_rdt,
+    input wb_xbus_ack,
+    //
+    output wire [31:0] wb_ibus_adr,
+    output wire wb_ibus_cyc,
+    input wire [31:0] wb_ibus_rdt,
+    input wire wb_ibus_ack
 );
 
-   parameter memfile = "";
-   // Size of the ROM/RAM storage in bytes
-   parameter memsize = 8 * 1024;
-   //parameter sim = 0;
-   parameter with_csr = 1;
-
-   /* verilator lint_off UNUSED */
-   wire [31:0] 	wb_ibus_adr;
-   /* verilator lint_on UNUSED */
-   wire 	wb_ibus_cyc;
-   wire [31:0] 	wb_ibus_rdt;
-   wire 	wb_ibus_ack;
+    parameter memfile = "";
+    // Size of the ROM/RAM storage in bytes
+    parameter memsize = 8 * 1024;
+    //parameter sim = 0;
+    parameter with_csr = 1;
 
     wire ram_ack;
     wire ram_cyc;
@@ -78,18 +77,6 @@ module servant
             .ack(ram_ack),
             .cyc(ram_cyc));
   
-    wire rom_ack;
-    wire rom_cyc;
-
-    arb #(.ADDR(0), .WIDTH(2))
-        arb_rom (
-            .wb_ck(wb_clk),
-            .addr(wb_ibus_adr[31:30]),
-            .wb_cyc(wb_ibus_cyc),
-            .wb_rst(wb_rst),
-            .ack(rom_ack),
-            .cyc(rom_cyc));
-
     //  Dbus RAM
 
     localparam RAM_ADDR_W = $clog2(memsize/4);
@@ -110,31 +97,7 @@ module servant
         .rdata(ram_rdt)
     );
 
-    //  Ibus ROM
- 
-    localparam ROM_ADDR_W = $clog2(memsize/4);
-
-    wire [(ROM_ADDR_W-1):0] rom_adr;
-    assign rom_adr = wb_ibus_adr[(ROM_ADDR_W+2-1):2];
-
-    wire [31:0] rom_rdt;
-
-    /* verilator lint_off UNUSED */
-    wire nowt2;
-    /* verilator lint_on UNUSED */
-   servant_ram
-     #(.memfile (memfile),
-       .depth (memsize))
-   rom
-     (// Wishbone interface
-      .i_wb_clk (wb_clk),
-      .i_wb_adr (rom_adr),
-      .i_wb_cyc (rom_cyc),
-      .i_wb_we  (1'b0),
-      .i_wb_sel (4'b0),
-      .i_wb_dat (32'h0),
-      .o_wb_rdt (rom_rdt),
-      .o_wb_ack (nowt2));
+    // Ibus
 
    // SoC signals have priority
 
@@ -143,8 +106,6 @@ module servant
   
     assign wb_dbus_rdt = wb_xbus_ack ? wb_xbus_rdt : ram_rdt;
     assign wb_dbus_ack = wb_xbus_ack | ram_ack;
-    assign wb_ibus_rdt = rom_rdt;
-    assign wb_ibus_ack = rom_ack;
 
    serv_rf_top
      #(.RESET_PC (32'h0000_0000),

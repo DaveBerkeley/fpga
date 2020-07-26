@@ -5,7 +5,9 @@ module top(
     output wire FLASH_SCK,
     output wire FLASH_SSB,
     output wire FLASH_IO0,
+    /* verilator lint_off UNUSED */
     input  wire FLASH_IO1,
+    /* verilator lint_on UNUSED */
     output wire FLASH_IO2,
     output wire FLASH_IO3,
     output wire LED1,
@@ -22,16 +24,9 @@ module top(
     parameter memfile = "firmware.hex";
     parameter memsize = 4096; // 8192;
 
+    /* verilator lint_off UNUSED */
     wire [7:0] test;
-
-    assign P1A1 = test[0];
-    assign P1A2 = test[1];
-    assign P1A3 = test[2];
-    assign P1A4 = test[3];
-    assign P1B1 = test[4];
-    assign P1B2 = test[5];
-    assign P1B3 = test[6];
-    assign P1B4 = test[7];
+    /* verilator lint_on UNUSED */
 
     // PLL
     wire pll_ck;
@@ -77,7 +72,7 @@ module top(
 
     generate 
         if (reset_loop) begin
-            reg [12:0] reseter = 0;
+            reg [13:0] reseter = 0;
 
             always @(posedge ck) begin
                 reseter <= reseter + 1;
@@ -89,12 +84,10 @@ module top(
         end
     endgenerate
 
-    /* verilator lint_off UNUSED */
     wire spi_cs;
     wire spi_sck;
     wire spi_miso;
     wire spi_mosi;
-    /* verilator lint_on UNUSED */
 
     // TODO : connect to the flash chip
     assign FLASH_SCK = spi_sck;
@@ -104,6 +97,13 @@ module top(
     assign FLASH_IO2 = 1;
     assign FLASH_IO3 = 1;
 
+    //assign FLASH_SCK = 1;
+    //assign FLASH_SSB = 1;
+    //assign FLASH_IO0 = 1;
+    //assign FLASH_IO1;
+    //assign FLASH_IO2 = 1;
+    //assign FLASH_IO3 = 1;
+
     // connect the soc to the cpu
     wire [31:0] wb_dbus_adr;
     wire [31:0] wb_dbus_dat;
@@ -112,6 +112,12 @@ module top(
     wire wb_dbus_cyc;
     wire [31:0] wb_dbus_rdt;
     wire wb_dbus_ack;
+
+    /* verilator lint_off UNUSED */
+    wire dummy_sck;
+    wire dummy_cs;
+    wire dummy_mosi;
+    /* verilator lint_on UNUSED */
 
     soc soc(
         .ck(ck),
@@ -126,13 +132,32 @@ module top(
         .wb_xbus_rdt(wb_dbus_rdt),
         .wb_xbus_ack(wb_dbus_ack),
         // SPI
-        .spi_cs(spi_cs),
-        .spi_sck(spi_sck),
-        .spi_miso(spi_miso),
-        .spi_mosi(spi_mosi),
+        .spi_cs(dummy_cs),
+        .spi_sck(dummy_sck),
+        .spi_miso(1'b0),
+        .spi_mosi(dummy_mosi),
         // IO
         .led(LED1),
         .tx(TX)
+    );
+
+    wire [31:0] wb_ibus_adr;
+    wire [31:0] wb_ibus_rdt;
+    wire wb_ibus_cyc;
+    wire wb_ibus_ack;
+    
+    ibus  #(.memfile (memfile), .memsize (memsize))
+    ibus (
+        .wb_clk(ck),
+        .wb_rst(rst),
+        .wb_ibus_adr(wb_ibus_adr),
+        .wb_ibus_rdt(wb_ibus_rdt),
+        .wb_ibus_cyc(wb_ibus_cyc),
+        .wb_ibus_ack(wb_ibus_ack),
+        .spi_cs(spi_cs),
+        .spi_sck(spi_sck),
+        .spi_miso(spi_miso),
+        .spi_mosi(spi_mosi)
     );
 
     // CPU
@@ -140,6 +165,10 @@ module top(
         servant (
             .wb_clk (ck), 
             .wb_rst (rst), 
+            .wb_ibus_adr(wb_ibus_adr),
+            .wb_ibus_cyc(wb_ibus_cyc),
+            .wb_ibus_ack(wb_ibus_ack),
+            .wb_ibus_rdt(wb_ibus_rdt),
             .wb_dbus_adr(wb_dbus_adr),
             .wb_dbus_dat(wb_dbus_dat),
             .wb_dbus_sel(wb_dbus_sel),
@@ -148,5 +177,14 @@ module top(
             .wb_xbus_rdt(wb_dbus_rdt),
             .wb_xbus_ack(wb_dbus_ack)
     );    
+
+    assign P1A1 = test[0];
+    assign P1A2 = spi_cs;
+    assign P1A3 = spi_sck;
+    assign P1A4 = spi_mosi;
+    assign P1B1 = spi_miso;
+    assign P1B2 = wb_ibus_cyc;
+    assign P1B3 = wb_ibus_ack;
+    assign P1B4 = test[7];
 
 endmodule
