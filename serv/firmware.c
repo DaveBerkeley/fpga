@@ -44,6 +44,12 @@ int main(void)
         SPI[0] = 0x9f; // jedec id
         *LEDS = 0;
 
+        SPI[1] = 0x00100084; // set read addr
+        SPI[0] = (3 << 8) + 0x03; // read data +inc +addr
+        *LEDS = 0;
+        SPI[0] = (3 << 8) + 0x03; // read data +inc +addr
+        *LEDS = 0;
+
         v = SPI[0];
         *uart = v;
         *uart = v >> 8;

@@ -150,7 +150,7 @@ module spi
         if (spi_req) begin
             spi_req <= 0;
             if (spi_inc) begin
-                spi_addr <= spi_addr + 1;
+                spi_addr <= spi_addr + 4;
             end
         end
     end
