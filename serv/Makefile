@@ -2,10 +2,10 @@
 CROSS=riscv32-unknown-elf-
 
 ifndef SERV
-$(error SERV is not set)
+S = https://github.com/olofk/serv
+$(error SERV is not set, see $(S))
 endif
 
-SERVANT=$(SERV)/servant
 CORE=$(SERV)/rtl
 
 VCONFIG = /tmp/config.vlt
@@ -18,14 +18,12 @@ ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE)
 ADD_DEPS = pll.v $(VCONFIG)
 ADD_IVERILOG = -I $(CORE)
 TB_DEPS = pll.v $(VCONFIG)
-TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v
+TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v sim.v
 
 PACKAGE = sg48
 DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
-
-TB_SRC = $(ADD_SRC)
 
 FILES =  pll.v
 FILES += servant.v
@@ -39,21 +37,25 @@ FILES += chip_select.v
 FILES += bus_arb.v
 FILES += ice40up5k_spram.v
 
-FILES += $(CORE)/serv_rf_top.v
-FILES += $(CORE)/serv_rf_ram_if.v
-FILES += $(CORE)/serv_rf_ram.v
-FILES += $(CORE)/serv_rf_if.v
-FILES += $(CORE)/serv_mem_if.v
-FILES += $(CORE)/serv_top.v
-FILES += $(CORE)/serv_state.v
-FILES += $(CORE)/serv_decode.v
-FILES += $(CORE)/serv_bufreg.v
-FILES += $(CORE)/serv_ctrl.v
-FILES += $(CORE)/serv_alu.v
-FILES += $(CORE)/serv_shift.v
-FILES += $(CORE)/serv_csr.v
+# CPU internals
+CPU_FILES  = $(CORE)/serv_rf_top.v
+CPU_FILES += $(CORE)/serv_rf_ram_if.v
+CPU_FILES += $(CORE)/serv_rf_ram.v
+CPU_FILES += $(CORE)/serv_rf_if.v
+CPU_FILES += $(CORE)/serv_mem_if.v
+CPU_FILES += $(CORE)/serv_top.v
+CPU_FILES += $(CORE)/serv_state.v
+CPU_FILES += $(CORE)/serv_decode.v
+CPU_FILES += $(CORE)/serv_bufreg.v
+CPU_FILES += $(CORE)/serv_ctrl.v
+CPU_FILES += $(CORE)/serv_alu.v
+CPU_FILES += $(CORE)/serv_shift.v
+CPU_FILES += $(CORE)/serv_csr.v
 
-ADD_SRC+=$(FILES)
+ADD_SRC+=$(FILES) $(CPU_FILES)
+
+#TB_SRC = $(ADD_SRC)
+TB_SRC = $(CPU_FILES)
 
 
 include ../main.mk
@@ -61,7 +63,7 @@ include ../main.mk
 prog_firmware: firmware.bin
 	iceprog -o 1M $^
 
-all: prog prog_firmware
+all: prog_firmware prog
 
 pll.v : Makefile
 	icepll -o 32 -m -f $@

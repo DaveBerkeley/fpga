@@ -16,8 +16,8 @@ module servant
     output [3:0] wb_dbus_sel,
     output wb_dbus_we,
     output wb_dbus_cyc,
-    input [31:0] wb_xbus_rdt,
-    input wb_xbus_ack,
+    input [31:0] wb_dbus_rdt,
+    input wb_dbus_ack,
     //
     output wire [31:0] wb_ibus_adr,
     output wire wb_ibus_cyc,
@@ -27,44 +27,12 @@ module servant
 
     parameter with_csr = 1;
 
-    wire ram_ack;
-    wire ram_cyc;
-
-    chip_select #(.ADDR(0), .WIDTH(2))
-        cs_ram (
-            .wb_ck(wb_clk),
-            .addr(wb_dbus_adr[31:30]),
-            .wb_cyc(wb_dbus_cyc),
-            .wb_rst(wb_rst),
-            .ack(ram_ack),
-            .cyc(ram_cyc));
-  
-    //  Dbus RAM
-
-    wire [31:0] ram_rdt;
-
-    sp_ram ram (
-        .ck(wb_clk),
-        .addr(wb_dbus_adr),
-        .cyc(ram_cyc),
-        .we(wb_dbus_we),
-        .sel(wb_dbus_sel),
-        .wdata(wb_dbus_dat),
-        .rdata(ram_rdt)
-    );
-
     // Ibus
 
    // SoC signals have priority
 
-    wire [31:0] wb_dbus_rdt;
-    wire wb_dbus_ack;
-  
-    assign wb_dbus_rdt = wb_xbus_ack ? wb_xbus_rdt : ram_rdt;
-    assign wb_dbus_ack = wb_xbus_ack | ram_ack;
-
    serv_rf_top
-     #(.RESET_PC (32'h0000_0000),
+     #(.RESET_PC (32'h0010_0000),
        .WITH_CSR (with_csr))
    cpu
      (

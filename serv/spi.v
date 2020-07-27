@@ -1,6 +1,7 @@
 
 module spi_tx(
     input wire ck,
+    input wire rst,
     output wire cs,
     output wire sck,
     output wire mosi,
@@ -39,6 +40,10 @@ module spi_tx(
     /* verilator lint_on UNUSED */
 
     always @(posedge ck) begin
+
+        if (rst) begin
+            bit_count <= 0;
+        end
 
         clock <= !clock;
 

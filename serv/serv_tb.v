@@ -2,18 +2,6 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
-task tb_assert(input test);
-
-    begin
-        if (!test) begin
-            $display("ASSERTION FAILED in %m");
-            $finish;
-        end
-    end
-
-endtask
-
-
 module SB_PLL40_PAD
     #(
         parameter FEEDBACK_PATH = 0,
@@ -420,7 +408,8 @@ module top (output wire TX);
     wire f_dbus_ack;
     wire [31:0] f_dbus_rdt;
 
-    ibus_read flash_read (
+    ibus_read #(.ADDR(8'h70))
+    flash_read (
         .wb_clk(wb_clk),
         .wb_rst(wb_rst),
         .wb_dbus_cyc(wb_dbus_cyc),

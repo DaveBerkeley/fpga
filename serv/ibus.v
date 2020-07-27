@@ -4,12 +4,12 @@ module ibus
     input wire wb_clk,
     input wire wb_rst,
     // ibus interface
+    input wire wb_ibus_cyc,
     /* verilator lint_off UNUSED */
     input wire [31:0] wb_ibus_adr,
     /* verilator lint_on UNUSED */
-    output wire [31:0] wb_ibus_rdt,
-    input wire wb_ibus_cyc,
     output wire wb_ibus_ack,
+    output wire [31:0] wb_ibus_rdt,
     // SPI interface
     output wire spi_cs,
     output wire spi_sck,
@@ -29,13 +29,18 @@ module ibus
     wire [31:0] spi_rdata;
 
     always @(posedge wb_clk) begin
-        if (start)
+
+        if (start) begin
             fetching <= 1;
+        end
+
         if (fetching & spi_ready) begin
             fetching <= 0;
         end
+
     end
 
+    // Endian Swap
     wire [31:0] rdata = { spi_rdata[7:0], spi_rdata[15:8], spi_rdata[23:16], spi_rdata[31:24] };
     assign wb_ibus_rdt = wb_ibus_cyc ? rdata : 0;
 
@@ -43,7 +48,7 @@ module ibus
     reg spi_tx_addr;
     reg spi_no_read;
    
-    initial spi_code = 8'h03; // SPI READ
+    initial spi_code = 0;
     initial spi_tx_addr = 1;
     initial spi_no_read = 0;
 
@@ -52,6 +57,7 @@ module ibus
     localparam SPI_RESET_EN  = 8'h66;
     localparam SPI_RESET_REQ = 8'h99;
 
+    // State Machine to control reset of the flash
     localparam RESET = 0;
     localparam RESET_EN_START = 1;
     localparam RESET_EN = 2;
@@ -61,7 +67,10 @@ module ibus
     localparam RUNNING = 6;
 
     reg [2:0] state;
+
+    // Set to initiate SPI xfer during reset commands
     reg rst_start = 0;
+    // Wait for Flash device to complete reset (~ 30us)
     reg [9:0] wait_ck = 0;
 
     always @(posedge wb_clk) begin
@@ -121,6 +130,7 @@ module ibus
 
     spi_tx spi(
         .ck(wb_clk),
+        .rst(wb_rst),
         // SPI io
         .cs(spi_cs),
         .sck(spi_sck),
@@ -131,7 +141,7 @@ module ibus
         .tx_addr(spi_tx_addr),
         .no_read(spi_no_read),
         // WB Bus
-        .addr(wb_ibus_adr[23:0] | 24'h100000),
+        .addr(wb_ibus_adr[23:0]),
         .req(start),
         // SPI status / data
         .rdata(spi_rdata),
@@ -158,7 +168,9 @@ endmodule
     *   uint32_t data = read(base); // read the data
     */
 
-module ibus_read(
+module ibus_read
+# (parameter ADDR=0, ADDR_W=8)
+(
     input wire wb_clk,
     input wire wb_rst,
     // dbus interface
@@ -174,16 +186,17 @@ module ibus_read(
     output wire wb_ibus_cyc,
     output wire [31:0] wb_ibus_adr,
     input wire wb_ibus_ack,
-    input wire [31:0] wb_ibus_rdt
+    input wire [31:0] wb_ibus_rdt,
+    output dev_busy
 );
 
     wire cyc;
     wire ack;
 
-    chip_select #(.ADDR(8'h70))
+    chip_select #(.ADDR(ADDR), .WIDTH(ADDR_W))
     dev_cs (
         .wb_ck(wb_clk), 
-        .addr(wb_dbus_adr[31:24]), 
+        .addr(wb_dbus_adr[31:(32-ADDR_W)]), 
         .wb_cyc(wb_dbus_cyc), 
         .wb_rst(wb_rst),
         .ack(ack), 
@@ -191,8 +204,10 @@ module ibus_read(
     );
 
     reg [31:0] rd_addr = 0;
-    reg [31:0] rd_data = 32'hfaceface;
+    reg [31:0] rd_data = 32'h0;
     reg busy = 0;
+
+    assign dev_busy = busy;
 
     always @(posedge wb_clk) begin
 
@@ -203,6 +218,7 @@ module ibus_read(
         end
 
         if (wb_ibus_ack) begin
+            // ack from ibus ends the cycle
             busy <= 0;
             rd_data <= wb_ibus_rdt;
         end
@@ -210,7 +226,7 @@ module ibus_read(
     end
 
     wire [31:0] status;
-    assign status = { 31'h0, busy };
+    assign status = { 8'h0, 8'h0, 8'h0, { 7'h7f, busy } };
 
     assign wb_dbus_ack = ack;
     assign wb_dbus_rdt = (cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? status : rd_data) : 0; 

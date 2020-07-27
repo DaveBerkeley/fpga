@@ -9,9 +9,7 @@ module top(
     output wire FLASH_SCK,
     output wire FLASH_SSB,
     output wire FLASH_IO0,
-    /* verilator lint_off UNUSED */
     input  wire FLASH_IO1,
-    /* verilator lint_on UNUSED */
     output wire FLASH_IO2,
     output wire FLASH_IO3,
     output wire LED1,
@@ -25,9 +23,12 @@ module top(
     output wire P1B4
 );
 
-    /* verilator lint_off UNUSED */
-    wire [7:0] test;
-    /* verilator lint_on UNUSED */
+    localparam GPIO_ADDR  = 8'h40;
+    localparam UART_ADDR  = 8'h60;
+    localparam FLASH_ADDR = 8'h70;
+
+    localparam prescale = 1;    // Divide the CPU clock down for development
+    localparam reset_loop = 1;  // Repeatedly reset the CPU
 
     // PLL
     wire pll_ck;
@@ -35,8 +36,6 @@ module top(
     wire locked;
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(CLK), .clock_out(pll_ck), .locked(locked));
-
-    localparam prescale = 1;
 
     generate
         wire ck;
@@ -69,11 +68,9 @@ module top(
 
     //  Continually Reset the cpu
 
-    localparam reset_loop = 1;
-
     generate 
         if (reset_loop) begin
-            reg [13:0] reseter = 0;
+            reg [14:0] reseter = 0;
 
             always @(posedge ck) begin
                 reseter <= reseter + 1;
@@ -84,6 +81,113 @@ module top(
             assign reset_req = 0;
         end
     endgenerate
+
+    // CPU dbus
+
+    wire [31:0] wb_dbus_adr;
+    wire [31:0] wb_dbus_dat;
+    wire [31:0] wb_dbus_rdt;
+    wire [3:0] wb_dbus_sel;
+    wire wb_dbus_we;
+    wire wb_dbus_cyc;
+    wire wb_dbus_ack;
+
+    // CPU ibus
+
+    wire wb_clk;
+    wire wb_rst;
+    wire [31:0] wb_ibus_adr;
+    wire [31:0] wb_ibus_rdt;
+    wire wb_ibus_cyc;
+    wire wb_ibus_ack;
+
+    assign wb_clk = ck;
+    assign wb_rst = rst;
+
+    //  RAM
+
+    parameter SIMULATION = 0;
+
+    wire ram_ack;
+    wire ram_cyc;
+    wire [31:0] ram_rdt;
+
+    chip_select #(.ADDR(0), .WIDTH(2))
+        cs_ram (
+            .wb_ck(wb_clk),
+            .addr(wb_dbus_adr[31:30]),
+            .wb_cyc(wb_dbus_cyc),
+            .wb_rst(wb_rst),
+            .ack(ram_ack),
+            .cyc(ram_cyc));
+  
+    //  Dbus RAM
+
+    sp_ram #(.SIMULATION(SIMULATION)) ram (
+        .ck(wb_clk),
+        .addr(wb_dbus_adr),
+        .cyc(ram_cyc),
+        .we(wb_dbus_we),
+        .sel(wb_dbus_sel),
+        .wdata(wb_dbus_dat),
+        .rdata(ram_rdt)
+    );
+
+    //  UART
+
+    wire baud_en;
+
+    uart_baud #(.DIVIDE(8)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
+
+    wire [31:0] uart_rdt;
+    wire uart_ack;
+    wire tx;
+    
+    uart
+        #(.ADDR(UART_ADDR), .AWIDTH(8))
+        uart_io (
+        // cpu bus
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .rdt(uart_rdt),
+        .ack(uart_ack),
+        // IO
+        .baud_en(baud_en),
+        .tx(tx)
+    );
+
+    //  GPIO
+
+    wire [31:0] gpio_rdt;
+    wire gpio_ack;
+
+    /* verilator lint_off UNUSED */
+    wire [7:0] gpio_reg;
+    /* verilator lint_on UNUSED */
+    
+    gpio
+        #(.ADDR(GPIO_ADDR), .AWIDTH(8))
+        gpio_io (
+        // cpu bus
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .rdt(gpio_rdt),
+        .ack(gpio_ack),
+        // IO
+        .gpio(gpio_reg)
+    );
+
+    //  SPI Flash interface
 
     wire spi_cs;
     wire spi_sck;
@@ -98,55 +202,6 @@ module top(
     assign FLASH_IO2 = 1;
     assign FLASH_IO3 = 1;
 
-    // CPU bus
-
-    wire [31:0] wb_dbus_adr;
-    wire [31:0] wb_dbus_dat;
-    wire [31:0] wb_dbus_rdt;
-    wire [3:0] wb_dbus_sel;
-    wire wb_dbus_we;
-    wire wb_dbus_cyc;
-    wire wb_dbus_ack;
-
-    assign wb_clk = ck;
-    assign wb_rst = rst;
-
-    // CPU ibus
-    wire wb_clk;
-    wire wb_rst;
-    wire [31:0] wb_ibus_adr;
-    wire [31:0] wb_ibus_rdt;
-    wire wb_ibus_cyc;
-    wire wb_ibus_ack;
-
-    // connect the soc to the cpu
-    wire [31:0] soc_rdt;
-    wire soc_ack;
-
-    soc soc(
-        .ck(ck),
-        .rst(rst),
-        .test(test),
-        // cpu
-        .wb_dbus_adr(wb_dbus_adr),
-        .wb_dbus_dat(wb_dbus_dat),
-        .wb_dbus_sel(wb_dbus_sel),
-        .wb_dbus_we(wb_dbus_we),
-        .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_xbus_rdt(soc_rdt),
-        .wb_xbus_ack(soc_ack),
-        // IO
-        .led(LED1),
-        .tx(TX)
-    );
-
-    // interface to ibus SPI XiP device    
-
-    wire [31:0] s_adr;
-    wire [31:0] s_rdt;
-    wire s_cyc;
-    wire s_ack;
-
     // flash_read connection to ibus arb
     wire [31:0] f_adr;
     wire [31:0] f_rdt;
@@ -155,8 +210,10 @@ module top(
     // flash_read dbus arb
     wire flash_ack;
     wire [31:0] flash_rdt;
+    wire flash_busy;
 
-    ibus_read flash_read (
+    ibus_read #(.ADDR(FLASH_ADDR))
+    flash_read (
         .wb_clk(wb_clk),
         .wb_rst(wb_rst),
         .wb_dbus_cyc(wb_dbus_cyc),
@@ -168,43 +225,62 @@ module top(
         .wb_ibus_cyc(f_cyc),
         .wb_ibus_adr(f_adr),
         .wb_ibus_ack(f_ack),
-        .wb_ibus_rdt(f_rdt)
-    );
-
-    bus_arb ibus_arb(
-        .wb_clk(ck),
-        .a_cyc(wb_ibus_cyc),
-        .a_adr(wb_ibus_adr),
-        .a_ack(wb_ibus_ack),
-        .a_rdt(wb_ibus_rdt),
-        .b_cyc(f_cyc),
-        .b_adr(f_adr),
-        .b_ack(f_ack),
-        .b_rdt(f_rdt),
-        .x_cyc(s_cyc),
-        .x_adr(s_adr),
-        .x_ack(s_ack),
-        .x_rdt(s_rdt)
+        .wb_ibus_rdt(f_rdt),
+        .dev_busy(flash_busy)
     );
 
     // SPI flash ibus interface
+    // Run XiP over this
+
+    wire [31:0] s_adr;
+    wire [31:0] s_rdt;
+    wire s_cyc;
+    wire s_ack;
+
     ibus ibus (
         .wb_clk(ck),
         .wb_rst(rst),
+        // iBus interface
         .wb_ibus_adr(s_adr),
         .wb_ibus_rdt(s_rdt),
         .wb_ibus_cyc(s_cyc),
         .wb_ibus_ack(s_ack),
+        // SPI interface
         .spi_cs(spi_cs),
         .spi_sck(spi_sck),
         .spi_miso(spi_miso),
         .spi_mosi(spi_mosi)
     );
 
-    assign wb_dbus_rdt = soc_rdt | flash_rdt;
-    assign wb_dbus_ack = soc_ack | flash_ack;
+    //  iBus arbitration between CPU and flash_read
 
-    // CPU
+    bus_arb ibus_arb(
+        .wb_clk(ck),
+        // CPU is the priority channel
+        .a_cyc(wb_ibus_cyc),
+        .a_adr(wb_ibus_adr),
+        .a_ack(wb_ibus_ack),
+        .a_rdt(wb_ibus_rdt),
+        // Flash_read at a lower priority
+        .b_cyc(f_cyc),
+        .b_adr(f_adr),
+        .b_ack(f_ack),
+        .b_rdt(f_rdt),
+        // Connect to the ibus SPI controller
+        .x_cyc(s_cyc),
+        .x_adr(s_adr),
+        .x_ack(s_ack),
+        .x_rdt(s_rdt)
+    );
+
+    // OR the dbus peripherals *_rdt & *_ack together
+    // They are 0 when not active.
+
+    assign wb_dbus_rdt = ram_rdt | uart_rdt | gpio_rdt | flash_rdt;
+    assign wb_dbus_ack = ram_ack | uart_ack | gpio_ack | flash_ack;
+
+    // SERV CPU
+
     servant servant (
         .wb_clk (ck), 
         .wb_rst (rst), 
@@ -217,17 +293,24 @@ module top(
         .wb_dbus_sel(wb_dbus_sel),
         .wb_dbus_we(wb_dbus_we),
         .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_xbus_rdt(wb_dbus_rdt),
-        .wb_xbus_ack(wb_dbus_ack)
-    );    
+        .wb_dbus_rdt(wb_dbus_rdt),
+        .wb_dbus_ack(wb_dbus_ack)
+    );
+    
+    //  IO
 
-    assign P1A1 = test[0];
-    assign P1A2 = spi_cs;
-    assign P1A3 = spi_sck;
-    assign P1A4 = spi_mosi;
-    assign P1B1 = spi_miso;
-    assign P1B2 = wb_ibus_cyc;
-    assign P1B3 = wb_ibus_ack;
-    assign P1B4 = test[7];
+    assign TX = tx;
+    assign LED1 = gpio_reg[0];
+
+    //  Test pins
+
+    assign P1A1 = tx;
+    assign P1A2 = flash_ack;
+    assign P1A3 = wb_ibus_ack;
+    assign P1A4 = flash_busy;
+    assign P1B1 = flash_busy;
+    assign P1B2 = 0;
+    assign P1B3 = 0;
+    assign P1B4 = 0;
 
 endmodule
