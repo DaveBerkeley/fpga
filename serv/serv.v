@@ -26,6 +26,7 @@ module top(
     localparam GPIO_ADDR  = 8'h40;
     localparam UART_ADDR  = 8'h60;
     localparam FLASH_ADDR = 8'h70;
+    localparam RESET_PC   = 32'h0010_0000;
 
     localparam prescale = 1;    // Divide the CPU clock down for development
     localparam reset_loop = 1;  // Repeatedly reset the CPU
@@ -281,22 +282,30 @@ module top(
 
     // SERV CPU
 
-    servant servant (
-        .wb_clk (ck), 
-        .wb_rst (rst), 
-        .wb_ibus_adr(wb_ibus_adr),
-        .wb_ibus_cyc(wb_ibus_cyc),
-        .wb_ibus_ack(wb_ibus_ack),
-        .wb_ibus_rdt(wb_ibus_rdt),
-        .wb_dbus_adr(wb_dbus_adr),
-        .wb_dbus_dat(wb_dbus_dat),
-        .wb_dbus_sel(wb_dbus_sel),
-        .wb_dbus_we(wb_dbus_we),
-        .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_dbus_rdt(wb_dbus_rdt),
-        .wb_dbus_ack(wb_dbus_ack)
+    parameter with_csr = 1;
+
+    serv_rf_top
+        #(.RESET_PC(RESET_PC), .WITH_CSR(with_csr))
+    cpu
+        (
+        .clk      (wb_clk),
+        .i_rst    (wb_rst),
+        .i_timer_irq  (1'b0),
+        // iBus
+        .o_ibus_adr   (wb_ibus_adr),
+        .o_ibus_cyc   (wb_ibus_cyc),
+        .i_ibus_rdt   (wb_ibus_rdt),
+        .i_ibus_ack   (wb_ibus_ack),
+        // dBus
+        .o_dbus_adr   (wb_dbus_adr),
+        .o_dbus_dat   (wb_dbus_dat),
+        .o_dbus_sel   (wb_dbus_sel),
+        .o_dbus_we    (wb_dbus_we),
+        .o_dbus_cyc   (wb_dbus_cyc),
+        .i_dbus_rdt   (wb_dbus_rdt),
+        .i_dbus_ack   (wb_dbus_ack)
     );
-    
+
     //  IO
 
     assign TX = tx;

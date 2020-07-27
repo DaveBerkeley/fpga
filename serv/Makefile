@@ -26,8 +26,6 @@ DEVICE = up5k
 PIN_DEF = ../icebreaker.pcf
 
 FILES =  pll.v
-FILES += servant.v
-FILES += soc.v
 FILES += ram.v
 FILES += ibus.v
 FILES += uart.v
