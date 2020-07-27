@@ -25,9 +25,6 @@ module servant
     input wire wb_ibus_ack
 );
 
-    // Size of the ROM/RAM storage in bytes
-    parameter memsize = 8 * 1024;
-    //parameter sim = 0;
     parameter with_csr = 1;
 
     wire ram_ack;
@@ -44,17 +41,11 @@ module servant
   
     //  Dbus RAM
 
-    localparam RAM_ADDR_W = $clog2(memsize/4);
-
-    wire [(RAM_ADDR_W-1):0] ram_adr;
-    assign ram_adr = wb_dbus_adr[(RAM_ADDR_W+2-1):2];
-
     wire [31:0] ram_rdt;
 
-    sp_ram #(.SIZE(memsize/4))
-    ram (
+    sp_ram ram (
         .ck(wb_clk),
-        .addr(ram_adr),
+        .addr(wb_dbus_adr),
         .cyc(ram_cyc),
         .we(wb_dbus_we),
         .sel(wb_dbus_sel),

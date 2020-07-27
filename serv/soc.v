@@ -19,9 +19,6 @@ module soc (
     output wire tx
 );
 
-    parameter memfile = "firmware.hex";
-    parameter memsize = 8192;
-
     localparam GPIO_ADDR = 8'h40;
     localparam UART_ADDR = 8'h60;
 

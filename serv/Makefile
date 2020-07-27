@@ -37,6 +37,7 @@ FILES += spi.v
 FILES += gpio.v
 FILES += chip_select.v
 FILES += bus_arb.v
+FILES += ice40up5k_spram.v
 
 FILES += $(CORE)/serv_rf_top.v
 FILES += $(CORE)/serv_rf_ram_if.v

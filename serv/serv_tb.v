@@ -57,9 +57,6 @@ module top (output wire TX);
 
     always #7 CLK <= !CLK;
 
-    parameter memfile = "firmware.hex";
-    parameter memsize = 8192;
-
     // PLL
     wire i_clk;
     assign i_clk = CLK;

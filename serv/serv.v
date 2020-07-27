@@ -25,8 +25,6 @@ module top(
     output wire P1B4
 );
 
-    parameter memsize = 8192;
-
     /* verilator lint_off UNUSED */
     wire [7:0] test;
     /* verilator lint_on UNUSED */
@@ -207,21 +205,20 @@ module top(
     assign wb_dbus_ack = soc_ack | flash_ack;
 
     // CPU
-    servant #(.memsize (memsize))
-        servant (
-            .wb_clk (ck), 
-            .wb_rst (rst), 
-            .wb_ibus_adr(wb_ibus_adr),
-            .wb_ibus_cyc(wb_ibus_cyc),
-            .wb_ibus_ack(wb_ibus_ack),
-            .wb_ibus_rdt(wb_ibus_rdt),
-            .wb_dbus_adr(wb_dbus_adr),
-            .wb_dbus_dat(wb_dbus_dat),
-            .wb_dbus_sel(wb_dbus_sel),
-            .wb_dbus_we(wb_dbus_we),
-            .wb_dbus_cyc(wb_dbus_cyc),
-            .wb_xbus_rdt(wb_dbus_rdt),
-            .wb_xbus_ack(wb_dbus_ack)
+    servant servant (
+        .wb_clk (ck), 
+        .wb_rst (rst), 
+        .wb_ibus_adr(wb_ibus_adr),
+        .wb_ibus_cyc(wb_ibus_cyc),
+        .wb_ibus_ack(wb_ibus_ack),
+        .wb_ibus_rdt(wb_ibus_rdt),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_xbus_rdt(wb_dbus_rdt),
+        .wb_xbus_ack(wb_dbus_ack)
     );    
 
     assign P1A1 = test[0];
