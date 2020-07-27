@@ -91,8 +91,8 @@ module uart
     wire cyc;
     wire uart_ready;
 
-    arb #(.ADDR(ADDR), .WIDTH(AWIDTH))
-        arb_uart (
+    chip_select #(.ADDR(ADDR), .WIDTH(AWIDTH))
+        cs_uart (
         .wb_ck(wb_clk), 
         .addr(wb_dbus_adr[31:31-7]), 
         .wb_cyc(wb_dbus_cyc), 

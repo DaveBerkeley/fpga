@@ -22,8 +22,8 @@ module gpio
 
     initial gpio = 0;
 
-    arb #(.ADDR(ADDR), .WIDTH(AWIDTH))
-        arb_gpio (
+    chip_select #(.ADDR(ADDR), .WIDTH(AWIDTH))
+        cs_gpio (
         .wb_ck(wb_clk), 
         .addr(wb_dbus_adr[31:31-7]), 
         .wb_cyc(wb_dbus_cyc), 

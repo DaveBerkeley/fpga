@@ -1,5 +1,5 @@
 
-module arb
+module chip_select
     #(parameter ADDR=0, WIDTH=8)
     (input wire wb_ck, 
     input wire [(WIDTH-1):0] addr, 

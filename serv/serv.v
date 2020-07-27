@@ -21,8 +21,8 @@ module top(
     output wire P1B4
 );
 
-    parameter memfile = "firmware.hex";
-    parameter memsize = 4096; // 8192;
+    parameter memfile = ""; // firmware.hex";
+    parameter memsize = 8192;
 
     /* verilator lint_off UNUSED */
     wire [7:0] test;
@@ -139,8 +139,7 @@ module top(
     wire wb_ibus_cyc;
     wire wb_ibus_ack;
     
-    ibus  #(.memfile (memfile), .memsize (memsize))
-    ibus (
+    ibus ibus (
         .wb_clk(ck),
         .wb_rst(rst),
         .wb_ibus_adr(wb_ibus_adr),

@@ -3,6 +3,7 @@ module ibus
     (
     input wire wb_clk,
     input wire wb_rst,
+    // ibus interface
     /* verilator lint_off UNUSED */
     input wire [31:0] wb_ibus_adr,
     /* verilator lint_on UNUSED */
@@ -16,12 +17,7 @@ module ibus
     input  wire spi_miso
 );
 
-    parameter memfile = "";
-    parameter memsize = 1 * 1024;
- 
-    localparam ROM_ADDR_W = $clog2(memsize/4);
-
-    // SPI : add SPI to ibus fetch
+    // XiP (Execute in place) : fetch ibus requests from Flash
 
     wire spi_ready;
     wire start;

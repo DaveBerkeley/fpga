@@ -68,8 +68,8 @@ module servant
     wire ram_ack;
     wire ram_cyc;
 
-    arb #(.ADDR(0), .WIDTH(2))
-        arb_ram (
+    chip_select #(.ADDR(0), .WIDTH(2))
+        cs_ram (
             .wb_ck(wb_clk),
             .addr(wb_dbus_adr[31:30]),
             .wb_cyc(wb_dbus_cyc),
