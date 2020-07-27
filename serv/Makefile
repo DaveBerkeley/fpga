@@ -30,13 +30,13 @@ TB_SRC = $(ADD_SRC)
 FILES =  pll.v
 FILES += servant.v
 FILES += soc.v
+FILES += ram.v
 FILES += ibus.v
 FILES += uart.v
 FILES += spi.v
 FILES += gpio.v
 FILES += chip_select.v
 FILES += bus_arb.v
-FILES += ../dsp/dpram.v
 
 FILES += $(CORE)/serv_rf_top.v
 FILES += $(CORE)/serv_rf_ram_if.v

@@ -5,7 +5,6 @@
 
 module bus_arb(
     input wire wb_clk,
-    input wire wb_rst,
     // Device A
     input wire a_cyc,
     input wire [31:0] a_adr,

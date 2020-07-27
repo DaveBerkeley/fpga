@@ -1,16 +1,17 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Jul 27 08:09:02 2020
+[*] Mon Jul 27 09:56:31 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
-[dumpfile_mtime] "Mon Jul 27 08:08:56 2020"
-[dumpfile_size] 1932526
+[dumpfile_mtime] "Mon Jul 27 09:54:49 2020"
+[dumpfile_size] 4023865
 [savefile] "/home/dave/Desktop/git/fpga/serv/test.gtkw"
-[timestart] 490300
+[timestart] 27440000
 [size] 1918 746
 [pos] -1 -1
-*-16.000000 427000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.000000 31311000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
+[treeopen] top.flash_read.
 [treeopen] top.soc.
 [sst_width] 196
 [signals_width] 182
@@ -19,72 +20,41 @@
 @28
 top.wb_clk
 top.wb_rst
-top.a_ack
+top.wb_dbus_cyc
+top.wb_dbus_we
 @22
-top.a_adr[31:0]
+top.wb_dbus_sel[3:0]
+top.wb_dbus_adr[31:0]
+top.wb_dbus_dat[31:0]
 @28
-top.a_cyc
+top.wb_dbus_ack
 @22
-top.a_rdt[31:0]
-@28
-top.b_ack
-@22
-top.b_adr[31:0]
-@28
-top.b_cyc
-@22
-top.b_rdt[31:0]
+top.wb_dbus_rdt[31:0]
 @200
 -
 @28
-top.x_cyc
+top.flash_read.busy
+top.ibus.ack
+top.arb_ibus.a_start
+top.arb_ibus.b_start
+top.arb_ibus.dev_a
+top.arb_ibus.dev_b
+top.arb_ibus.b_ack
+top.arb_ibus.a_ack
 @22
-top.x_adr[31:0]
+top.flash_read.rd_addr[31:0]
+top.flash_read.rd_data[31:0]
 @28
+top.i_cyc
+top.i_ack
+top.f_cyc
+top.f_ack
+top.x_cyc
 top.x_ack
-@c00022
-top.x_rdt[31:0]
-@28
-(0)top.x_rdt[31:0]
-(1)top.x_rdt[31:0]
-(2)top.x_rdt[31:0]
-(3)top.x_rdt[31:0]
-(4)top.x_rdt[31:0]
-(5)top.x_rdt[31:0]
-(6)top.x_rdt[31:0]
-(7)top.x_rdt[31:0]
-(8)top.x_rdt[31:0]
-(9)top.x_rdt[31:0]
-(10)top.x_rdt[31:0]
-(11)top.x_rdt[31:0]
-(12)top.x_rdt[31:0]
-(13)top.x_rdt[31:0]
-(14)top.x_rdt[31:0]
-(15)top.x_rdt[31:0]
-(16)top.x_rdt[31:0]
-(17)top.x_rdt[31:0]
-(18)top.x_rdt[31:0]
-(19)top.x_rdt[31:0]
-(20)top.x_rdt[31:0]
-(21)top.x_rdt[31:0]
-(22)top.x_rdt[31:0]
-(23)top.x_rdt[31:0]
-(24)top.x_rdt[31:0]
-(25)top.x_rdt[31:0]
-(26)top.x_rdt[31:0]
-(27)top.x_rdt[31:0]
-(28)top.x_rdt[31:0]
-(29)top.x_rdt[31:0]
-(30)top.x_rdt[31:0]
-(31)top.x_rdt[31:0]
-@1401200
--group_end
-@28
-top.arb.dev_a
-top.arb.dev_b
+top.ibus.spi_cs
+top.ibus.spi_sck
+top.ibus.spi_miso
 @29
-top.arb.pause
-@28
-top.arb.busy
+top.ibus.spi_mosi
 [pattern_trace] 1
 [pattern_trace] 0

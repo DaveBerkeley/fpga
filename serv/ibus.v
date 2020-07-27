@@ -142,4 +142,81 @@ module ibus
 
 endmodule
 
+   /*
+    *   Device on dbus which makes reads to the ibus
+    *   to allow SPI flash contents to be read.
+    *
+    *   WRITE the fetch address to BASE[0]
+    *   READ BASE[4] for status (bit_0 == busy)
+    *   READ BASE[0] for the result. 
+    *   
+    *   ie, to read flash location 0x100008, do
+    *
+    *   write(base, 0x100008);      // start a flash read
+    *   while (read(base+4) & 0x01) // wait for !busy
+    *       ;
+    *   uint32_t data = read(base); // read the data
+    */
+
+module ibus_read(
+    input wire wb_clk,
+    input wire wb_rst,
+    // dbus interface
+    input wire wb_dbus_cyc,
+    input wire wb_dbus_we,
+    /* verilator lint_off UNUSED */
+    input wire [31:0] wb_dbus_adr,
+    /* verilator lint_on UNUSED */
+    input wire [31:0] wb_dbus_dat,
+    output wire [31:0] wb_dbus_rdt,
+    output wire wb_dbus_ack,
+    // ibus interface
+    output wire wb_ibus_cyc,
+    output wire [31:0] wb_ibus_adr,
+    input wire wb_ibus_ack,
+    input wire [31:0] wb_ibus_rdt
+);
+
+    wire cyc;
+    wire ack;
+
+    chip_select #(.ADDR(8'h70))
+    dev_cs (
+        .wb_ck(wb_clk), 
+        .addr(wb_dbus_adr[31:24]), 
+        .wb_cyc(wb_dbus_cyc), 
+        .wb_rst(wb_rst),
+        .ack(ack), 
+        .cyc(cyc)
+    );
+
+    reg [31:0] rd_addr = 0;
+    reg [31:0] rd_data = 32'hfaceface;
+    reg busy = 0;
+
+    always @(posedge wb_clk) begin
+
+        if (cyc & wb_dbus_we & !busy) begin
+            // start a flash read cycle
+            rd_addr <= wb_dbus_dat;
+            busy <= 1;
+        end
+
+        if (wb_ibus_ack) begin
+            busy <= 0;
+            rd_data <= wb_ibus_rdt;
+        end
+
+    end
+
+    wire [31:0] status;
+    assign status = { 31'h0, busy };
+
+    assign wb_dbus_ack = ack;
+    assign wb_dbus_rdt = (cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? status : rd_data) : 0; 
+
+    assign wb_ibus_cyc = busy;
+    assign wb_ibus_adr = busy ? rd_addr : 0; 
+
+endmodule
 

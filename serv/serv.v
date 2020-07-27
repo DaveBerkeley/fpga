@@ -1,4 +1,8 @@
 
+   /*
+    *
+    */
+
 module top(
     input wire CLK, 
     output wire TX, 
@@ -97,20 +101,30 @@ module top(
     assign FLASH_IO2 = 1;
     assign FLASH_IO3 = 1;
 
-    // connect the soc to the cpu
+    // CPU bus
+
     wire [31:0] wb_dbus_adr;
     wire [31:0] wb_dbus_dat;
+    wire [31:0] wb_dbus_rdt;
     wire [3:0] wb_dbus_sel;
     wire wb_dbus_we;
     wire wb_dbus_cyc;
-    wire [31:0] wb_dbus_rdt;
     wire wb_dbus_ack;
 
-    /* verilator lint_off UNUSED */
-    wire dummy_sck;
-    wire dummy_cs;
-    wire dummy_mosi;
-    /* verilator lint_on UNUSED */
+    assign wb_clk = ck;
+    assign wb_rst = rst;
+
+    // CPU ibus
+    wire wb_clk;
+    wire wb_rst;
+    wire [31:0] wb_ibus_adr;
+    wire [31:0] wb_ibus_rdt;
+    wire wb_ibus_cyc;
+    wire wb_ibus_ack;
+
+    // connect the soc to the cpu
+    wire [31:0] soc_rdt;
+    wire soc_ack;
 
     soc soc(
         .ck(ck),
@@ -122,35 +136,76 @@ module top(
         .wb_dbus_sel(wb_dbus_sel),
         .wb_dbus_we(wb_dbus_we),
         .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_xbus_rdt(wb_dbus_rdt),
-        .wb_xbus_ack(wb_dbus_ack),
-        // SPI
-        .spi_cs(dummy_cs),
-        .spi_sck(dummy_sck),
-        .spi_miso(1'b0),
-        .spi_mosi(dummy_mosi),
+        .wb_xbus_rdt(soc_rdt),
+        .wb_xbus_ack(soc_ack),
         // IO
         .led(LED1),
         .tx(TX)
     );
 
-    wire [31:0] wb_ibus_adr;
-    wire [31:0] wb_ibus_rdt;
-    wire wb_ibus_cyc;
-    wire wb_ibus_ack;
-    
+    // interface to ibus SPI XiP device    
+
+    wire [31:0] s_adr;
+    wire [31:0] s_rdt;
+    wire s_cyc;
+    wire s_ack;
+
+    // flash_read connection to ibus arb
+    wire [31:0] f_adr;
+    wire [31:0] f_rdt;
+    wire f_cyc;
+    wire f_ack;
+    // flash_read dbus arb
+    wire flash_ack;
+    wire [31:0] flash_rdt;
+
+    ibus_read flash_read (
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_ack(flash_ack),
+        .wb_dbus_rdt(flash_rdt),
+        .wb_ibus_cyc(f_cyc),
+        .wb_ibus_adr(f_adr),
+        .wb_ibus_ack(f_ack),
+        .wb_ibus_rdt(f_rdt)
+    );
+
+    bus_arb ibus_arb(
+        .wb_clk(ck),
+        .a_cyc(wb_ibus_cyc),
+        .a_adr(wb_ibus_adr),
+        .a_ack(wb_ibus_ack),
+        .a_rdt(wb_ibus_rdt),
+        .b_cyc(f_cyc),
+        .b_adr(f_adr),
+        .b_ack(f_ack),
+        .b_rdt(f_rdt),
+        .x_cyc(s_cyc),
+        .x_adr(s_adr),
+        .x_ack(s_ack),
+        .x_rdt(s_rdt)
+    );
+
+    // SPI flash ibus interface
     ibus ibus (
         .wb_clk(ck),
         .wb_rst(rst),
-        .wb_ibus_adr(wb_ibus_adr),
-        .wb_ibus_rdt(wb_ibus_rdt),
-        .wb_ibus_cyc(wb_ibus_cyc),
-        .wb_ibus_ack(wb_ibus_ack),
+        .wb_ibus_adr(s_adr),
+        .wb_ibus_rdt(s_rdt),
+        .wb_ibus_cyc(s_cyc),
+        .wb_ibus_ack(s_ack),
         .spi_cs(spi_cs),
         .spi_sck(spi_sck),
         .spi_miso(spi_miso),
         .spi_mosi(spi_mosi)
     );
+
+    assign wb_dbus_rdt = soc_rdt | flash_rdt;
+    assign wb_dbus_ack = soc_ack | flash_ack;
 
     // CPU
     servant #(.memfile (memfile), .memsize (memsize))

@@ -206,6 +206,8 @@ module top (output wire TX);
     reg  wb_dbus_we = 0;
     reg  wb_dbus_cyc = 0;
     wire [31:0] wb_dbus_rdt;
+    wire [31:0] soc_rdt;
+    wire soc_ack;
     wire wb_dbus_ack;
 
     soc soc (
@@ -217,36 +219,13 @@ module top (output wire TX);
         .wb_dbus_sel(wb_dbus_sel),
         .wb_dbus_we(wb_dbus_we),
         .wb_dbus_cyc(wb_dbus_cyc),
-        .wb_xbus_rdt(wb_dbus_rdt),
-        .wb_xbus_ack(wb_dbus_ack),
-        // SPI
-        .spi_cs(xspi_cs),
-        .spi_sck(xspi_sck),
-        .spi_mosi(xspi_mosi),
-        .spi_miso(xspi_miso),
+        .wb_xbus_rdt(soc_rdt),
+        .wb_xbus_ack(soc_ack),
         .test(test),
         .led(led),
         .tx(tx)
     );
 
-    reg [31:0] wb_ibus_adr = 0;
-    reg wb_ibus_cyc = 0;
-    wire [31:0] wb_ibus_rdt;
-    wire wb_ibus_ack;
-    
-    ibus ibus (
-        .wb_clk(wb_clk),
-        .wb_rst(wb_rst),
-        .wb_ibus_adr(wb_ibus_adr),
-        .wb_ibus_rdt(wb_ibus_rdt),
-        .wb_ibus_cyc(wb_ibus_cyc),
-        .wb_ibus_ack(wb_ibus_ack),
-        .spi_cs(spi_cs),
-        .spi_sck(spi_sck),
-        .spi_miso(spi_miso),
-        .spi_mosi(spi_mosi)
-    );
-    
     task write (input [31:0] addr, input [31:0] data);
 
         wb_dbus_adr <= addr;
@@ -254,16 +233,18 @@ module top (output wire TX);
         wb_dbus_cyc <= 1;
         wb_dbus_we <= 1;
         wb_dbus_sel <= 4'b1111;
-        @(posedge ck);
+        wait (wb_dbus_ack);
         @(posedge ck);
         wb_dbus_cyc <= 0;
         wb_dbus_we <= 0;
         wb_dbus_sel <= 4'b0;
-        @(posedge ck);
         wb_dbus_adr <= 0;
         wb_dbus_dat <= 0;
+        @(posedge ck);
 
     endtask
+
+    reg [31:0] last_read = 0;
 
     task read (input [31:0] addr);
 
@@ -271,10 +252,10 @@ module top (output wire TX);
         wb_dbus_cyc <= 1;
         wb_dbus_we <= 0;
         wb_dbus_sel <= 4'b0000;
-        @(posedge ck);
+        wait (wb_dbus_ack);
+        last_read <= wb_dbus_rdt;
         @(posedge ck);
         wb_dbus_cyc <= 0;
-        @(posedge ck);
         wb_dbus_adr <= 0;
 
     endtask
@@ -287,61 +268,28 @@ module top (output wire TX);
         end
     end
 
-    task spi_wait_ready;
-        begin
-            poll_addr <= SPI_ADDR;
-            wait (wb_dbus_rdt[0]);
-            poll_addr <= 0;
-        end
-    endtask
+    reg [31:0] i_data = 0;
 
-    reg [31:0] i_rdt = 0;
+    // Device A
+    reg         i_cyc = 0;
+    reg  [31:0] i_adr = 32'hZ;
+    wire        i_ack;
+    wire [31:0] i_rdt;
 
     task iread (input [31:0] addr);
 
-        wb_ibus_adr <= addr;
-        wb_ibus_cyc <= 1;
-        wait (wb_ibus_ack);
+        i_adr <= addr;
+        i_cyc <= 1;
+        wait (i_ack);
         @(posedge ck);
         // Latch the result
-        i_rdt <= wb_ibus_rdt;
-        wb_ibus_cyc <= 0;
-        wb_ibus_adr <= 32'hZ;
+        i_data <= i_rdt;
+        i_cyc <= 0;
+        i_adr <= 32'hZ;
 
     endtask
 
-    localparam SPI_CTRL = 32'h50000000;
-    localparam SPI_ADDR = 32'h50000004;
-
 `ifdef XXXX
-    initial begin
-
-        wait (wb_rst == 0);
-        @(posedge ck);
-
-        spi_wait_ready();
-        write(SPI_ADDR, 32'h00123456);
-        write(SPI_CTRL, 32'h00000303);
-
-        spi_wait_ready();
-        tb_assert(wb_dbus_rdt == 32'h1);
-
-        write(SPI_CTRL, 32'h00000003);
-
-        spi_wait_ready();
-        tb_assert(wb_dbus_rdt == 32'h1);
-
-        read(SPI_CTRL);
-        tb_assert(wb_dbus_rdt == 32'haaaaaaaa);
-
-        write(SPI_CTRL, 32'h00000403); // no read
-
-        spi_wait_ready();
-        tb_assert(wb_dbus_rdt == 32'h1);
-
-    end
-`endif
-
     initial begin
 
         wait (wb_rst == 0);
@@ -353,11 +301,6 @@ module top (output wire TX);
 
     // Test bus_arb
 
-    // Device A
-    reg         a_cyc = 0;
-    reg  [31:0] a_adr = 32'hZ;
-    wire        a_ack;
-    wire [31:0] a_rdt;
     // Device B
     reg         b_cyc = 0;
     reg  [31:0] b_adr = 32'hZ;
@@ -369,24 +312,7 @@ module top (output wire TX);
     reg         x_ack = 0;
     reg  [31:0] x_rdt = 0;
 
-    bus_arb arb(
-        .wb_clk(ck),
-        .wb_rst(wb_rst),
-        .a_cyc(a_cyc),
-        .a_adr(a_adr),
-        .a_ack(a_ack),
-        .a_rdt(a_rdt),
-        .b_cyc(b_cyc),
-        .b_adr(b_adr),
-        .b_ack(b_ack),
-        .b_rdt(b_rdt),
-        .x_cyc(x_cyc),
-        .x_adr(x_adr),
-        .x_ack(x_ack),
-        .x_rdt(x_rdt)
-    );
-
-    // simulate slow device
+    // TODO : simulate slow device
     always @(posedge ck) begin
         if (x_cyc) begin
             x_ack <= 1;
@@ -487,5 +413,106 @@ module top (output wire TX);
         @(posedge ck);
 
     end
+`endif
+
+    wire        f_cyc;
+    wire [31:0] f_adr;
+    wire        f_ack;
+    wire [31:0] f_rdt;
+
+    wire f_dbus_ack;
+    wire [31:0] f_dbus_rdt;
+
+    ibus_read flash_read (
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_ack(f_dbus_ack),
+        .wb_dbus_rdt(f_dbus_rdt),
+        .wb_ibus_cyc(f_cyc),
+        .wb_ibus_adr(f_adr),
+        .wb_ibus_ack(f_ack),
+        .wb_ibus_rdt(f_rdt)
+    );
+
+    bus_arb arb_ibus(
+        .wb_clk(ck),
+        .a_cyc(i_cyc),
+        .a_adr(i_adr),
+        .a_ack(i_ack),
+        .a_rdt(i_rdt),
+        .b_cyc(f_cyc),
+        .b_adr(f_adr),
+        .b_ack(f_ack),
+        .b_rdt(f_rdt),
+        .x_cyc(x_cyc),
+        .x_adr(x_adr),
+        .x_ack(x_ack),
+        .x_rdt(x_rdt)
+    );
+
+    wire [31:0] x_adr;
+    wire x_cyc;
+    wire [31:0] x_rdt;
+    wire x_ack;
+    
+    wire [31:0] wb_ibus_adr;
+    wire wb_ibus_cyc;
+    wire [31:0] wb_ibus_rdt;
+    wire wb_ibus_ack;
+
+    assign wb_ibus_adr = x_adr;
+    assign wb_ibus_cyc = x_cyc;
+    assign wb_ibus_rdt = x_rdt;
+    assign wb_ibus_ack = x_ack;
+    
+    ibus ibus (
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_ibus_adr(x_adr),
+        .wb_ibus_rdt(x_rdt),
+        .wb_ibus_cyc(x_cyc),
+        .wb_ibus_ack(x_ack),
+        .spi_cs(spi_cs),
+        .spi_sck(spi_sck),
+        .spi_miso(spi_miso),
+        .spi_mosi(spi_mosi)
+    );
+
+    integer i_addr = 0;
+
+    initial begin
+        wait (wb_rst == 0);
+        @(posedge ck);
+
+        iread(i_addr);
+        iread(i_addr+4);
+        iread(i_addr+8);
+    end
+ 
+    initial begin
+        wait (wb_rst == 0);
+        @(posedge ck);
+
+        write(32'h70000000, 32'h12345678);
+
+        // poll for ready
+        poll_addr <= 32'h70000004;
+        @(posedge ck);
+        @(posedge ck);
+        @(posedge ck);
+        wait (!last_read[0]); // wait for ready
+        poll_addr <= 0;
+
+        @(posedge ck);
+        @(posedge ck);
+        @(posedge ck);
+    end
+
+    assign wb_dbus_ack = soc_ack | f_dbus_ack;
+    assign wb_dbus_rdt = soc_rdt | f_dbus_rdt;
 
 endmodule

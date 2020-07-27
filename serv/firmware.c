@@ -20,29 +20,9 @@ int main(void)
 
     while (true)
     {
-        *uart = 'X';
+        *uart = 0xda;
         *LEDS = 0;
-
-        //SPI[1] = 0; // set read addr
-        //SPI[0] = (1 << 10) + 0x66; // enable reset
-        //*LEDS = 0;
-        //SPI[0] = (1 << 10) + 0x99; // reset
-        //*LEDS = 0;
-        //SPI[0] = 0x9f; // jedec id
-        //*LEDS = 0;
-
-        //SPI[1] = 0x00100084; // set read addr
-        //SPI[0] = (3 << 8) + 0x03; // read data +inc +addr
-        //*LEDS = 0;
-        //SPI[0] = (3 << 8) + 0x03; // read data +inc +addr
-        //*LEDS = 0;
-
-        while (true)
-        {
-            *uart = 'A';
-            *LEDS = 0;
-            *LEDS = 1;
-        }
+        *LEDS = 1;
     }
     return 0;
 }
