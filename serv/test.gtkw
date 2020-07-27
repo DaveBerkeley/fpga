@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul 23 14:58:11 2020
+[*] Mon Jul 27 08:09:02 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
-[dumpfile_mtime] "Thu Jul 23 14:55:59 2020"
-[dumpfile_size] 2699106
+[dumpfile_mtime] "Mon Jul 27 08:08:56 2020"
+[dumpfile_size] 1932526
 [savefile] "/home/dave/Desktop/git/fpga/serv/test.gtkw"
-[timestart] 0
+[timestart] 490300
 [size] 1918 746
 [pos] -1 -1
-*-17.000000 679000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-16.000000 427000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.soc.
 [sst_width] 196
@@ -18,36 +18,73 @@
 [sst_vpaned_height] 206
 @28
 top.wb_clk
-top.o_rst
-top.wb_dbus_cyc
+top.wb_rst
+top.a_ack
 @22
-top.wb_dbus_adr[31:0]
+top.a_adr[31:0]
 @28
-top.wb_ibus_cyc
+top.a_cyc
 @22
-top.wb_ibus_adr[31:0]
-top.wb_dbus_dat[31:0]
-top.wb_dbus_sel[3:0]
+top.a_rdt[31:0]
 @28
-top.wb_dbus_we
-top.wb_dbus_ack
-top.wb_dbus_ack_2
+top.b_ack
 @22
-top.wb_dbus_rdt[31:0]
-top.wb_dbus_rdt_2[31:0]
+top.b_adr[31:0]
 @28
-top.wb_ibus_ack
-top.wb_ibus_ack_2
+top.b_cyc
 @22
-top.wb_ibus_rdt[31:0]
-@23
-top.wb_ibus_rdt_2[31:0]
+top.b_rdt[31:0]
 @200
 -
 @28
-top.led
+top.x_cyc
 @22
-top.soc.wb_dmem_rdt[31:0]
-top.soc_2.ram_rdt[31:0]
+top.x_adr[31:0]
+@28
+top.x_ack
+@c00022
+top.x_rdt[31:0]
+@28
+(0)top.x_rdt[31:0]
+(1)top.x_rdt[31:0]
+(2)top.x_rdt[31:0]
+(3)top.x_rdt[31:0]
+(4)top.x_rdt[31:0]
+(5)top.x_rdt[31:0]
+(6)top.x_rdt[31:0]
+(7)top.x_rdt[31:0]
+(8)top.x_rdt[31:0]
+(9)top.x_rdt[31:0]
+(10)top.x_rdt[31:0]
+(11)top.x_rdt[31:0]
+(12)top.x_rdt[31:0]
+(13)top.x_rdt[31:0]
+(14)top.x_rdt[31:0]
+(15)top.x_rdt[31:0]
+(16)top.x_rdt[31:0]
+(17)top.x_rdt[31:0]
+(18)top.x_rdt[31:0]
+(19)top.x_rdt[31:0]
+(20)top.x_rdt[31:0]
+(21)top.x_rdt[31:0]
+(22)top.x_rdt[31:0]
+(23)top.x_rdt[31:0]
+(24)top.x_rdt[31:0]
+(25)top.x_rdt[31:0]
+(26)top.x_rdt[31:0]
+(27)top.x_rdt[31:0]
+(28)top.x_rdt[31:0]
+(29)top.x_rdt[31:0]
+(30)top.x_rdt[31:0]
+(31)top.x_rdt[31:0]
+@1401200
+-group_end
+@28
+top.arb.dev_a
+top.arb.dev_b
+@29
+top.arb.pause
+@28
+top.arb.busy
 [pattern_trace] 1
 [pattern_trace] 0

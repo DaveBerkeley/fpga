@@ -108,6 +108,7 @@ module ibus
         end
 
         if (state == WAITING) begin
+            // Wait >30us for the flash reset to complete
             wait_ck <= wait_ck +1;
             if (wait_ck == 10'h3FF) begin
                 state <= RUNNING;

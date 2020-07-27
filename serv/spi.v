@@ -103,8 +103,8 @@ module spi
 
     wire cyc;
 
-    arb #(.ADDR(ADDR), .WIDTH(AWIDTH))
-        arb_spi (
+    chip_select #(.ADDR(ADDR), .WIDTH(AWIDTH))
+        cs_spi (
         .wb_ck(wb_clk), 
         .addr(wb_dbus_adr[31:24]), 
         .wb_cyc(wb_dbus_cyc), 

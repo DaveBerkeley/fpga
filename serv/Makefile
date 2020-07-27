@@ -32,11 +32,11 @@ FILES += servant.v
 FILES += soc.v
 FILES += ibus.v
 FILES += uart.v
-FILES += chip_select.v
 FILES += spi.v
 FILES += gpio.v
+FILES += chip_select.v
+FILES += bus_arb.v
 FILES += ../dsp/dpram.v
-FILES += $(SERVANT)/servant_ram.v
 
 FILES += $(CORE)/serv_rf_top.v
 FILES += $(CORE)/serv_rf_ram_if.v

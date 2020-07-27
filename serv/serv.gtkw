@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sun Jul 26 18:00:25 2020
+[*] Mon Jul 27 06:11:40 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
-[dumpfile_mtime] "Sun Jul 26 17:58:45 2020"
-[dumpfile_size] 1936282
+[dumpfile_mtime] "Mon Jul 27 06:09:33 2020"
+[dumpfile_size] 1905829
 [savefile] "/home/dave/Desktop/git/fpga/serv/serv.gtkw"
 [timestart] 0
 [size] 1913 664
 [pos] -1 -1
-*-23.101376 1155000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.101376 1155000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.clock.
 [treeopen] top.ibus.
@@ -125,16 +125,11 @@ top.wb_ibus_rdt[31:0]
 @28
 top.ibus.fetching
 top.ibus.spi.req
-top.ibus.spi_ready
-@22
-top.ibus.spi.bit_count[6:0]
-@28
+top.ibus.spi_cs
+top.ibus.spi_sck
 top.ibus.spi_mosi
 top.ibus.spi_ready
-@29
 top.ibus.state[2:0]
-@28
-top.spi_miso
 @22
 top.ibus.spi.rx[31:0]
 top.i_rdt[31:0]

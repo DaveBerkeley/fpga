@@ -5,8 +5,7 @@
 task tb_assert(input test);
 
     begin
-        if (!test)
-        begin
+        if (!test) begin
             $display("ASSERTION FAILED in %m");
             $finish;
         end
@@ -235,8 +234,7 @@ module top (output wire TX);
     wire [31:0] wb_ibus_rdt;
     wire wb_ibus_ack;
     
-    ibus  #(.memfile (memfile), .memsize (memsize))
-    ibus (
+    ibus ibus (
         .wb_clk(wb_clk),
         .wb_rst(wb_rst),
         .wb_ibus_adr(wb_ibus_adr),
@@ -350,6 +348,143 @@ module top (output wire TX);
         @(posedge ck);
 
         iread(32'h00100000);
+
+    end
+
+    // Test bus_arb
+
+    // Device A
+    reg         a_cyc = 0;
+    reg  [31:0] a_adr = 32'hZ;
+    wire        a_ack;
+    wire [31:0] a_rdt;
+    // Device B
+    reg         b_cyc = 0;
+    reg  [31:0] b_adr = 32'hZ;
+    wire        b_ack;
+    wire [31:0] b_rdt;
+    // Controlled Device
+    wire        x_cyc;
+    wire [31:0] x_adr;
+    reg         x_ack = 0;
+    reg  [31:0] x_rdt = 0;
+
+    bus_arb arb(
+        .wb_clk(ck),
+        .wb_rst(wb_rst),
+        .a_cyc(a_cyc),
+        .a_adr(a_adr),
+        .a_ack(a_ack),
+        .a_rdt(a_rdt),
+        .b_cyc(b_cyc),
+        .b_adr(b_adr),
+        .b_ack(b_ack),
+        .b_rdt(b_rdt),
+        .x_cyc(x_cyc),
+        .x_adr(x_adr),
+        .x_ack(x_ack),
+        .x_rdt(x_rdt)
+    );
+
+    // simulate slow device
+    always @(posedge ck) begin
+        if (x_cyc) begin
+            x_ack <= 1;
+            x_rdt <= x_adr;
+        end
+        if (x_ack) begin
+            x_ack <= 0;
+            x_rdt <= 0;
+        end
+    end
+
+    initial begin
+        wait (wb_rst == 0);
+        @(posedge ck);
+
+        // dev A request
+        a_adr <= 32'h12341234;
+        a_cyc <= 1;
+        wait (a_ack);
+        tb_assert(a_rdt == a_adr);
+        @(posedge ck);
+        a_adr <= 32'hZ;
+        a_cyc <= 0;
+        @(posedge ck);
+
+        // dev A request
+        a_adr <= 32'h11111111;
+        a_cyc <= 1;
+        wait (a_ack);
+        tb_assert(a_rdt == a_adr);
+        @(posedge ck);
+        a_adr <= 32'hZ;
+        a_cyc <= 0;
+        @(posedge ck);
+
+        // dev B request
+        b_adr <= 32'h22222222;
+        b_cyc <= 1;
+        wait (b_ack);
+        tb_assert(b_rdt == b_adr);
+        @(posedge ck);
+        b_adr <= 32'hZ;
+        b_cyc <= 0;
+        @(posedge ck);
+
+        // Simultaneous A B requests
+        // A should get priority
+        a_adr <= 32'h11111111;
+        a_cyc <= 1;
+        b_adr <= 32'h22222222;
+        b_cyc <= 1;
+        wait (a_ack);
+        tb_assert(a_rdt == a_adr);
+        @(posedge ck);
+        a_adr <= 32'hZ;
+        a_cyc <= 0;
+        wait (b_ack);
+        tb_assert(b_rdt == b_adr);
+        @(posedge ck);
+        b_adr <= 32'hZ;
+        b_cyc <= 0;
+        @(posedge ck);
+
+        // B request while A is waiting
+        a_adr <= 32'h11111111;
+        a_cyc <= 1;
+        @(posedge ck);
+        b_adr <= 32'h22222222;
+        b_cyc <= 1;
+        wait (a_ack);
+        tb_assert(a_rdt == a_adr);
+        @(posedge ck);
+        a_adr <= 32'hZ;
+        a_cyc <= 0;
+        wait (b_ack);
+        tb_assert(b_rdt == b_adr);
+        @(posedge ck);
+        b_adr <= 32'hZ;
+        b_cyc <= 0;
+        @(posedge ck);
+
+        // A request while B is waiting
+        b_adr <= 32'h22222222;
+        b_cyc <= 1;
+        @(posedge ck);
+        a_adr <= 32'h11111111;
+        a_cyc <= 1;
+        wait (b_ack);
+        @(posedge ck);
+        tb_assert(b_rdt == b_adr);
+        b_adr <= 32'hZ;
+        b_cyc <= 0;
+        wait (a_ack);
+        @(posedge ck);
+        tb_assert(a_rdt == a_adr);
+        a_adr <= 32'hZ;
+        a_cyc <= 0;
+        @(posedge ck);
 
     end
 
