@@ -25,7 +25,6 @@ module servant
     input wire wb_ibus_ack
 );
 
-    parameter memfile = "";
     // Size of the ROM/RAM storage in bytes
     parameter memsize = 8 * 1024;
     //parameter sim = 0;

@@ -25,7 +25,6 @@ module top(
     output wire P1B4
 );
 
-    parameter memfile = ""; // firmware.hex";
     parameter memsize = 8192;
 
     /* verilator lint_off UNUSED */
@@ -208,7 +207,7 @@ module top(
     assign wb_dbus_ack = soc_ack | flash_ack;
 
     // CPU
-    servant #(.memfile (memfile), .memsize (memsize))
+    servant #(.memsize (memsize))
         servant (
             .wb_clk (ck), 
             .wb_rst (rst), 

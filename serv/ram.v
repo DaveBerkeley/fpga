@@ -1,6 +1,6 @@
 
 module sp_ram 
-# (parameter SIZE=256, AWIDTH=$clog2(SIZE))
+    # (parameter SIZE=256, AWIDTH=$clog2(SIZE))
 (   
     input wire ck,
     input wire cyc,

@@ -12,12 +12,12 @@ VCONFIG = /tmp/config.vlt
 
 PROJ = serv
 ADD_SRC = 
-ADD_CLEAN = pll.v firmware.elf firmware.bin $(PROJ).bin firmware.hex $(PROJ)_tb $(VCONFIG)
+ADD_CLEAN = pll.v firmware.elf firmware.bin $(PROJ).bin $(PROJ)_tb $(VCONFIG)
 ADD_YOSYS = -dsp
 ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE)
-ADD_DEPS = firmware.hex pll.v $(VCONFIG)
+ADD_DEPS = pll.v $(VCONFIG)
 ADD_IVERILOG = -I $(CORE)
-TB_DEPS = pll.v firmware.hex $(VCONFIG)
+TB_DEPS = pll.v $(VCONFIG)
 TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v
 
 PACKAGE = sg48
@@ -57,6 +57,11 @@ ADD_SRC+=$(FILES)
 
 include ../main.mk
 
+prog_firmware: firmware.bin
+	iceprog -o 1M $^
+
+all: prog prog_firmware
+
 pll.v : Makefile
 	icepll -o 32 -m -f $@
 	# Change *_CORE macro to *_PAD macro
@@ -66,9 +71,6 @@ pll.v : Makefile
 
 # number of words in init ram
 INIT_RAM_SIZE=2048
-
-firmware.hex: firmware.bin
-	./makehex.py $^ $(INIT_RAM_SIZE) > $@
 
 firmware.bin: firmware.elf
 	$(CROSS)objcopy -S -O binary $^ $@
