@@ -1,0 +1,55 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Mon Jul 27 16:29:27 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
+[dumpfile_mtime] "Mon Jul 27 16:25:48 2020"
+[dumpfile_size] 846000
+[savefile] "/home/dave/Desktop/git/fpga/serv/bus_arb_tb.gtkw"
+[timestart] 0
+[size] 1913 664
+[pos] -1 133
+*-16.101376 100100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 263
+[signals_width] 214
+[sst_expanded] 1
+[sst_vpaned_height] 166
+@28
+top.ibus_arb.wb_clk
+top.wb_rst
+top.ibus_arb.a_cyc
+@22
+top.ibus_arb.a_adr[31:0]
+@28
+top.ibus_arb.a_ack
+@22
+top.ibus_arb.a_rdt[31:0]
+@28
+top.ibus_arb.b_cyc
+@22
+top.ibus_arb.b_adr[31:0]
+@28
+top.ibus_arb.b_ack
+@22
+top.ibus_arb.b_rdt[31:0]
+@29
+top.ibus_arb.x_cyc
+@22
+top.ibus_arb.x_adr[31:0]
+@28
+top.ibus_arb.x_ack
+@22
+top.ibus_arb.x_rdt[31:0]
+@200
+-
+@28
+top.ibus_arb.a_start
+top.ibus_arb.b_start
+top.ibus_arb.cycle_busy
+top.ibus_arb.busy
+top.ibus_arb.dev_a
+top.ibus_arb.dev_b
+top.ibus_arb.pause
+[pattern_trace] 1
+[pattern_trace] 0

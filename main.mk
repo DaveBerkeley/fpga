@@ -29,7 +29,7 @@ endif
 	verilator --top-module top $(ADD_VERILATOR) $(TB_VERILATOR) $(TB_SRC) --lint-only -Wall
 	iverilog -DSIMULATION -g2012 $(ADD_IVERILOG) -o $@ $(TB_SRC) $@.v
 	./$@
-	#gtkwave $(PROJ).vcd $(PROJ).gtkw &
+	#gtkwave $(PROJ).vcd $@.gtkw &
 
 %_tb.vcd: %_tb
 	vvp -N $< +vcd=$@

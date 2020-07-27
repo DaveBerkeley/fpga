@@ -10,5 +10,7 @@ task tb_assert(input test);
 
 endtask
 
+module top;
 
+endmodule
 

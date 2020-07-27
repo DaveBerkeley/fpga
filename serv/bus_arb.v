@@ -19,21 +19,23 @@ module bus_arb(
     output wire x_cyc,
     output wire [31:0] x_adr,
     input wire x_ack,
-    input wire [31:0] x_rdt
+    input wire [31:0] x_rdt,
+    output wire busy
 );
 
     reg dev_a = 0; // Device A granted control
     reg dev_b = 0; // Device B granted control
     reg pause = 0; // Pause after x_ack
+    wire cycle_busy;
 
-    wire busy;
-    assign busy = dev_a | dev_b | pause;
+    assign cycle_busy = dev_a | dev_b | pause;
+    assign busy = cycle_busy | a_cyc | b_cyc;
 
     // Detect start of device request
     wire a_start;
-    assign a_start = a_cyc & !busy;
+    assign a_start = a_cyc & !cycle_busy;
     wire b_start;
-    assign b_start = b_cyc & !(a_cyc | busy);
+    assign b_start = b_cyc & !(a_cyc | cycle_busy);
 
     always @(posedge wb_clk) begin
 
@@ -58,7 +60,7 @@ module bus_arb(
     end
 
     // TODO : can this cause a glitch on the adr lines?
-    assign x_cyc = (dev_a & a_cyc) | (dev_b & b_cyc) | ((a_cyc | b_cyc) & !busy);
+    assign x_cyc = (dev_a & a_cyc) | (dev_b & b_cyc) | ((a_cyc | b_cyc) & !cycle_busy);
     assign x_adr = ((a_start | dev_a) ? a_adr : 0) | ((b_start | dev_b) ? b_adr : 0);
 
     assign a_ack = dev_a & x_ack;

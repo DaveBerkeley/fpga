@@ -13,6 +13,10 @@ module top(
     output wire FLASH_IO2,
     output wire FLASH_IO3,
     output wire LED1,
+    output wire LED2,
+    output wire LED3,
+    output wire LED4,
+    output wire LED5,
     output wire P1A1,
     output wire P1A2,
     output wire P1A3,
@@ -107,8 +111,6 @@ module top(
 
     //  RAM
 
-    parameter SIMULATION = 0;
-
     wire ram_ack;
     wire ram_cyc;
     wire [31:0] ram_rdt;
@@ -124,7 +126,7 @@ module top(
   
     //  Dbus RAM
 
-    sp_ram #(.SIMULATION(SIMULATION)) ram (
+    sp_ram ram (
         .ck(wb_clk),
         .addr(wb_dbus_adr),
         .cyc(ram_cyc),
@@ -170,7 +172,7 @@ module top(
     /* verilator lint_off UNUSED */
     wire [7:0] gpio_reg;
     /* verilator lint_on UNUSED */
-    
+ 
     gpio
         #(.ADDR(GPIO_ADDR), .AWIDTH(8))
         gpio_io (
@@ -255,6 +257,10 @@ module top(
 
     //  iBus arbitration between CPU and flash_read
 
+    /* verilator lint_off UNUSED */
+    wire arb_busy;
+    /* verilator lint_on UNUSED */
+
     bus_arb ibus_arb(
         .wb_clk(ck),
         // CPU is the priority channel
@@ -271,7 +277,8 @@ module top(
         .x_cyc(s_cyc),
         .x_adr(s_adr),
         .x_ack(s_ack),
-        .x_rdt(s_rdt)
+        .x_rdt(s_rdt),
+        .busy(arb_busy)
     );
 
     // OR the dbus peripherals *_rdt & *_ack together
@@ -310,6 +317,10 @@ module top(
 
     assign TX = tx;
     assign LED1 = gpio_reg[0];
+    assign LED2 = gpio_reg[1];
+    assign LED3 = gpio_reg[2];
+    assign LED4 = gpio_reg[3];
+    assign LED5 = gpio_reg[4];
 
     //  Test pins
 

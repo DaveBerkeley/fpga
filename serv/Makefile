@@ -12,7 +12,7 @@ VCONFIG = /tmp/config.vlt
 
 PROJ = serv
 ADD_SRC = 
-ADD_CLEAN = pll.v firmware.elf firmware.bin $(PROJ).bin $(PROJ)_tb $(VCONFIG)
+ADD_CLEAN = pll.v firmware.elf firmware.bin $(PROJ).bin *_tb $(VCONFIG)
 ADD_YOSYS = -dsp
 ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE)
 ADD_DEPS = pll.v $(VCONFIG)
@@ -53,7 +53,7 @@ CPU_FILES += $(CORE)/serv_csr.v
 ADD_SRC+=$(FILES) $(CPU_FILES)
 
 #TB_SRC = $(ADD_SRC)
-TB_SRC = $(CPU_FILES)
+TB_SRC = $(CPU_FILES) bus_arb.v
 
 
 include ../main.mk
