@@ -39,7 +39,7 @@ module gpio
         end
     end
 
-    assign rdt = { 24'h0, gpio };
+    assign rdt = cyc ? { 24'h0, gpio } : 32'h0;
 
 endmodule
 
