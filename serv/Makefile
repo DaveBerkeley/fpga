@@ -19,21 +19,23 @@ ADD_DEPS = pll.v $(VCONFIG)
 ADD_IVERILOG = -I $(CORE)
 TB_DEPS = pll.v $(VCONFIG)
 TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v sim.v
+ADD_TB_IVERILOG = sim.v tb.v
 
 PACKAGE = sg48
 DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
 
-FILES =  pll.v
-FILES += ram.v
+FILES  = pll.v
 FILES += ibus.v
 FILES += uart.v
 FILES += spi.v
 FILES += gpio.v
 FILES += chip_select.v
 FILES += bus_arb.v
-FILES += ice40up5k_spram.v
+
+HW_FILES  = ice40up5k_spram.v
+HW_FILES += ram.v
 
 # CPU internals
 CPU_FILES  = $(CORE)/serv_rf_top.v
@@ -50,10 +52,8 @@ CPU_FILES += $(CORE)/serv_alu.v
 CPU_FILES += $(CORE)/serv_shift.v
 CPU_FILES += $(CORE)/serv_csr.v
 
-ADD_SRC+=$(FILES) $(CPU_FILES)
-
-#TB_SRC = $(ADD_SRC)
-TB_SRC = $(CPU_FILES) bus_arb.v
+ADD_SRC+=$(FILES) $(CPU_FILES) $(HW_FILES)
+TB_SRC = $(CPU_FILES) $(FILES)
 
 
 include ../main.mk
@@ -81,5 +81,7 @@ firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
+
+tb: serv_tb bus_arb_tb
 
 #	FIN

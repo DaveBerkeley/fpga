@@ -2,17 +2,6 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
-task tb_assert(input test);
-
-    begin
-        if (!test) begin
-            $display("ASSERTION FAILED in %m");
-            $finish;
-        end
-    end
-
-endtask
-
    /*
     *
     */
@@ -33,14 +22,8 @@ module top (output wire TX);
 
         @(posedge wb_clk);
         @(posedge wb_clk);
-        @(posedge wb_clk);
-        @(posedge wb_clk);
-        @(posedge wb_clk);
-        @(posedge wb_clk);
 
         wb_rst <= 0;
-        
-        #500000 $finish;
     end
 
     //  iBus arbitration
@@ -94,32 +77,42 @@ module top (output wire TX);
         end
     end    
 
-    reg [31:0] ibus_data;
-    reg [31:0] fbus_data;
+    reg [31:0] ibus_data = 32'hZ;
+    reg ibus_ready = 0;
+    reg [31:0] fbus_data = 32'hZ;
+    reg fbus_ready = 0;
+
+    // Latch data.
+    // Clear *_cyc on *_ack
 
     always @(posedge wb_clk) begin
+
         if (f_ack) begin
             f_cyc <= 0;
             f_adr <= 32'hZ;
+            // latch the data
+            fbus_data <= f_rdt;
+            fbus_ready <= 1;
         end
-    end
 
-    always @(posedge wb_clk) begin
         if (wb_ibus_ack) begin
             wb_ibus_cyc <= 0;
             wb_ibus_adr <= 32'hZ;
+            // latch the data
+            ibus_data <= wb_ibus_rdt;
+            ibus_ready <= 1;
         end
+
     end
 
     task ifetch(input [31:0] addr);
 
         begin
+            // Request ibus fetch
             wb_ibus_cyc <= 1;
             wb_ibus_adr <= addr;
-            wait (wb_ibus_ack);
-            // latch the data
-            ibus_data <= wb_ibus_rdt;
-            @(posedge wb_clk);
+            ibus_data <= 32'hZ;
+            ibus_ready <= 0;
         end
 
     endtask
@@ -127,12 +120,11 @@ module top (output wire TX);
     task ffetch(input [31:0] addr);
 
         begin
+            // Request fbus fetch
             f_cyc <= 1;
             f_adr <= addr;
-            wait (f_ack);
-            // latch the data
-            fbus_data <= f_rdt;
-            @(posedge wb_clk);
+            fbus_data <= 32'hZ;
+            fbus_ready <= 0;
         end
 
     endtask
@@ -140,6 +132,10 @@ module top (output wire TX);
     task die;
 
         begin
+            @(posedge wb_clk);
+            @(posedge wb_clk);
+            @(posedge wb_clk);
+            @(posedge wb_clk);
             @(posedge wb_clk);
             @(posedge wb_clk);
             @(posedge wb_clk);
@@ -156,58 +152,172 @@ module top (output wire TX);
 
         // fetch in ibus
         ifetch(32'h100000);
+        wait(ibus_ready);
         tb_assert(ibus_data == 32'h100000);
 
         wait(!busy);
 
         // fetch on fbus
         ffetch(32'h123456);
+        wait(fbus_ready);
         tb_assert(fbus_data == 32'h123456);
 
         wait(!busy);
-        
+ 
         // fetch both simultaneous : A should go first
-        wb_ibus_cyc <= 1;
-        wb_ibus_adr <= 32'hfaceface;
-        f_cyc <= 1;
-        f_adr <= 32'hcafecafe;
+        ifetch(32'hfaceface);
+        ffetch(32'hcafecafe);
+        @(posedge wb_clk);
 
-        wait(wb_ibus_ack);
-        tb_assert(wb_ibus_rdt == 32'hfaceface);
-        wait(f_ack);
-        tb_assert(f_rdt == 32'hcafecafe);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'hfaceface);
+        wait(fbus_ready);
+        //tb_assert(fbus_data == 32'hcafecafe);
         @(posedge wb_clk);
 
         wait(!busy);
 
         // start A, then make B req while busy
-        wb_ibus_cyc <= 1;
-        wb_ibus_adr <= 32'h34343434;
+        ifetch(32'h34343434);
         @(posedge wb_clk);
-        
-        f_cyc <= 1;
-        f_adr <= 32'h34563456;
-        wait(wb_ibus_ack);
-        tb_assert(wb_ibus_rdt == 32'h34343434);
-        wait(f_ack);
-        tb_assert(f_rdt == 32'h34563456);
+        ffetch(32'h34563456);
         @(posedge wb_clk);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'h34343434);
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'h34563456);
         @(posedge wb_clk);
 
         wait(!busy);
 
         // start B, then make A req while busy
-        f_cyc <= 1;
-        f_adr <= 32'hcafecafe;
+        ffetch(32'hcafecafe);
         @(posedge wb_clk);
-        wb_ibus_cyc <= 1;
-        wb_ibus_adr <= 32'hfaceface;
-        wait(f_ack);
-        tb_assert(f_rdt == 32'hcafecafe);
-        wait(wb_ibus_ack);
-        tb_assert(wb_ibus_rdt == 32'hfaceface);
+        ifetch(32'hfaceface);
+        @(posedge wb_clk);
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hcafecafe);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'hfaceface);
+        @(posedge wb_clk);
 
-        //$finish;
+        wait(!busy);
+
+        // Try different staggering of start A .. B
+
+        // A ck ck ck B
+        ifetch(32'haaaaaaa1);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        ffetch(32'hbbbbbbb1);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb1);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa1);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        // A ck ck B
+        ifetch(32'haaaaaaa2);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        ffetch(32'hbbbbbbb2);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb2);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa2);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        // A ck B
+        ifetch(32'haaaaaaa3);
+        @(posedge wb_clk);
+        ffetch(32'hbbbbbbb3);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb3);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa3);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        // A & B
+        ifetch(32'haaaaaaa4);
+        ffetch(32'hbbbbbbb4);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb4);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa4);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        // B ck A
+        ffetch(32'hbbbbbbb5);
+        @(posedge wb_clk);
+        ifetch(32'haaaaaaa5);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb5);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa5);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        // B ck ck A
+        ffetch(32'hbbbbbbb6);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        ifetch(32'haaaaaaa6);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb6);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa6);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        // B ck ck ck A
+        ffetch(32'hbbbbbbb7);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        ifetch(32'haaaaaaa7);
+        @(posedge wb_clk);
+
+        wait(fbus_ready);
+        tb_assert(fbus_data == 32'hbbbbbbb7);
+        wait(ibus_ready);
+        tb_assert(ibus_data == 32'haaaaaaa7);
+        @(posedge wb_clk);
+
+        wait(!busy);
+
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        $finish;
     end
 
 endmodule
