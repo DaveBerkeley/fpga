@@ -14,7 +14,8 @@ module ibus
     output wire spi_cs,
     output wire spi_sck,
     output wire spi_mosi,
-    input  wire spi_miso
+    input  wire spi_miso,
+    output wire ready
 );
 
     // XiP (Execute in place) : fetch ibus requests from Flash
@@ -149,6 +150,7 @@ module ibus
     );
 
     assign wb_ibus_ack = ack && (state == RUNNING);
+    assign ready = state == RUNNING;
 
 endmodule
 
@@ -157,14 +159,11 @@ endmodule
     *   to allow SPI flash contents to be read.
     *
     *   WRITE the fetch address to BASE[0]
-    *   READ BASE[4] for status (bit_0 == busy)
     *   READ BASE[0] for the result. 
     *   
     *   ie, to read flash location 0x100008, do
     *
     *   write(base, 0x100008);      // start a flash read
-    *   while (read(base+4) & 0x01) // wait for !busy
-    *       ;
     *   uint32_t data = read(base); // read the data
     */
 
@@ -186,12 +185,16 @@ module ibus_read
     output wire wb_ibus_cyc,
     output wire [31:0] wb_ibus_adr,
     input wire wb_ibus_ack,
+/* verilator lint_off UNUSED */
     input wire [31:0] wb_ibus_rdt,
-    output dev_busy
+/* verilator lint_on UNUSED */
+    output wire dev_busy
 );
 
     wire cyc;
-    wire ack;
+    /* verilator lint_off UNUSED */
+    wire nowt;
+    /* verilator lint_on UNUSED */
 
     chip_select #(.ADDR(ADDR), .WIDTH(ADDR_W))
     dev_cs (
@@ -199,10 +202,12 @@ module ibus_read
         .addr(wb_dbus_adr[31:(32-ADDR_W)]), 
         .wb_cyc(wb_dbus_cyc), 
         .wb_rst(wb_rst),
-        .ack(ack), 
+        .ack(nowt), 
         .cyc(cyc)
     );
 
+    reg  ack = 0;
+    reg  ibus_ack = 0;
     reg [31:0] rd_addr = 0;
     reg [31:0] rd_data = 32'h0;
     reg busy = 0;
@@ -211,25 +216,50 @@ module ibus_read
 
     always @(posedge wb_clk) begin
 
-        if (cyc & wb_dbus_we & !busy) begin
-            // start a flash read cycle
-            rd_addr <= wb_dbus_dat;
-            busy <= 1;
+        if (wb_rst) begin
+            ack <= 0;
+            ibus_ack <= 0;
+            rd_addr <= 0;
+            //busy <= 0;
         end
 
-        if (wb_ibus_ack) begin
-            // ack from ibus ends the cycle
+        if (!wb_dbus_cyc) begin
+            ack <= 0;
+            ibus_ack <= 0;
+        end
+
+        // dbus write
+        if (cyc & wb_dbus_we) begin
+            // Set the read addr
+            rd_addr <= wb_dbus_dat;
+            ack <= 1;
+        end
+
+        // dbus read
+        if (cyc & !wb_dbus_we) begin
+            if (!ibus_ack) begin
+                // Start an ibus read cycle
+                busy <= 1;
+            end
+        end
+
+        // ack from ibus ends the read
+        if (wb_ibus_ack & busy) begin
             busy <= 0;
             rd_data <= wb_ibus_rdt;
+            ibus_ack <= 1;
+            // Increment the read address for the next read cycle
+            rd_addr <= rd_addr + 32'h4;
+        end
+
+        if (ibus_ack) begin
+            ack <= 1;
         end
 
     end
 
-    wire [31:0] status;
-    assign status = { 8'h0, 8'h0, 8'h0, { 7'h7f, busy } };
-
-    assign wb_dbus_ack = ack;
-    assign wb_dbus_rdt = (cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? status : rd_data) : 0; 
+    assign wb_dbus_ack = cyc & ack;
+    assign wb_dbus_rdt = cyc ? rd_data : 0; 
 
     assign wb_ibus_cyc = busy;
     assign wb_ibus_adr = busy ? rd_addr : 0; 

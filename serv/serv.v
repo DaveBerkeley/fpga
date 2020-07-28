@@ -213,7 +213,9 @@ module top(
     // flash_read dbus arb
     wire flash_ack;
     wire [31:0] flash_rdt;
+    /* verilator lint_off UNUSED */
     wire flash_busy;
+    /* verilator lint_on UNUSED */
 
     ibus_read #(.ADDR(FLASH_ADDR))
     flash_read (
@@ -239,6 +241,7 @@ module top(
     wire [31:0] s_rdt;
     wire s_cyc;
     wire s_ack;
+    wire ibus_ready;
 
     ibus ibus (
         .wb_clk(ck),
@@ -252,7 +255,8 @@ module top(
         .spi_cs(spi_cs),
         .spi_sck(spi_sck),
         .spi_miso(spi_miso),
-        .spi_mosi(spi_mosi)
+        .spi_mosi(spi_mosi),
+        .ready(ibus_ready)
     );
 
     //  iBus arbitration between CPU and flash_read
@@ -326,9 +330,9 @@ module top(
 
     assign P1A1 = tx;
     assign P1A2 = flash_ack;
-    assign P1A3 = wb_ibus_ack;
-    assign P1A4 = flash_busy;
-    assign P1B1 = flash_busy;
+    assign P1A3 = f_cyc;
+    assign P1A4 = gpio_rdt[0];
+    assign P1B1 = ibus_ready;
     assign P1B2 = 0;
     assign P1B3 = 0;
     assign P1B4 = 0;
