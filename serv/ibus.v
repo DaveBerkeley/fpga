@@ -1,4 +1,6 @@
 
+`default_nettype none
+
 module ibus
     (
     input wire wb_clk,

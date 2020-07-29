@@ -18,6 +18,8 @@
  *
  */
 
+`default_nettype none
+
 module ice40up5k_spram #(
 	// We current always use the whole SPRAM (128 kB)
 	parameter integer WORDS = 32768

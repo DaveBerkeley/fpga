@@ -27,6 +27,7 @@ DEVICE = up5k
 PIN_DEF = ../icebreaker.pcf
 
 FILES  = pll.v
+FILES += reset.v
 FILES += ibus.v
 FILES += uart.v
 FILES += spi.v
@@ -82,6 +83,6 @@ firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: serv_tb bus_arb_tb ibus_tb uart_tb
+tb: serv_tb bus_arb_tb ibus_tb uart_tb reset_tb
 
 #	FIN

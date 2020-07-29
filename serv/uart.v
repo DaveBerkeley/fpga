@@ -1,4 +1,6 @@
 
+`default_nettype none
+
 module uart_tx(
     input wire ck,
     input wire baud_ck,

@@ -1,4 +1,6 @@
 
+`default_nettype none
+
    /*
     *
     */
@@ -35,7 +37,7 @@ module top(
     localparam RESET_PC   = 32'h0010_0000;
 
     localparam RUN_SLOW = 0;    // Divide the CPU clock down for development
-    localparam RESET_LOOP = 1;  // Repeatedly reset the CPU
+    localparam RESET_LOOP = 0;  // Repeatedly reset the CPU
 
     // PLL
     wire pll_ck;
@@ -61,18 +63,10 @@ module top(
     endgenerate
 
     // Reset generator
-    reg [4:0] rst_reg = 5'b11111;
     wire reset_req;
-
-    always @(posedge ck) begin
-        if (reset_req)
-            rst_reg <= 5'b11111;
-        else
-            rst_reg <= {1'b0, rst_reg[4:1]};
-    end
-
     wire rst;
-    assign rst = rst_reg[0];
+
+    reset #(.LENGTH(80)) reset(.ck(ck), .rst_req(reset_req), .rst(rst));
 
     // Continually Reset the cpu (for development)
 
@@ -333,7 +327,7 @@ module top(
     //  Test pins
 
     assign P1A1 = tx;
-    assign P1A2 = flash_ack;
+    assign P1A2 = wb_rst;
     assign P1A3 = f_cyc;
     assign P1A4 = tx_busy;
     assign P1B1 = ibus_ready;
