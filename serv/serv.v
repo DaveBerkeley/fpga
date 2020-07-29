@@ -27,9 +27,11 @@ module top(
     output wire P1B4
 );
 
+    // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
     localparam UART_ADDR  = 8'h60;
     localparam FLASH_ADDR = 8'h70;
+    // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
     localparam RUN_SLOW = 0;    // Divide the CPU clock down for development
@@ -42,6 +44,7 @@ module top(
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(CLK), .clock_out(pll_ck), .locked(locked));
 
+    // Conditonally slow the cpu clock down for development.
     generate
         wire ck;
         if (RUN_SLOW) begin
@@ -71,7 +74,7 @@ module top(
     wire rst;
     assign rst = rst_reg[0];
 
-    //  Continually Reset the cpu
+    // Continually Reset the cpu (for development)
 
     generate 
         if (RESET_LOOP) begin
@@ -116,13 +119,14 @@ module top(
     wire [31:0] ram_rdt;
 
     chip_select #(.ADDR(0), .WIDTH(2))
-        cs_ram (
-            .wb_ck(wb_clk),
-            .addr(wb_dbus_adr[31:30]),
-            .wb_cyc(wb_dbus_cyc),
-            .wb_rst(wb_rst),
-            .ack(ram_ack),
-            .cyc(ram_cyc));
+    cs_ram (
+        .wb_ck(wb_clk),
+        .addr(wb_dbus_adr[31:30]),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(ram_ack),
+        .cyc(ram_cyc)
+    );
   
     //  Dbus RAM
 
@@ -149,9 +153,8 @@ module top(
     wire tx_busy;
     /* verilator lint_on UNUSED */
     
-    uart
-        #(.ADDR(UART_ADDR), .AWIDTH(8))
-        uart_io (
+    uart #(.ADDR(UART_ADDR), .AWIDTH(8))
+    uart_io (
         // cpu bus
         .wb_clk(wb_clk),
         .wb_rst(wb_rst),
@@ -177,9 +180,8 @@ module top(
     wire [7:0] gpio_reg;
     /* verilator lint_on UNUSED */
  
-    gpio
-        #(.ADDR(GPIO_ADDR), .AWIDTH(8))
-        gpio_io (
+    gpio #(.ADDR(GPIO_ADDR), .AWIDTH(8))
+    gpio_io (
         // cpu bus
         .wb_clk(wb_clk),
         .wb_rst(wb_rst),
@@ -299,10 +301,8 @@ module top(
 
     parameter with_csr = 1;
 
-    serv_rf_top
-        #(.RESET_PC(RESET_PC), .WITH_CSR(with_csr))
-    cpu
-        (
+    serv_rf_top #(.RESET_PC(RESET_PC), .WITH_CSR(with_csr))
+    cpu (
         .clk      (wb_clk),
         .i_rst    (wb_rst),
         .i_timer_irq  (1'b0),

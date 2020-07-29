@@ -36,8 +36,7 @@ addi x30, zero, 0
 addi x31, zero, 0
 
 # Point sp to the end of RAM
-# TODO : this should depend on the physical RAM allocation
-li sp, 0x20000
+la sp, _estack
 
 # Copy initialised data from flash to RAM
 #

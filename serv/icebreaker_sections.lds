@@ -1,12 +1,13 @@
 MEMORY
 {
-    ROM (xrw) : ORIGIN = 0x00100000, LENGTH = 0x20000
-    RAM (xrw) : ORIGIN = 0x00000000, LENGTH = 0x20000
+    ROM (xr)  : ORIGIN = 0x00100000, LENGTH = 0x20000
+    RAM (rw)  : ORIGIN = 0x00000000, LENGTH = 0x20000
 }
 SECTIONS {
     .text :
     {
         . = ALIGN(4);
+        _stext = .;
         *(.text)
         *(.text*)
         . = ALIGN(4);
@@ -42,9 +43,24 @@ SECTIONS {
         . = ALIGN(4);
         _ebss = .;
     } >RAM
+
     .heap :
     {
         . = ALIGN(4);
-        _heap_start = .;
+        _sheap = .;
+        . = 0x10000;
+        _eheap = .;
+    } >RAM
+
+    _ram_end = ORIGIN(RAM) + LENGTH(RAM) - 1;
+    _stack_size = _ram_end - _eheap;
+
+    .stack :
+    {
+        . = ALIGN(4);
+        _sstack = .;
+        . = _stack_size; 
+        . = ALIGN(8);
+        _estack = .;
     } >RAM
 }
