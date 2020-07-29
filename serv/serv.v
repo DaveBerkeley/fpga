@@ -32,7 +32,7 @@ module top(
     localparam FLASH_ADDR = 8'h70;
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam prescale = 1;    // Divide the CPU clock down for development
+    localparam prescale = 0;    // Divide the CPU clock down for development
     localparam reset_loop = 1;  // Repeatedly reset the CPU
 
     // PLL
@@ -75,7 +75,7 @@ module top(
 
     generate 
         if (reset_loop) begin
-            reg [14:0] reseter = 0;
+            reg [(prescale ? 21 : 24):0] reseter = 0;
 
             always @(posedge ck) begin
                 reseter <= reseter + 1;
@@ -140,7 +140,7 @@ module top(
 
     wire baud_en;
 
-    uart_baud #(.DIVIDE(8)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
+    uart_baud #(.DIVIDE(prescale ? 17 : 278)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
 
     wire [31:0] uart_rdt;
     wire uart_ack;

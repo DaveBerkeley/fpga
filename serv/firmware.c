@@ -10,30 +10,38 @@ uint32_t i;
 uint32_t ram[256/4];
 uint32_t stack;
 uint32_t ram_hi[256/4];
-uint32_t x = 0xdb;
+
+// banner made with : figlet "SERV Risc-V" | sed 's/\\/\\\\/g'
+char banner[] = 
+"\r\n"
+"  ____  _____ ______     __  ____  _            __     __\r\n"
+" / ___|| ____|  _ \\ \\   / / |  _ \\(_)___  ___   \\ \\   / /\r\n"
+" \\___ \\|  _| | |_) \\ \\ / /  | |_) | / __|/ __|___\\ \\ / / \r\n"
+"  ___) | |___|  _ < \\ V /   |  _ <| \\__ \\ (_|_____\\ V /  \r\n"
+" |____/|_____|_| \\_\\ \\_/    |_| \\_\\_|___/\\___|     \\_/   \r\n"
+"\r\n"
+"https://github.com/olofk/serv\r\n"
+"\r\n"
+"The World's smallest RISC-V CPU. Using Bit-serial Architecture.\r\n";
 
 int main(void)
 {
-    register uint32_t v;
-
     *LEDS = 0;
     // request data from flash device
-    flash[0] = 0x100020;
+    //flash[0] = 0x100020;
+
+    for (char *s = banner; *s; s++)
+    {
+        *uart = *s;
+        *LEDS = 1;
+    }
 
     while (true)
     {
-        // Read the data from flash
-        *LEDS = 1;
-        v = flash[0];
-        *uart = v >> 24;
-        *LEDS = 1;
-        *uart = v >> 16;
-        *LEDS = 1;
-        *uart = v >> 8;
-        *LEDS = 1;
-        *uart = v;
+        *LEDS = 0;
         *LEDS = 1;
     }
+
     return 0;
 }
 
