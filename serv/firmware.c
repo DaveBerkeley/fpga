@@ -50,7 +50,7 @@ void print(const char *text)
      *
      */
 
-extern uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack, _ram_end;
+extern uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack;
 
 //char test[1024 * 20];
 
@@ -74,19 +74,13 @@ int main(void)
     print(banner);
 
     print("RAM ");
-    print_num(1 + (uint32_t) &_ram_end, 10, 6);
+    print_num((uint32_t) &_estack, 10, 6);
     print(" bytes\r\n");
     print("\r\n");
     show_section("Program :", & _stext, & _etext);
     show_section("Data    :", & _sdata, & _edata);
     show_section("Heap    :", & _sheap, & _eheap);
     show_section("Stack   :", & _sstack, & _estack);
-
-    char c =0;
-    print("\r\n");
-    print("sp: 0x");
-    print_num((uint32_t) & c, 16, 6);
-    print("\r\n");
 
     uint16_t mask = 1;
 

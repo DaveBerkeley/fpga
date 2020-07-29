@@ -44,23 +44,17 @@ SECTIONS {
         _ebss = .;
     } >RAM
 
+    /* Specify the stack size */
+    _stack_size = 0x1000;
+    _estack = ORIGIN(RAM) + LENGTH(RAM);
+    _sstack = _estack - _stack_size;
+
+    /* The heap is everything else */
     .heap :
     {
         . = ALIGN(4);
         _sheap = .;
-        . = 0x10000;
-        _eheap = .;
+        _eheap = _sstack;
     } >RAM
 
-    _ram_end = ORIGIN(RAM) + LENGTH(RAM) - 1;
-    _stack_size = _ram_end - _eheap;
-
-    .stack :
-    {
-        . = ALIGN(4);
-        _sstack = .;
-        . = _stack_size; 
-        . = ALIGN(8);
-        _estack = .;
-    } >RAM
 }
