@@ -4,7 +4,7 @@ start:
 
 # zero-initialize register file
 addi x1, zero, 0
-# x2 (sp) is initialized by reset
+#
 addi x3, zero, 0
 addi x4, zero, 0
 addi x5, zero, 0
@@ -35,30 +35,13 @@ addi x29, zero, 0
 addi x30, zero, 0
 addi x31, zero, 0
 
-# zero initialize entire scratchpad memory
-#li a0, 0x00000000
-#setmemloop:
-#sw a0, 0(a0)
-#addi a0, a0, 4
-#blt a0, sp, setmemloop
-
-# copy data section
-#la a0, _sidata
-#la a1, _sdata
-#la a2, _edata
-#bge a1, a2, end_init_data
-#loop_init_data:
-#lw a3, 0(a0)
-#sw a3, 0(a1)
-#addi a0, a0, 4
-#addi a1, a1, 4
-#blt a1, a2, loop_init_data
-#end_init_data:
-
 # Point sp to the end of RAM
+# TODO : this should depend on the physical RAM allocation
 li sp, 0x20000
 
-# flash_dev 0x70000000
+# Copy initialised data from flash to RAM
+#
+# ibus_read device is mapped to 0x70000000
 
 # Write the address to flash bridge dev
 li a0, 0x70000000 

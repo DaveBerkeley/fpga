@@ -6,11 +6,6 @@
 #define uart  ((uint32_t*) 0x60000000)
 #define flash ((uint32_t*) 0x70000000)
 
-uint32_t i;
-uint32_t ram[256/4];
-uint32_t stack;
-uint32_t ram_hi[256/4];
-
 // banner made with : figlet "SERV Risc-V" | sed 's/\\/\\\\/g'
 char banner[] = 
 "\r\n"
@@ -22,33 +17,66 @@ char banner[] =
 "\r\n"
 "The World's smallest RISC-V CPU. Using Bit-serial Architecture.\r\n"
 "\r\n"
-"https://github.com/olofk/serv\r\n"
-;
+"https://github.com/olofk/serv\r\n";
 
-int main(void)
+    /*
+     *
+     */
+
+void print_num(uint32_t n, uint32_t base)
 {
-    *LEDS = 0;
+    if (n > base)
+    {
+        print_num(n / base, base);
+    }
 
-    for (char *s = banner; *s; s++)
+    n %= base;
+    *uart = (n > 9) ? ('a' + n - 10) : ('0' + n);
+}
+
+    /*
+     *
+     */
+
+void print(const char *text)
+{
+    for (const char *s = text; *s; s++)
     {
         *uart = *s;
     }
+}
+
+    /*
+     *
+     */
+
+int main(void)
+{
+    uint8_t c;
+
+    print("sp : ");
+    print_num((uint32_t) & c, 16);
+    print("\r\n");
+
+    *LEDS = 0;
+
+    print(banner);
+    print("Hello World!\r\n");
+
+    uint16_t mask = 1;
 
     while (true)
     {
-        *LEDS = 0;
-        *LEDS = 1;
+        *LEDS = mask;
+        mask <<= 1;
+        if (mask > 0x20)
+            mask = 1;
+        uint32_t v;
+        for (int i = 0; i < 1000; i++)
+            v = *LEDS;
     }
 
     return 0;
-}
-
-void another()
-{
-    while (true)
-    {
-        *uart = 'Q';
-    }
 }
 
 //  FIN

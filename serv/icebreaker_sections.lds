@@ -9,10 +9,6 @@ SECTIONS {
         . = ALIGN(4);
         *(.text)
         *(.text*)
-        *(.rodata)
-        *(.rodata*)
-        *(.srodata)
-        *(.srodata*)
         . = ALIGN(4);
         _etext = .;
         _sidata = _etext;
@@ -27,6 +23,10 @@ SECTIONS {
         *(.data*)
         *(.sdata)
         *(.sdata*)
+        *(.rodata)
+        *(.rodata*)
+        *(.srodata)
+        *(.srodata*)
         . = ALIGN(4);
         _edata = .;
     } >RAM
