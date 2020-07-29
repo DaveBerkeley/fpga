@@ -32,8 +32,8 @@ module top(
     localparam FLASH_ADDR = 8'h70;
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam prescale = 0;    // Divide the CPU clock down for development
-    localparam reset_loop = 1;  // Repeatedly reset the CPU
+    localparam RUN_SLOW = 0;    // Divide the CPU clock down for development
+    localparam RESET_LOOP = 1;  // Repeatedly reset the CPU
 
     // PLL
     wire pll_ck;
@@ -44,7 +44,7 @@ module top(
 
     generate
         wire ck;
-        if (prescale) begin
+        if (RUN_SLOW) begin
             reg [3:0] scale = 0;
 
             always @(posedge pll_ck) begin
@@ -74,8 +74,8 @@ module top(
     //  Continually Reset the cpu
 
     generate 
-        if (reset_loop) begin
-            reg [(prescale ? 21 : 24):0] reseter = 0;
+        if (RESET_LOOP) begin
+            reg [(RUN_SLOW ? 20 : 23):0] reseter = 0;
 
             always @(posedge ck) begin
                 reseter <= reseter + 1;
@@ -140,11 +140,14 @@ module top(
 
     wire baud_en;
 
-    uart_baud #(.DIVIDE(prescale ? 17 : 278)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
+    uart_baud #(.DIVIDE(RUN_SLOW ? 17 : 278)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
 
     wire [31:0] uart_rdt;
     wire uart_ack;
     wire tx;
+    /* verilator lint_off UNUSED */
+    wire tx_busy;
+    /* verilator lint_on UNUSED */
     
     uart
         #(.ADDR(UART_ADDR), .AWIDTH(8))
@@ -161,7 +164,8 @@ module top(
         .ack(uart_ack),
         // IO
         .baud_en(baud_en),
-        .tx(tx)
+        .tx(tx),
+        .busy(tx_busy)
     );
 
     //  GPIO
@@ -331,7 +335,7 @@ module top(
     assign P1A1 = tx;
     assign P1A2 = flash_ack;
     assign P1A3 = f_cyc;
-    assign P1A4 = gpio_rdt[0];
+    assign P1A4 = tx_busy;
     assign P1B1 = ibus_ready;
     assign P1B2 = 0;
     assign P1B3 = 0;

@@ -20,20 +20,18 @@ char banner[] =
 "  ___) | |___|  _ < \\ V /   |  _ <| \\__ \\ (_|_____\\ V /  \r\n"
 " |____/|_____|_| \\_\\ \\_/    |_| \\_\\_|___/\\___|     \\_/   \r\n"
 "\r\n"
-"https://github.com/olofk/serv\r\n"
+"The World's smallest RISC-V CPU. Using Bit-serial Architecture.\r\n"
 "\r\n"
-"The World's smallest RISC-V CPU. Using Bit-serial Architecture.\r\n";
+"https://github.com/olofk/serv\r\n"
+;
 
 int main(void)
 {
     *LEDS = 0;
-    // request data from flash device
-    //flash[0] = 0x100020;
 
     for (char *s = banner; *s; s++)
     {
         *uart = *s;
-        *LEDS = 1;
     }
 
     while (true)

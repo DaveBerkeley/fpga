@@ -5,7 +5,8 @@ module uart_tx(
     input wire [7:0] in,
     input wire we,
     output reg ready,
-    output reg tx);
+    output reg tx
+);
 
     reg [9:0] shift = 10'h3ff;
     reg [3:0] count = 0;
@@ -75,21 +76,24 @@ module uart
     input wire wb_clk,
     input wire wb_rst,
     /* verilator lint_off UNUSED */
-    input [31:0] wb_dbus_adr,
-    input [31:0] wb_dbus_dat,
-    input [3:0] wb_dbus_sel,
+    input wire [31:0] wb_dbus_adr,
+    input wire [31:0] wb_dbus_dat,
+    input wire [3:0] wb_dbus_sel,
     /* verilator lint_on UNUSED */
-    input wb_dbus_we,
-    input wb_dbus_cyc,
+    input wire wb_dbus_we,
+    input wire wb_dbus_cyc,
     output wire [31:0] rdt,
     output wire ack,
     // IO
     input wire baud_en,
-    output wire tx
+    output wire tx,
+    output wire busy
 );
 
     wire cyc;
     wire uart_ready;
+    wire cs_ack;
+    reg  ready = 0;
 
     chip_select #(.ADDR(ADDR), .WIDTH(AWIDTH))
         cs_uart (
@@ -97,7 +101,7 @@ module uart
         .addr(wb_dbus_adr[31:31-7]), 
         .wb_cyc(wb_dbus_cyc), 
         .wb_rst(wb_rst),
-        .ack(ack), 
+        .ack(cs_ack), 
         .cyc(cyc)
     );    
 
@@ -109,7 +113,18 @@ module uart
         .ready(uart_ready),
         .tx(tx));
 
-    assign rdt = cyc ? { 31'h0, uart_ready } : 0;
+    always @(posedge wb_clk) begin
+
+        if (cyc) begin
+            // allow immeadiate ack if not busy
+            ready <= uart_ready;
+        end
+
+    end
+
+    assign rdt = 0;
+    assign ack = (cyc & ready) ? cs_ack : (cyc & uart_ready);
+    assign busy = !uart_ready;
 
 endmodule
 

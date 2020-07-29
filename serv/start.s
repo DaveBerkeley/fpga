@@ -60,7 +60,7 @@ li sp, 0x20000
 
 # flash_dev 0x70000000
 
-# Write address to flash bridge dev
+# Write the address to flash bridge dev
 li a0, 0x70000000 
 la a1, _sidata # start of .data section in ROM
 sw a1, 0(a0)
@@ -69,7 +69,7 @@ la a2, _sdata # start of .data section in RAM
 la a3, _edata # end of .data section in RAM
 bge a2, a3, end_init_data
 loop_init_data:
-# read data from ROM
+# read data from ROM. Addr is incremented in h/w.
 lw a1, 0(a0)
 # save in RAM
 sw a1, 0(a2)
