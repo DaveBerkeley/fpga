@@ -1,4 +1,6 @@
 
+`default_nettype none
+
 module sp_ram 
 (   
     input wire ck,

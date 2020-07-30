@@ -1,0 +1,85 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Jul 30 05:17:22 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
+[dumpfile_mtime] "Thu Jul 30 05:17:13 2020"
+[dumpfile_size] 15804
+[savefile] "/home/dave/Desktop/git/fpga/serv/spi_tb.gtkw"
+[timestart] 26648000
+[size] 1833 612
+[pos] -1 -1
+*-19.335110 27967000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 196
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 160
+@28
+top.ck
+top.rst
+@22
+top.spi_tx.addr[23:0]
+top.spi_tx.bit_count[6:0]
+@28
+top.spi_tx.clock
+@22
+top.spi_tx.code[7:0]
+@28
+top.spi_tx.cs
+top.spi_tx.sck
+top.spi_tx.miso
+top.spi_tx.mosi
+@29
+top.spi_tx.no_read
+@22
+top.spi_tx.rdata[31:0]
+@28
+top.spi_tx.ready
+top.spi_tx.req
+@22
+top.spi_tx.rx[31:0]
+@28
+top.spi_tx.sending
+@c00022
+top.spi_tx.tx[31:0]
+@28
+(0)top.spi_tx.tx[31:0]
+(1)top.spi_tx.tx[31:0]
+(2)top.spi_tx.tx[31:0]
+(3)top.spi_tx.tx[31:0]
+(4)top.spi_tx.tx[31:0]
+(5)top.spi_tx.tx[31:0]
+(6)top.spi_tx.tx[31:0]
+(7)top.spi_tx.tx[31:0]
+(8)top.spi_tx.tx[31:0]
+(9)top.spi_tx.tx[31:0]
+(10)top.spi_tx.tx[31:0]
+(11)top.spi_tx.tx[31:0]
+(12)top.spi_tx.tx[31:0]
+(13)top.spi_tx.tx[31:0]
+(14)top.spi_tx.tx[31:0]
+(15)top.spi_tx.tx[31:0]
+(16)top.spi_tx.tx[31:0]
+(17)top.spi_tx.tx[31:0]
+(18)top.spi_tx.tx[31:0]
+(19)top.spi_tx.tx[31:0]
+(20)top.spi_tx.tx[31:0]
+(21)top.spi_tx.tx[31:0]
+(22)top.spi_tx.tx[31:0]
+(23)top.spi_tx.tx[31:0]
+(24)top.spi_tx.tx[31:0]
+(25)top.spi_tx.tx[31:0]
+(26)top.spi_tx.tx[31:0]
+(27)top.spi_tx.tx[31:0]
+(28)top.spi_tx.tx[31:0]
+(29)top.spi_tx.tx[31:0]
+(30)top.spi_tx.tx[31:0]
+(31)top.spi_tx.tx[31:0]
+@1401200
+-group_end
+@28
+top.spi_tx.sck
+top.spi_tx.tx_addr
+[pattern_trace] 1
+[pattern_trace] 0
