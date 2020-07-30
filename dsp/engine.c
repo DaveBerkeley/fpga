@@ -1,25 +1,9 @@
-/*
- *  PicoSoC - A simple example SoC using PicoRV32
- *
- *  Copyright (C) 2017  Clifford Wolf <clifford@clifford.at>
- *
- *  Permission to use, copy, modify, and/or distribute this software for any
- *  purpose with or without fee is hereby granted, provided that the above
- *  copyright notice and this permission notice appear in all copies.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- *  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- *  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- *  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- */
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+
+#include "firmware.h"
 
     /*
      *
@@ -35,7 +19,7 @@ void __assert_func(const char *file, int line, const char *function, const char 
     print(function);
     print("() ");
     print(expr);
-    print("\n");
+    print("\r\n");
     while (true) ;
 }
 
@@ -70,7 +54,7 @@ enum Opcode {
     NOOP    = 0x0,
 };
 
-bool verbose = false;
+bool verbose = true;
 
 uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, int32_t gain)
 {
@@ -137,7 +121,7 @@ uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, int32_t gain)
         print_hex(gain & 0xff, 2);
     }
 
-    print("\n");
+    print("\r\n");
 
     return value;
 }
@@ -148,7 +132,7 @@ uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, int32_t gain)
 
 void reset_engine()
 {
-    if (verbose) print("reset engine\n");
+    if (verbose) print("reset engine\r\n");
 
     // Reset the audio engine
     uint32_t *reset = ADDR_RESET;
@@ -167,7 +151,7 @@ void reset_engine()
         {
             print("status ");
             print_hex(t, 8);
-            print("\n");
+            print("\r\n");
         }
     }
 }
@@ -184,18 +168,16 @@ void set_audio(uint32_t addr, uint32_t value)
     print_hex(addr, 8);
     print(" ");
     print_hex(value, 8);
-    print("\n");
+    print("\r\n");
 }
 
 void clr_audio(uint32_t value)
 {
-    uint32_t *input = ADDR_AUDIO;
-
     if (verbose) 
     {
         print("clr_audio ");
         print_hex(value, 8);
-        print("\n");
+        print("\r\n");
     }
 
     bool old = verbose;
@@ -221,10 +203,10 @@ void test(const char *text, uint32_t *result, uint32_t expect)
         print_hex(t, 8);
         print(" expected ");
         print_hex(expect, 8);
-        print("\n");
+        print("\r\n");
     }
     ASSERT(t == expect);
-    if (verbose) print("Okay\n");
+    if (verbose) print("Okay\r\n");
 }
 
 void run(uint32_t expect)
@@ -247,7 +229,7 @@ void set_control(uint32_t v)
     {
         print("set control=");
         print_hex(v, 8);
-        print("\n");
+        print("\r\n");
     }
 }
 
@@ -277,35 +259,38 @@ uint16_t twoc(uint16_t n)
 
 void engine()
 {
-    // control_reg
-    uint32_t *status = ADDR_STAT;
     set_control(1); // allow audio writes
     // Reset the audio engine
     uint32_t *reset = ADDR_RESET;
     *reset = 0;
 
-    print("wait for 'done'\n");
+    print("wait for 'done'\r\n");
     //while ((*status & 0x01))
     //    ;
 
-    verbose = 0;
+    verbose = true;
     uint32_t *coef;
 
     //  Test
-    print("Test fetching opcode\n");
+    print("Test fetching opcode\r\n");
     coef = ADDR_COEF;
     *coef++ = capture(0);
     *coef++ = opcode(MACZ, 1, 0, 0x1234);
     *coef++ = halt();
     *coef++ = halt();
 
+    //print("Early exit\r\n");
+    //return;
+
+    TRACE();
     run(opcode(MACZ, 1, 0, 0x1234));
+    TRACE();
 
 //#define ALL_TESTS
 
 #ifdef ALL_TESTS
     //  Check reading all channels
-    print("Writing to audio input\n");
+    print("Writing to audio input\r\n");
 
     // Write an audio signal to all the input RAM locations
     for (int chan = 0; chan < CHANNELS; chan++)
@@ -337,9 +322,9 @@ void engine()
     }
 #endif
 
-    verbose = 0;
+    verbose = true;
     //  Check multiplier input
-    print("Check multiplier input\n");
+    print("Check multiplier input\r\n");
     clr_audio(0);
     set_audio(FRAMES+4, 0x1234);
 
@@ -354,7 +339,7 @@ void engine()
     run(0x34561234);
 
     //  Check multiplier input
-    print("Check multiplier input with -ve audio 2\n");
+    print("Check multiplier input with -ve audio 2\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -372,7 +357,7 @@ void engine()
     run((0x4545 << 16) + 0x1234);
 
     //  Check multiplier output
-    print("Check multiplier output\n");
+    print("Check multiplier output\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -390,7 +375,7 @@ void engine()
     run(0x1111 * 2);
 
     //  Check multiplier output 2
-    print("Check multiplier output 2\n");
+    print("Check multiplier output 2\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -409,7 +394,7 @@ void engine()
     run(m1);
 
     //  Check multiplier output 3
-    print("Check multiplier output 3\n");
+    print("Check multiplier output 3\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -429,7 +414,7 @@ void engine()
     run(m2);
 
     //  Check multiplier output 4
-    print("Check multiplier output 4\n");
+    print("Check multiplier output 4\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -451,7 +436,7 @@ void engine()
     run(m3);
 
     //  Check accumulator output
-    print("Check accumulator output\n");
+    print("Check accumulator output\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -471,7 +456,7 @@ void engine()
     run(m1);
 
     //  Check accumulator output 2
-    print("Check accumulator output 2\n");
+    print("Check accumulator output 2\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -496,12 +481,12 @@ void engine()
         print_hex(m2, 8);
         print(" = ");
         print_hex(m1+m2, 8);
-        print("\n");
+        print("\r\n");
     }
     run(m1 + m2);
 
     //  Check accumulator output 3
-    print("Check accumulator output 3 (-ve audio)\n");
+    print("Check accumulator output 3 (-ve audio)\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -529,12 +514,12 @@ void engine()
         print_hex(m3, 8);
         print(" = ");
         print_hex(m1+m2-m3, 8);
-        print("\n");
+        print("\r\n");
     }
     run(m1 + m2 - m3);
 
     //  Check accumulator output 4
-    print("Check accumulator output 4\n");
+    print("Check accumulator output 4\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -559,9 +544,9 @@ void engine()
     run(acc);
 
     //  Check write output
-    verbose = 0;
+    verbose = true;
 #ifdef ALL_TESTS
-    print("Check write shift/output\n");
+    print("Check write shift/output\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
     set_audio(5 + (1 * FRAMES), 0x1234);
@@ -578,7 +563,7 @@ void engine()
                 print_hex(shift, 2);
                 print(" addr=");
                 print_hex(addr, 2);
-                print("\n");
+                print("\r\n");
             }
             coef = ADDR_COEF;
             *coef++ = opcode(MACZ, 4, 1, 0x2000);
@@ -606,7 +591,7 @@ void engine()
                 print_hex(audio, 8);
                 print(" got ");
                 print_hex(v, 8);
-                print("\n");
+                print("\r\n");
             }
             ASSERT(audio == v);
         }
@@ -614,7 +599,7 @@ void engine()
 #endif
 
     //  Check filter performance
-    print("Check filter performance\n");
+    print("Check filter performance\r\n");
     clr_audio(0);
     set_audio(0, 0x0111);
     set_audio(1, 0x0222);
@@ -637,8 +622,8 @@ void engine()
     verbose = true;
 
     //  End of tests
-    print("Tests run OKAY\n");
-    print("==============\n");
+    print("Tests run OKAY\r\n");
+    print("==============\r\n");
 
     coef = ADDR_COEF;
 
@@ -748,7 +733,7 @@ void engine()
 
     set_control(0); // stop audio writes
     reset_engine();
-    print("loop ..\n");
+    print("loop ..\r\n");
     while (true)
     {
     }

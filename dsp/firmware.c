@@ -1,21 +1,3 @@
-/*
- *  PicoSoC - A simple example SoC using PicoRV32
- *
- *  Copyright (C) 2017  Clifford Wolf <clifford@clifford.at>
- *
- *  Permission to use, copy, modify, and/or distribute this software for any
- *  purpose with or without fee is hereby granted, provided that the above
- *  copyright notice and this permission notice appear in all copies.
- *
- *  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- *  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- *  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- *  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- */
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -23,6 +5,8 @@
 
 #include <stdlib.h>
 #include <errno.h>
+
+#include "firmware.h"
 
 // Memory locations defined in the linker config.
 extern "C" uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack;
@@ -48,10 +32,6 @@ extern "C" void *_sbrk(intptr_t increment)
     heap = next;
     return base;
 }
-
-#define LEDS  ((uint32_t*) 0x40000000)
-#define uart  ((uint32_t*) 0x50000000)
-#define flash ((uint32_t*) 0x70000000)
 
 // banner made with : figlet "SERV Risc-V" | sed 's/\\/\\\\/g'
 char banner[] = 
@@ -84,6 +64,11 @@ void print_num(uint32_t n, uint32_t base, uint32_t digits)
 void print_dec(uint32_t n)
 {
     print_num(n, 10, 8);
+}
+
+void print_hex(uint32_t n, uint32_t digits)
+{
+    print_num(n, 16, digits);
 }
 
     /*
@@ -123,6 +108,7 @@ void main()
 {
     *LEDS = 0;
 
+#if 0
     print(banner);
 
     print("RAM ");
@@ -134,9 +120,11 @@ void main()
     show_section("Heap    :", & _sheap, & _eheap);
     show_section("Stack   :", & _sstack, & _estack);
     print("\r\n");
+#endif
 
+    print("Run audio engine\r\n");
 
-    print("Run audio engine .. TODO\r\n");
+    engine();
 
     uint16_t mask = 1;
 

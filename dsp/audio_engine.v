@@ -1,38 +1,41 @@
 
+`default_nettype none
+
    /*
     *   Audio Perihperal
     */
 
 module audio_engine (
     input wire ck,
-    input wire rst,
-    input wire iomem_valid,
-    output wire iomem_ready,
-    input wire [3:0] iomem_wstrb,
+    input wire wb_rst,
+    input wire wb_dbus_cyc,
+    output wire ack,
+    input wire wb_dbus_we,
     /* verilator lint_off UNUSED */
-    input wire [31:0] iomem_addr,
+    input wire [3:0] wb_dbus_sel,
+    input wire [31:0] wb_dbus_adr,
     /* verilator lint_on UNUSED */
-    input wire [31:0] iomem_wdata,
-    output wire [31:0] iomem_rdata,
+    input wire [31:0] wb_dbus_dat,
+    output wire [31:0] rdt,
+
     output wire sck, // I2S clock
     output wire ws,  // I2S word select
     output wire sd_out,  // I2S data out
     input wire sd_in0,  // I2S data in
     input wire sd_in1,  // I2S data in
-    /* verilator lint_off UNUSED */
     input wire sd_in2,  // I2S data in
     input wire sd_in3,  // I2S data in
-    /* verilator lint_off UNUSED */
+    output wire ready,
     output wire [7:0] test
 );
 
-    parameter                ADDR = 16'h6000;
+    parameter                ADDR = 8'h60;
 
     localparam ADDR_COEF   = ADDR;
-    localparam ADDR_RESULT = ADDR + 16'h0100;
-    localparam ADDR_STATUS = ADDR + 16'h0200;
-    localparam ADDR_RESET  = ADDR + 16'h0300;
-    localparam ADDR_INPUT  = ADDR + 16'h0400;
+    localparam ADDR_RESULT = ADDR + 8'h01;
+    localparam ADDR_STATUS = ADDR + 8'h02;
+    localparam ADDR_RESET  = ADDR + 8'h03;
+    localparam ADDR_INPUT  = ADDR + 8'h04;
 
     localparam CHANNELS = 8;
     localparam FRAMES = 256;
@@ -46,19 +49,23 @@ module audio_engine (
     // Send an extended reset pulse to the audio engine
 
     reg [1:0] resetx = 0;
+    reg reset_req = 0;
 
     always @(posedge ck) begin
-        if (reset_req || frame_reset_req)
+        if (reset_req || frame_reset_req) begin
             resetx <= 0;
-        else 
-           if (resetx != 2'b10)
+        end else begin
+            if (resetx != 2'b10) begin
                 resetx <= resetx + 1;
+            end
+        end
     end
 
-    wire reset;
-    assign reset = rst && (resetx == 2'b10);
-
     wire done;
+    // TODO : reset is active low!!!!!
+    wire reset;
+    assign reset = !((!wb_rst) && (resetx == 2'b10));
+
     reg [(FRAME_W-1):0] frame_counter = 0;
     wire [(FRAME_W-1):0] frame;
 
@@ -78,8 +85,8 @@ module audio_engine (
 
     wire i2s_clock;
 
-    // Divide the 12Mhz clock down to 2MHz
-    localparam I2S_DIVIDER = 6;
+    // Divide the 32Mhz clock down to 2MHz
+    localparam I2S_DIVIDER = 16;
     localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
     assign i2s_clock = ck;
 
@@ -105,15 +112,19 @@ module audio_engine (
     wire [15:0] mic_1;
     wire [15:0] mic_2;
     wire [15:0] mic_3;
-    //wire [15:0] mic_4;
-    //wire [15:0] mic_5;
-    //wire [15:0] mic_6;
-    //wire [15:0] mic_7;
+    wire [15:0] mic_4;
+    wire [15:0] mic_5;
+    wire [15:0] mic_6;
+    wire [15:0] mic_7;
 
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
         rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
         rx_1(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
+    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+        rx_2(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
+    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+        rx_3(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
 
     //  I2S Output
 
@@ -132,11 +143,10 @@ module audio_engine (
                 1   :   mic_source = mic_1;
                 2   :   mic_source = mic_2;
                 3   :   mic_source = mic_3;
-                //4   :   mic_source = mic_4;
-                //5   :   mic_source = mic_5;
-                //6   :   mic_source = mic_6;
-                //7   :   mic_source = mic_7;
-                default : mic_source = 16'h0;
+                4   :   mic_source = mic_4;
+                5   :   mic_source = mic_5;
+                6   :   mic_source = mic_6;
+                7   :   mic_source = mic_7;
             endcase
         end
 
@@ -167,10 +177,31 @@ module audio_engine (
         end
     end
 
-    assign test[0] = i2s_en;
-    assign test[7:1] = 0;
+    assign test[0] = status_ack;
+    assign test[1] = coef_ack;
+    assign test[2] = input_ack;
+    assign test[3] = reset_ack;
+    assign test[4] = result_ack;
+    assign test[5] = 0;
+    assign test[6] = 0;
+    assign test[7] = 0;
+
+    wire [7:0] cs_adr;
+    assign cs_adr = wb_dbus_adr[31:24];
 
     //  Drive the engine
+
+    wire coef_ack, coef_cyc;
+
+    chip_select #(.ADDR(ADDR_COEF)) 
+    cs_coef(
+        .wb_ck(ck),
+        .addr(cs_adr),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(coef_ack),
+        .cyc(coef_cyc)
+    );
 
     // Coefficient / Program DP RAM
     // This is written to by the host, read by the engine.
@@ -179,37 +210,59 @@ module audio_engine (
     wire [31:0] coef_rdata;
     wire [(CODE_W-1):0] coef_raddr;
 
+    assign coef_we = wb_dbus_we & coef_cyc;
+    assign coef_waddr = wb_dbus_adr[CODE_W+2-1:2];
+
     dpram #(.BITS(32), .SIZE(CODE))
         coef (.ck(ck),
-            .we(coef_we), .waddr(coef_waddr), .wdata(iomem_wdata),
+            .we(coef_we), .waddr(coef_waddr), .wdata(wb_dbus_dat),
             .re(1'h1), .raddr(coef_raddr), .rdata(coef_rdata));
-
-    assign coef_waddr = iomem_addr[(2+CODE_W-1):2];
 
     // Audio Input DP RAM
     // Audio Input data is written into this RAM
     // and read out by the audio engine.
 
-    wire audio_we;
+    wire input_ack, input_cyc;
+
+    chip_select #(.ADDR(ADDR_INPUT)) 
+    cs_input(
+        .wb_ck(ck),
+        .addr(cs_adr),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(input_ack),
+        .cyc(input_cyc)
+    );
+
     wire [15:0] audio_wdata;
     wire [(AUDIO_W-1):0] audio_waddr;
     wire [15:0] audio_rdata;
     wire [(AUDIO_W-1):0] audio_raddr;
 
-    dpram #(.BITS(16), .SIZE(AUDIO)) 
-        audio_in (.ck(ck),
-            .we(audio_we), .waddr(audio_waddr), .wdata(audio_wdata),
-            .re(1'h1), .raddr(audio_raddr), .rdata(audio_rdata));
-
     wire input_we;
+    assign input_we = wb_dbus_we & input_cyc;
+
+    wire audio_we;
     // allow audio writes from I2S input or from host processor
     assign audio_we    = allow_audio_writes ? input_we                      : write_en;
-    assign audio_waddr = allow_audio_writes ? iomem_addr[(AUDIO_W+2-1):2]   : write_addr;
-    assign audio_wdata = allow_audio_writes ? iomem_wdata[15:0]             : write_data;
+    assign audio_waddr = allow_audio_writes ? wb_dbus_adr[(AUDIO_W+2-1):2]  : write_addr;
+    assign audio_wdata = allow_audio_writes ? wb_dbus_dat[15:0]             : write_data;
+
+    dpram #(.BITS(16), .SIZE(AUDIO)) 
+    audio_in (.ck(ck),
+        .we(audio_we), 
+        .waddr(audio_waddr), 
+        .wdata(audio_wdata),
+        .re(1'h1), 
+        .raddr(audio_raddr), 
+        .rdata(audio_rdata)
+    );
 
     // Sequencer
 
+    /* verilator lint_off UNUSED */
     wire [3:0] out_wr_addr;
+    /* verilator lint_on UNUSED */
     wire [15:0] out_audio;
     wire out_we;
     wire error;
@@ -235,77 +288,85 @@ module audio_engine (
         end
     end
 
-    wire result_re;
     wire [15:0] result_rdata;
     wire [0:0] result_raddr;
 
-    assign result_raddr = iomem_addr[2];
+    assign result_raddr = wb_dbus_adr[2];
     assign result_rdata = result_raddr ? right : left;
 
     // Interface the peripheral to the Risc-V bus
 
-    wire reset_en;
-    wire coef_ready, reset_ready, input_ready, result_ready;
-
     /* verilator lint_off UNUSED */
-    wire nowt_1, nowt_2, nowt_3, nowt_4;
+    wire nowt_2, nowt_3, nowt_4;
     /* verilator lint_on UNUSED */
 
-    iomem #(.ADDR(ADDR_COEF)) coef_io (.ck(ck),
-                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
-                            .ready(coef_ready), .we(coef_we), .re(nowt_1));
+    wire reset_ack, reset_cyc;
 
-    reg reset_req = 0;
+    chip_select #(.ADDR(ADDR_RESET)) 
+    cs_reset(
+        .wb_ck(ck),
+        .addr(cs_adr),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(reset_ack),
+        .cyc(reset_cyc)
+    );
 
+    // A write to the reset register causes a reset to be issued to the engine
     always @(posedge ck) begin
-        reset_req <= reset_en;
+        if (reset_cyc & wb_dbus_we) begin
+            reset_req <= 1;
+        end
+        if (reset_req) begin
+            reset_req <= 0;
+        end
     end
 
-    iomem #(.ADDR(ADDR_RESET)) reset_io (.ck(ck),
-                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
-                            .ready(reset_ready), .we(reset_en), .re(nowt_2));
+    wire result_ack, result_cyc;
 
-    iomem #(.ADDR(ADDR_INPUT)) input_io (.ck(ck),
-                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
-                            .ready(input_ready), .we(input_we), .re(nowt_3));
+    chip_select #(.ADDR(ADDR_RESULT)) 
+    cs_result(
+        .wb_ck(ck),
+        .addr(cs_adr),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(result_ack),
+        .cyc(result_cyc)
+    );
 
-    reg [31:0] rd_result = 0;
+    wire [31:0] result_rdt;
 
-    always @(posedge ck) begin
-        if (result_re)
-            rd_result <= { 16'h0, result_rdata };
-        else
-            rd_result <= 0;
-    end
-
-    iomem #(.ADDR(ADDR_RESULT)) result_io (.ck(ck),
-                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
-                            .ready(result_ready), .we(nowt_4), .re(result_re));
+    assign result_rdt = (result_cyc & !wb_dbus_we) ? { 16'h0, result_rdata } : 0;
 
     //  Read / Write the control reg
 
-    wire status_re, status_we, status_ready;
+    wire status_ack, status_cyc;
 
-    iomem #(.ADDR(ADDR_STATUS)) status_io (.ck(ck),
-                            .valid(iomem_valid), .wstrb(iomem_wstrb), .addr(iomem_addr),
-                            .ready(status_ready), .we(status_we), .re(status_re));
-
-    reg [31:0] rd_status;
-
+    chip_select #(.ADDR(ADDR_STATUS)) 
+    cs_status(
+        .wb_ck(ck),
+        .addr(cs_adr),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(status_ack),
+        .cyc(status_cyc)
+    );
+    
     always @(posedge ck) begin
-        if (status_we)
-            control_reg <= iomem_wdata[(CONTROL_W-1):0];
-        if (status_re)
-            if (iomem_addr[2])
-                rd_status <= capture;
-            else
-                rd_status[4:0] <= { 3'h0, error, done };
-        else
-            rd_status <= 0;
+        if (status_cyc & wb_dbus_we) begin
+            control_reg <= wb_dbus_dat[8:0];
+        end
     end
 
-    assign iomem_rdata = rd_result | rd_status;
-    assign iomem_ready = coef_ready | result_ready | status_ready | reset_ready | input_ready;
+    wire [31:0] status_rdt;
+
+    assign status_rdt = (status_cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? capture : { 30'h0, error, done }) : 0;
+
+    //
+
+    assign rdt = result_rdt | status_rdt;
+    assign ack = coef_ack | input_ack | reset_ack | result_ack | status_ack;
+    assign ready = done;
 
 endmodule
 

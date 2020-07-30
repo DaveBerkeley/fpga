@@ -112,10 +112,10 @@ module top(
     wire ram_cyc;
     wire [31:0] ram_rdt;
 
-    chip_select #(.ADDR(0), .WIDTH(2))
+    chip_select #(.ADDR(0), .WIDTH(8))
     cs_ram (
         .wb_ck(wb_clk),
-        .addr(wb_dbus_adr[31:30]),
+        .addr(wb_dbus_adr[31:24]),
         .wb_cyc(wb_dbus_cyc),
         .wb_rst(wb_rst),
         .ack(ram_ack),
@@ -241,7 +241,9 @@ module top(
     wire [31:0] s_rdt;
     wire s_cyc;
     wire s_ack;
+    /* verilator lint_off UNUSED */
     wire ibus_ready;
+    /* verilator lint_on UNUSED */
 
     ibus ibus (
         .wb_clk(ck),
@@ -285,11 +287,66 @@ module top(
         .busy(arb_busy)
     );
 
+    wire engine_ack;
+    wire [31:0] engine_rdt;
+    /* verilator lint_off UNUSED */
+    wire sck; // I2S clock
+    wire ws;  // I2S word select
+    wire sd_out;  // I2S data out
+    wire sd_in0;  // I2S data in
+    wire sd_in1;  // I2S data in
+    wire sd_in2;  // I2S data in
+    wire sd_in3;  // I2S data in
+    wire [7:0] test;
+    /* verilator lint_on UNUSED */
+
+    // TODO : remove me
+    assign sd_in0 = 0;
+    assign sd_in1 = 0;
+    assign sd_in2 = 0;
+    assign sd_in3 = 0;
+
+    /* verilator lint_off UNUSED */
+    wire audio_ready;
+    /* verilator lint_off UNUSED */
+
+    audio_engine audio_engine(
+        .ck(ck),
+        .wb_rst(wb_rst),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .ack(engine_ack),
+        .rdt(engine_rdt),
+        .sck(sck),
+        .ws(ws),
+        .sd_out(sd_out),
+        .sd_in0(sd_in0),
+        .sd_in1(sd_in1),
+        .sd_in2(sd_in2),
+        .sd_in3(sd_in3),
+        .ready(audio_ready),
+        .test(test)
+    );
+    
+    //  Test pins
+
+    assign P1A1 = sck;
+    assign P1A2 = ws;
+    assign P1A3 = sd_out;
+    assign P1A4 = test[0];
+    assign P1B1 = test[1];
+    assign P1B2 = test[2];
+    assign P1B3 = test[3];
+    assign P1B4 = tx;
+
     // OR the dbus peripherals *_rdt & *_ack together
     // They are 0 when not active.
 
-    assign wb_dbus_rdt = ram_rdt | uart_rdt | gpio_rdt | flash_rdt;
-    assign wb_dbus_ack = ram_ack | uart_ack | gpio_ack | flash_ack;
+    assign wb_dbus_rdt = ram_rdt | uart_rdt | gpio_rdt | flash_rdt | engine_rdt;
+    assign wb_dbus_ack = ram_ack | uart_ack | gpio_ack | flash_ack | engine_ack;
 
     // SERV CPU
 
@@ -323,16 +380,5 @@ module top(
     assign LED3 = gpio_reg[2];
     assign LED4 = gpio_reg[3];
     assign LED5 = gpio_reg[4];
-
-    //  Test pins
-
-    assign P1A1 = tx;
-    assign P1A2 = wb_rst;
-    assign P1A3 = f_cyc;
-    assign P1A4 = tx_busy;
-    assign P1B1 = ibus_ready;
-    assign P1B2 = 0;
-    assign P1B3 = 0;
-    assign P1B4 = 0;
 
 endmodule

@@ -26,10 +26,10 @@ module sequencer(
 
     // Align the reset to the -ve edge
     // to ensure the pipeline operates correctly
-    reg reset = 0;
+    reg reset = 1;
 
     always @(posedge ck) begin
-        reset <= rst;
+        reset <= !rst;
     end
 
     initial begin 

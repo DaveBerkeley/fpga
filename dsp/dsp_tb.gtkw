@@ -1,0 +1,49 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Jul 30 14:50:17 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Thu Jul 30 14:48:17 2020"
+[dumpfile_size] 801149
+[savefile] "/home/dave/Desktop/git/fpga/dsp/dsp_tb.gtkw"
+[timestart] 4685000
+[size] 1835 711
+[pos] -1 -1
+*-19.000000 450000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.engine.
+[treeopen] tb.engine.seq.
+[sst_width] 196
+[signals_width] 166
+[sst_expanded] 1
+[sst_vpaned_height] 194
+@28
+tb.engine.ck
+tb.engine.wb_rst
+tb.engine.ack
+tb.engine.wb_dbus_cyc
+@22
+tb.engine.wb_dbus_adr[31:0]
+tb.engine.wb_dbus_dat[31:0]
+tb.engine.wb_dbus_sel[3:0]
+@28
+tb.engine.wb_dbus_we
+@22
+tb.rd_data[31:0]
+@28
+tb.engine.seq.done
+tb.engine.error
+@22
+tb.engine.rdt[31:0]
+tb.engine.seq.coef_addr[7:0]
+tb.engine.seq.coef_data[31:0]
+tb.engine.seq.op_code[4:0]
+tb.engine.seq.offset[7:0]
+@28
+tb.engine.seq.chan[2:0]
+@22
+tb.engine.seq.gain[15:0]
+tb.engine.seq.audio_raddr[10:0]
+tb.engine.seq.capture_out[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

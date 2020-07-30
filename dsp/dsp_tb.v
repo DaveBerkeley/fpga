@@ -2,19 +2,6 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
-task tb_assert(input test);
-
-    begin
-        if (!test)
-        begin
-            $display("ASSERTION FAILED in %m");
-            $dumpall();
-            $finish;
-        end
-    end
-
-endtask
-
 module tb ();
 
     initial begin
@@ -27,240 +14,156 @@ module tb ();
 
     always #42 ck <= !ck;
 
-    reg [0:0] reset_cnt = 0;
-    wire rst = & reset_cnt;
+    wire rst;
 
-    always @(posedge ck) begin
-        if (!rst)
-            reset_cnt <= reset_cnt + 1;
-    end
+    reset #(.LENGTH(4)) reset (.ck(ck), .rst_req(1'b0), .rst(rst));
 
-    reg        iomem_valid;
-    wire       iomem_ready;
-    reg [3:0]  iomem_wstrb;
-    reg [31:0] iomem_addr;
-    reg [31:0] iomem_wdata;
-    wire [31:0] iomem_rdata;
-
-    // Write audio test data into memory
+    reg        wb_dbus_cyc = 0;
+    reg        wb_dbus_we = 0;
+    wire       wb_dbus_ack;
+    reg [3:0]  wb_dbus_sel = 0;
+    reg [31:0] wb_dbus_adr = 32'hZ;
+    reg [31:0] wb_dbus_dat = 32'hZ;
+    wire [31:0] wb_dbus_rdt;
 
     task write(input [31:0] addr, input [31:0] data);
         begin
+            wb_dbus_adr <= addr;
+            wb_dbus_dat <= data;
+            wb_dbus_sel <= 4'b1111;
+            wb_dbus_we <= 1;
+            wb_dbus_cyc <= 1;
             @(posedge ck);
-            iomem_addr <= addr;
-            iomem_wdata <= data;
-            iomem_wstrb <= 4'b1111;
-            iomem_valid <= 1;
-            @(posedge ck);
+            wait(!wb_dbus_cyc);
             @(posedge ck);
         end
     endtask
+
+    reg [31:0] rd_data = 32'hZ;
 
     task read(input [31:0] addr);
 
+            wb_dbus_adr <= addr;
+            wb_dbus_cyc <= 1;
             @(posedge ck);
-            iomem_addr <= addr;
-            iomem_wstrb <= 0;
-            iomem_valid <= 1;
-            @(posedge ck);
-            @(posedge ck);
+            wait(!wb_dbus_cyc);
+            rd_data <= wb_dbus_rdt;
 
     endtask
 
-    // Simulate removing iomem_valid
+    reg [31:0] poll_addr = 0;
+
     always @(posedge ck) begin
-        if (iomem_ready || !rst) begin
-            iomem_valid <= 0;
-            iomem_wstrb <= 0;            
-            iomem_addr <= 32'hZ;
-            iomem_wdata <= 32'hZ;
+        if (poll_addr != 0) begin
+            read(poll_addr);
         end
     end
 
-    task write_opcode;
-        
-        input [31:0] addr;
-        input [6:0] opcode;
-        input [4:0] offset;
-        input [3:0] chan;
-        input [15:0] gain;
-
-        integer i;
-
-        begin
-            i = gain + (chan << 16) + (offset << 20) + (opcode << 25); 
-            write(addr, i);
-            $display("%h", i);
+    always @(posedge ck) begin
+        if (wb_dbus_ack) begin
+            wb_dbus_adr <= 32'hZ;
+            wb_dbus_dat <= 32'hZ;
+            wb_dbus_sel <= 0;
+            wb_dbus_we <= 0;
+            wb_dbus_cyc <= 0;
         end
-
-    endtask
-
-    task capture;
-
-        input [31:0] addr;
-        input [2:0] code;
-
-        begin
-            write_opcode(addr, 7'b0010000 + code, 0, 0, 0);
-        end
-
-    endtask
-
-    task noop;
-
-        input [31:0] addr;
-
-        begin
-            write_opcode(addr, 7'b0000000, 0, 0, 0);
-        end
-
-    endtask
-
-    task save;
-
-        input [31:0] addr;
-        input [5:0] shift;
-        input [5:0] offset;
-
-        begin
-            write_opcode(addr, 7'b1010000, 0, 0, 0);
-        end
-
-    endtask
-
-    integer i;
-
-    initial begin
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-        @(posedge ck);
-        // Setup the coefficient RAM
-        i = 32'h60000000;
-
-        write(i, 32'h48000004); i += 4;
-        write(i, 32'h40010004); i += 4;
-        write(i, 32'h10180000); i += 4;
-        write(i, 32'h48010008); i += 4;
-        write(i, 32'h50000008); i += 4;
-        write(i, 32'h10200001); i += 4;
-        write(i, 32'h78000000); i += 4;
-        write(i, 32'h78000000); i += 4;
-
-        i = 32'h60000000;
-        read(i);
- 
-        // set control register
-        write(32'h62000000, 1); // allow_audio_writes
-
-        // Write to audio RAM
-        i = 32'h64000000;
-        write(i + 0, 32'h00001234);
-        write(i + 4, 32'h0000abcd);
-        write(i + 8, 32'h00002323);
-        write(i + (30'h40 << 2), 32'h00002222);
-
-        write(i + (30'h44 << 2), 32'h00001111);
-        write(i + (30'h45 << 2), 32'h00001234);
-        write(i + (30'h46 << 2), 32'h0000abcd);
-        write(i + (30'h47 << 2), 32'h00002222);
-
-        reset_cnt <= 0;
-
-        for (int i = 0; i < 200; i += 1) begin
-            @(posedge ck);
-        end
-        write(32'h62000000, 0); // disable allow_audio_writes
-        
     end
 
-    /* verilator lint_off UNUSED */
+    // _rdt should be zero if no cyc active
+    always @(posedge ck) begin
+        if (!wb_dbus_cyc) begin
+            tb_assert(wb_dbus_rdt == 0);
+        end
+    end
+
+    wire sck, ws, sd_out, sd_gen;
+    assign sck = 0;
+    assign ws = 0;
     wire [7:0] test;
-    /* verilator lint_on UNUSED */
+    wire engine_ready;
 
-    // Sync to the sck/ws I2S signals generated by the engine.
-    wire sd_out, sck, ws;
-    wire [5:0] frame_posn;
-    wire sen;
-    i2s_secondary i2sx (.ck(ck), .sck(sck), .ws(ws), .en(sen), .frame_posn(frame_posn));
-
-    reg [15:0] left  = 16'h1234;
-    reg [15:0] right = 16'habcd;
-
-    wire sd_gen;
-    i2s_tx txx(.ck(ck), .en(sen), .frame_posn(frame_posn), .sd(sd_gen), .left(left), .right(right));
-
-    audio_engine engine(.ck(ck), .rst(rst),
-        .iomem_valid(iomem_valid),
-        .iomem_ready(iomem_ready),
-        .iomem_wstrb(iomem_wstrb),
-        .iomem_addr(iomem_addr),
-        .iomem_wdata(iomem_wdata),
-        .iomem_rdata(iomem_rdata),
-        .sck(sck), .ws(ws),
-        .sd_out(sd_out), .sd_in0(sd_gen),
+    audio_engine engine(.ck(ck), 
+        .wb_rst(rst),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_dbus_sel(wb_dbus_sel),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .ack(wb_dbus_ack),
+        .rdt(wb_dbus_rdt),
+        .sck(sck), 
+        .ws(ws),
+        .sd_out(sd_out), 
+        .sd_in0(sd_gen),
+        .ready(engine_ready),
         .test(test)
     );
 
-    //  Test pipe()
+    integer i;
 
-    reg pt_rst = 0;
-    reg pt_in = 0;
-    wire pt_out;
-
-    pipe #(.LENGTH(4)) pipe_test(.ck(ck), .rst(pt_rst), .in(pt_in), .out(pt_out));
-
-    integer pt_i;
+    localparam COEF   = 32'h60000000;
+    localparam RESULT = 32'h61000000;
+    localparam STATUS = 32'h62000000;
+    localparam RESET  = 32'h63000000;
+    localparam INPUT  = 32'h64000000;
 
     initial begin
-        $display("test pipe()");
-        tb_assert(pt_out == 0);
+        wait(!rst);
         @(posedge ck);
-        pt_rst <= 1;
-        pt_in <= 1;
-        tb_assert(pt_out == 0);
+        @(posedge ck);
+        @(posedge ck);
 
-        for (pt_i = 0; pt_i < 4; pt_i = pt_i + 1) begin
-            @(posedge ck);
-            tb_assert(pt_out == 0);
-        end
- 
-        for (pt_i = 0; pt_i < 4; pt_i = pt_i + 1) begin
-            @(posedge ck);
-            tb_assert(pt_out == 1);
-        end
- 
-        pt_in <= 0;
-        @(posedge ck);
-        pt_in <= 1;
+        // Test fetching opcode
+        i = COEF;
+        write(i, 32'h08000000); i += 4; // capture 0
+        write(i, 32'h48081234); i += 4; // MACZ offset=01 chan=0 gain=1234
+        write(i, 32'h78000000); i += 4; // HALT
+        write(i, 32'h78000000); i += 4; // HALT
 
+        // Reset the dsp
+        write(RESET, 0);
         @(posedge ck);
-        tb_assert(pt_out == 1);
-        @(posedge ck);
-        tb_assert(pt_out == 1);
-        @(posedge ck);
-        tb_assert(pt_out == 1);
-        @(posedge ck);
-        tb_assert(pt_out == 0);
-        @(posedge ck);
-        tb_assert(pt_out == 1);
-        @(posedge ck);
-        tb_assert(pt_out == 1);
-        @(posedge ck);
-        tb_assert(pt_out == 1);
+        tb_assert(!engine_ready);
 
-        pt_in <= 0;
-        for (pt_i = 0; pt_i < 4; pt_i = pt_i + 1) begin
-            @(posedge ck);
-            tb_assert(pt_out == 1);
-        end
-        for (pt_i = 0; pt_i < 4; pt_i = pt_i + 1) begin
-            @(posedge ck);
-            tb_assert(pt_out == 0);
-        end
+        // Poll for ready
+        poll_addr <= STATUS;
+        wait(rd_data & 32'h1);
+        poll_addr <= 32'h0;
+        tb_assert(engine_ready);
+        @(posedge ck);
+
+        // read capture reg
+        read(STATUS + 4);
+        // check we captured the op-code above
+        @(posedge ck);
+        tb_assert(rd_data == 32'h48081234);
+        // PASS
+
+        // set control : allow_audio_writes
+        write(STATUS, 1);
+        @(posedge ck);
+
+        // Check multiplier input
+
+        // set_audio
+        write(INPUT + ('h104 * 2), 16'h1234); 
+        @(posedge ck);
+
+        i = COEF;
+        write(i, 32'h48213456); i += 4; // MACZ offset=04 chan=1 gain=3456
+        write(i, 32'h00000000); i += 4; // NOOP
+        write(i, 32'h00000000); i += 4; // NOOP
+        write(i, 32'h08100000); i += 4; // CAPT 2 mul in a/b
+        write(i, 32'h78000000); i += 4; // HALT
+        write(i, 32'h78000000); i += 4; // HALT
+
+        // Reset the dsp
+        write(RESET, 0);
+        @(posedge ck);
+        wait(engine_ready);
+        @(posedge ck);
+
     end
-
 
 endmodule
 
