@@ -12,7 +12,7 @@ VCONFIG = /tmp/config.vlt
 
 PROJ = serv
 ADD_SRC = 
-ADD_CLEAN = pll.v firmware.elf firmware.bin $(PROJ).bin *_tb $(VCONFIG)
+ADD_CLEAN = pll.v firmware.elf firmware.bin firmware.hex $(PROJ).bin *_tb $(VCONFIG)
 ADD_YOSYS = -dsp
 ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE)
 ADD_DEPS = pll.v $(VCONFIG)
@@ -78,6 +78,7 @@ CFLAGS  = -DICEBREAKER
 CFLAGS += -march=rv32i
 CFLAGS += -ffreestanding
 CFLAGS += -nostartfiles
+CFLAGS += -Wall -Werror
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
 
 firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds

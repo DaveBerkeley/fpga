@@ -2,6 +2,34 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <stdlib.h>
+#include <errno.h>
+
+// Memory locations defined in the linker config.
+extern "C" uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack;
+
+    /*
+     *  _sbrk() is used by malloc() to alloc heap memory.
+     */
+
+extern "C" void *_sbrk(intptr_t increment)
+{
+    static void *heap = (void*) & _sheap;
+
+    void *base = heap;
+
+    void *next = & ((char *) base)[increment];
+
+    if (next >= (void*) & _eheap)
+    {
+        errno = ENOMEM;
+        return (void*) -1;
+    }
+
+    heap = next;
+    return base;
+}
+
 #define LEDS  ((uint32_t*) 0x40000000)
 #define uart  ((uint32_t*) 0x60000000)
 #define flash ((uint32_t*) 0x70000000)
@@ -50,10 +78,6 @@ void print(const char *text)
      *
      */
 
-extern uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack;
-
-//char test[1024 * 20];
-
 void show_section(const char* text, uint32_t *start, uint32_t *end)
 {
     uint32_t s = (uint32_t) start;
@@ -67,9 +91,10 @@ void show_section(const char* text, uint32_t *start, uint32_t *end)
     print("\r\n");
 }
 
-#if defined(__cplusplus)
-extern "C" 
-#endif
+    /*
+     *
+     */
+
 int main(void)
 {
     *LEDS = 0;
@@ -84,6 +109,7 @@ int main(void)
     show_section("Data    :", & _sdata, & _edata);
     show_section("Heap    :", & _sheap, & _eheap);
     show_section("Stack   :", & _sstack, & _estack);
+    print("\r\n");
 
     uint16_t mask = 1;
 
@@ -93,9 +119,9 @@ int main(void)
         mask <<= 1;
         if (mask > 0x20)
             mask = 1;
-        uint32_t v;
+        uint32_t v = 0;
         for (int i = 0; i < 1000; i++)
-            v = *LEDS;
+            v |= *LEDS;
     }
 
     return 0;
