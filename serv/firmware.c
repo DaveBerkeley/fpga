@@ -67,6 +67,9 @@ void show_section(const char* text, uint32_t *start, uint32_t *end)
     print("\r\n");
 }
 
+#if defined(__cplusplus)
+extern "C" 
+#endif
 int main(void)
 {
     *LEDS = 0;

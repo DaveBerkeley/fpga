@@ -10,6 +10,7 @@ SECTIONS {
         _stext = .;
         *(.text)
         *(.text*)
+        *(.eh_frame)
         . = ALIGN(4);
         _etext = .;
         _sidata = _etext;

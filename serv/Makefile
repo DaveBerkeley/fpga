@@ -71,14 +71,17 @@ pll.v : Makefile
 	sed -i 's/SB_PLL40_CORE/SB_PLL40_PAD/g' $@
 	sed -i 's/.REFERENCECLK/.PACKAGEPIN/g' $@
 
-# number of words in init ram
-INIT_RAM_SIZE=2048
-
 firmware.bin: firmware.elf
 	$(CROSS)objcopy -S -O binary $^ $@
 
+CFLAGS  = -DICEBREAKER
+CFLAGS += -march=rv32i
+CFLAGS += -ffreestanding
+CFLAGS += -nostartfiles
+LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
+
 firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
-	$(CROSS)gcc -DICEBREAKER -march=rv32i -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostartfiles -o $@ start.s firmware.c
+	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ start.s firmware.c
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
