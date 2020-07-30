@@ -1,1 +1,3 @@
-dsp_tb
+*_tb
+firmware.elf
+pll.v
