@@ -2,3 +2,4 @@ pll.v
 *.hex
 *.elf
 *_tb
+tags

@@ -97,6 +97,7 @@ CFLAGS += -march=rv32i
 CFLAGS += -ffreestanding
 CFLAGS += -nostartfiles
 CFLAGS += -Wall -Werror
+CFLAGS += -O1
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
 
 firmware.elf: firmware.c engine.c $(SOC)/start.s Makefile icebreaker_sections.lds

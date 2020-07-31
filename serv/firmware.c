@@ -5,8 +5,93 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#define LEDS  ((uint32_t*) 0x40000000)
+#define uart  ((uint32_t*) 0x60000000)
+#define flash ((uint32_t*) 0x70000000)
+#define TIMER ((uint32_t*) 0xc0000000)
+
 // Memory locations defined in the linker config.
-extern "C" uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack;
+extern "C" uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack, _ivector;
+
+    /*
+     *
+     */
+
+inline uint32_t read_mie()
+{
+    uint32_t value;
+    __asm__ volatile ("csrr %0, mie" : "=r"(value));
+    return value;
+}
+
+inline void write_mie(uint32_t value)
+{
+    __asm__ volatile ("csrw mie, %0" : : "r"(value));
+}
+
+inline uint32_t read_mtvec()
+{
+    uint32_t value;
+    __asm__ volatile ("csrr %0, mtvec" : "=r"(value));
+    return value;
+}
+
+inline void write_mtvec(uint32_t value)
+{
+    __asm__ volatile ("csrw mtvec, %0" : : "r"(value));
+}
+
+inline uint32_t read_mstatus()
+{
+    uint32_t value;
+    __asm__ volatile ("csrr %0, mstatus" : "=r"(value));
+    return value;
+}
+
+inline void write_mstatus(uint32_t value)
+{
+    __asm__ volatile ("csrw mstatus, %0" : : "r"(value));
+}
+
+inline uint32_t read_mcause()
+{
+    uint32_t value;
+    __asm__ volatile ("csrr %0, mcause" : "=r"(value));
+    return value;
+}
+
+inline void write_mcause(uint32_t value)
+{
+    __asm__ volatile ("csrw mcause, %0" : : "r"(value));
+}
+
+    /*
+     *
+     */
+
+extern "C" void irq_handler(void)__attribute__((interrupt));;
+
+void irq_handler(void)
+{
+#if 0
+    uint32_t hi, lo;
+
+    lo = TIMER[2]; // mtime_lo
+    hi = TIMER[3]; // mtime_hi
+    TIMER[2] = lo + 0x04000000;
+    TIMER[3] = hi;
+#else
+    static uint64_t s = 0x01000000;
+
+    s +=  0x01000000;
+    TIMER[2] = s & 0xffffffff;
+    TIMER[3] = s >> 32;
+    write_mcause(0);
+
+    static int i = 0;
+    *LEDS = i++;
+#endif
+}
 
     /*
      *  _sbrk() is used by malloc() to alloc heap memory.
@@ -29,10 +114,6 @@ extern "C" void *_sbrk(intptr_t increment)
     heap = next;
     return base;
 }
-
-#define LEDS  ((uint32_t*) 0x40000000)
-#define uart  ((uint32_t*) 0x60000000)
-#define flash ((uint32_t*) 0x70000000)
 
 // banner made with : figlet "SERV Risc-V" | sed 's/\\/\\\\/g'
 char banner[] = 
@@ -99,6 +180,7 @@ int main(void)
 {
     *LEDS = 0;
 
+#if 0
     print(banner);
 
     print("RAM ");
@@ -110,9 +192,67 @@ int main(void)
     show_section("Heap    :", & _sheap, & _eheap);
     show_section("Stack   :", & _sstack, & _estack);
     print("\r\n");
+#endif
 
     uint16_t mask = 1;
 
+    uint32_t v, w;
+
+    TIMER[2] = 0x01000000;
+    TIMER[3] = 0x00000000;
+
+    print("Timer 0x"); 
+    w = TIMER[0]; // mtime_lo
+    v = TIMER[1]; // mtime_hi
+    print_num(v, 16, 8);
+    print_num(w, 16, 8);
+    print("\r\n"); 
+    print("Compare 0x"); 
+    w = TIMER[2]; // mtime_lo
+    v = TIMER[3]; // mtime_hi
+    print_num(v, 16, 8);
+    print_num(w, 16, 8);
+    print("\r\n"); 
+
+    // This instruction does not work!
+    write_mie(0xffffffff);
+
+    write_mstatus(0x8);
+    write_mtvec((uint32_t) irq_handler);
+
+    int j = 0;
+
+    while (true)
+    {
+        w = TIMER[0]; // mtime_lo
+        v = TIMER[1]; // mtime_hi
+        print_num(v, 16, 8);
+        print("_");
+        print_num(w, 16, 8);
+        
+        print(" E:");
+        v = read_mie();
+        print_num(v, 16, 8);
+
+        print(" ");
+        w = TIMER[2]; // mtimecmp_lo
+        v = TIMER[3]; // mtimecmp_hi
+        print_num(v, 16, 8);
+        print("_");
+        print_num(w, 16, 8);
+        print(" ");
+        
+        // loop
+        print_num(j, 10, 2);
+        j += 1;
+        print("\r\n"); 
+
+        for (int i = 0; i < 1000; i++)
+        {
+            v |= *LEDS;            
+        }
+    }
+    
     while (true)
     {
         *LEDS = mask;

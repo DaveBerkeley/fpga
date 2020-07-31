@@ -37,8 +37,9 @@ module top(
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam RUN_SLOW = 0;    // Divide the CPU clock down for development
-    localparam RESET_LOOP = 0;  // Repeatedly reset the CPU
+    localparam RUN_SLOW = 0;        // Divide the CPU clock down for development
+    localparam RESET_LOOP = 0;      // Repeatedly reset the CPU
+    localparam TIMER_ENABLED = 1;   // Hardware Timer
 
     // PLL
     wire pll_ck;
@@ -135,34 +136,49 @@ module top(
         .rdata(ram_rdt)
     );
 
-    //  Risc-V Timer
+    //  Risc-V 64-bit Timer
 
-    wire timer_cyc;
     wire timer_ack;
     wire timer_irq;
     wire [31:0] timer_rdt;
 
-    chip_select #(.ADDR(TIMER_ADDR), .WIDTH(8))
-    cs_timer (
-        .wb_ck(wb_clk),
-        .addr(wb_dbus_adr[31:24]),
-        .wb_cyc(wb_dbus_cyc),
-        .wb_rst(wb_rst),
-        .ack(timer_ack),
-        .cyc(timer_cyc)
-    );
+    generate
 
-    timer timer (
-        .wb_clk(wb_clk),
-        .wb_rst(wb_rst),
-        .ck_en(1'b1), // no prescale
-        .wb_dbus_dat(wb_dbus_dat),
-        .wb_dbus_adr(wb_dbus_adr),
-        .wb_dbus_we(wb_dbus_we),
-        .cyc(timer_cyc),
-        .irq(timer_irq),
-        .rdt(timer_rdt)
-    );
+        if (TIMER_ENABLED) begin
+
+            wire timer_cyc;
+
+            chip_select #(.ADDR(TIMER_ADDR), .WIDTH(8))
+            cs_timer (
+                .wb_ck(wb_clk),
+                .addr(wb_dbus_adr[31:24]),
+                .wb_cyc(wb_dbus_cyc),
+                .wb_rst(wb_rst),
+                .ack(timer_ack),
+                .cyc(timer_cyc)
+            );
+
+            timer timer (
+                .wb_clk(wb_clk),
+                .wb_rst(wb_rst),
+                .ck_en(1'b1), // no prescale
+                .wb_dbus_dat(wb_dbus_dat),
+                .wb_dbus_adr(wb_dbus_adr),
+                .wb_dbus_we(wb_dbus_we),
+                .cyc(timer_cyc),
+                .irq(timer_irq),
+                .rdt(timer_rdt)
+            );
+
+        end else begin
+
+            //  No timer hardware
+            assign timer_ack = 0;
+            assign timer_irq = 0;
+            assign timer_rdt = 0;
+
+        end
+    endgenerate
 
     //  UART
 
@@ -357,7 +373,7 @@ module top(
     //  Test pins
 
     assign P1A1 = tx;
-    assign P1A2 = wb_rst;
+    assign P1A2 = timer_irq;
     assign P1A3 = f_cyc;
     assign P1A4 = tx_busy;
     assign P1B1 = ibus_ready;
