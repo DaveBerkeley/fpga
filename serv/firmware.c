@@ -81,15 +81,23 @@ void irq_handler(void)
     TIMER[2] = lo + 0x04000000;
     TIMER[3] = hi;
 #else
+
+    // check for timer interrupt
+    uint32_t cause = read_mcause();
+    if ((cause & 0xff) != 0x07)
+    {
+        return;
+    }
+
     static uint64_t s = 0x01000000;
 
     s +=  0x01000000;
     TIMER[2] = s & 0xffffffff;
     TIMER[3] = s >> 32;
-    write_mcause(0);
+    //write_mcause(0);
 
     static int i = 0;
-    *LEDS = i++;
+    LEDS[0] = i++;
 #endif
 }
 
@@ -215,7 +223,7 @@ int main(void)
     print("\r\n"); 
 
     // This instruction does not work!
-    write_mie(0xffffffff);
+    write_mie(0x08);
 
     write_mstatus(0x8);
     write_mtvec((uint32_t) irq_handler);
@@ -232,6 +240,14 @@ int main(void)
         
         print(" E:");
         v = read_mie();
+        print_num(v, 16, 8);
+
+        print(" S:");
+        v = read_mstatus();
+        print_num(v, 16, 8);
+
+        print(" C:");
+        v = read_mcause();
         print_num(v, 16, 8);
 
         print(" ");
@@ -251,17 +267,6 @@ int main(void)
         {
             v |= *LEDS;            
         }
-    }
-    
-    while (true)
-    {
-        *LEDS = mask;
-        mask <<= 1;
-        if (mask > 0x20)
-            mask = 1;
-        uint32_t v = 0;
-        for (int i = 0; i < 1000; i++)
-            v |= *LEDS;
     }
 
     return 0;
