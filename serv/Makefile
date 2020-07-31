@@ -34,6 +34,7 @@ FILES += spi.v
 FILES += gpio.v
 FILES += chip_select.v
 FILES += bus_arb.v
+FILES += timer.v
 
 HW_FILES  = ice40up5k_spram.v
 HW_FILES += ram.v
@@ -87,6 +88,6 @@ firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: serv_tb bus_arb_tb ibus_tb uart_tb reset_tb spi_tb
+tb: serv_tb bus_arb_tb ibus_tb uart_tb reset_tb spi_tb timer_tb
 
 #	FIN

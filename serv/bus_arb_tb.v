@@ -6,9 +6,7 @@
     *
     */
 
-module top (output wire TX);
-
-    assign TX = 0;
+module top ();
 
     reg wb_clk = 0;
 

@@ -33,6 +33,7 @@ module top(
     localparam GPIO_ADDR  = 8'h40;
     localparam UART_ADDR  = 8'h60;
     localparam FLASH_ADDR = 8'h70;
+    localparam TIMER_ADDR = 8'hc0;
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
@@ -132,6 +133,35 @@ module top(
         .sel(wb_dbus_sel),
         .wdata(wb_dbus_dat),
         .rdata(ram_rdt)
+    );
+
+    //  Risc-V Timer
+
+    wire timer_cyc;
+    wire timer_ack;
+    wire timer_irq;
+    wire [31:0] timer_rdt;
+
+    chip_select #(.ADDR(TIMER_ADDR), .WIDTH(8))
+    cs_timer (
+        .wb_ck(wb_clk),
+        .addr(wb_dbus_adr[31:24]),
+        .wb_cyc(wb_dbus_cyc),
+        .wb_rst(wb_rst),
+        .ack(timer_ack),
+        .cyc(timer_cyc)
+    );
+
+    timer timer (
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .ck_en(1'b1), // no prescale
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_we(wb_dbus_we),
+        .cyc(timer_cyc),
+        .irq(timer_irq),
+        .rdt(timer_rdt)
     );
 
     //  UART
@@ -286,10 +316,10 @@ module top(
     );
 
     // OR the dbus peripherals *_rdt & *_ack together
-    // They are 0 when not active.
+    // They must be 0 when not active.
 
-    assign wb_dbus_rdt = ram_rdt | uart_rdt | gpio_rdt | flash_rdt;
-    assign wb_dbus_ack = ram_ack | uart_ack | gpio_ack | flash_ack;
+    assign wb_dbus_rdt = timer_rdt | ram_rdt | uart_rdt | gpio_rdt | flash_rdt;
+    assign wb_dbus_ack = timer_ack | ram_ack | uart_ack | gpio_ack | flash_ack;
 
     // SERV CPU
 
@@ -299,7 +329,7 @@ module top(
     cpu (
         .clk      (wb_clk),
         .i_rst    (wb_rst),
-        .i_timer_irq  (1'b0),
+        .i_timer_irq  (timer_irq),
         // iBus
         .o_ibus_adr   (wb_ibus_adr),
         .o_ibus_cyc   (wb_ibus_cyc),

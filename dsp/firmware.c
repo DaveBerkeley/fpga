@@ -108,7 +108,7 @@ void main()
 {
     *LEDS = 0;
 
-#if 0
+#if 1
     print(banner);
 
     print("RAM ");

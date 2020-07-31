@@ -1,20 +1,18 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Jul 30 14:50:17 2020
+[*] Thu Jul 30 15:31:07 2020
 [*]
-[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Thu Jul 30 14:48:17 2020"
-[dumpfile_size] 801149
+[dumpfile] "(null)"
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dsp_tb.gtkw"
-[timestart] 4685000
+[timestart] 2817000
 [size] 1835 711
 [pos] -1 -1
-*-19.000000 450000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.000000 4830000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.engine.
 [treeopen] tb.engine.seq.
 [sst_width] 196
-[signals_width] 166
+[signals_width] 174
 [sst_expanded] 1
 [sst_vpaned_height] 194
 @28
@@ -31,6 +29,10 @@ tb.engine.wb_dbus_we
 @22
 tb.rd_data[31:0]
 @28
+tb.engine.status_ack
+@23
+tb.engine.control_reg[8:0]
+@28
 tb.engine.seq.done
 tb.engine.error
 @22
@@ -45,5 +47,8 @@ tb.engine.seq.chan[2:0]
 tb.engine.seq.gain[15:0]
 tb.engine.seq.audio_raddr[10:0]
 tb.engine.seq.capture_out[31:0]
+tb.engine.audio_in.waddr[10:0]
+@28
+tb.engine.allow_audio_writes
 [pattern_trace] 1
 [pattern_trace] 0

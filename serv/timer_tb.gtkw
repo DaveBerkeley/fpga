@@ -1,0 +1,110 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Fri Jul 31 07:16:11 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/serv/serv.vcd"
+[dumpfile_mtime] "Fri Jul 31 07:15:46 2020"
+[dumpfile_size] 22429
+[savefile] "/home/dave/Desktop/git/fpga/serv/timer_tb.gtkw"
+[timestart] 966000
+[size] 1879 628
+[pos] -1 -1
+*-16.000000 1211090 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 196
+[signals_width] 166
+[sst_expanded] 1
+[sst_vpaned_height] 165
+@28
+top.wb_clk
+top.wb_rst
+top.wb_dbus_cyc
+@22
+top.wb_dbus_adr[31:0]
+top.wb_dbus_dat[31:0]
+@28
+top.wb_dbus_we
+top.ack
+top.irq
+@22
+top.rdt[31:0]
+@c00022
+top.timer.mtime[63:0]
+@28
+(0)top.timer.mtime[63:0]
+(1)top.timer.mtime[63:0]
+(2)top.timer.mtime[63:0]
+(3)top.timer.mtime[63:0]
+(4)top.timer.mtime[63:0]
+(5)top.timer.mtime[63:0]
+(6)top.timer.mtime[63:0]
+(7)top.timer.mtime[63:0]
+(8)top.timer.mtime[63:0]
+(9)top.timer.mtime[63:0]
+(10)top.timer.mtime[63:0]
+(11)top.timer.mtime[63:0]
+(12)top.timer.mtime[63:0]
+(13)top.timer.mtime[63:0]
+(14)top.timer.mtime[63:0]
+(15)top.timer.mtime[63:0]
+(16)top.timer.mtime[63:0]
+(17)top.timer.mtime[63:0]
+(18)top.timer.mtime[63:0]
+(19)top.timer.mtime[63:0]
+(20)top.timer.mtime[63:0]
+(21)top.timer.mtime[63:0]
+(22)top.timer.mtime[63:0]
+(23)top.timer.mtime[63:0]
+(24)top.timer.mtime[63:0]
+(25)top.timer.mtime[63:0]
+(26)top.timer.mtime[63:0]
+(27)top.timer.mtime[63:0]
+(28)top.timer.mtime[63:0]
+(29)top.timer.mtime[63:0]
+(30)top.timer.mtime[63:0]
+(31)top.timer.mtime[63:0]
+(32)top.timer.mtime[63:0]
+(33)top.timer.mtime[63:0]
+(34)top.timer.mtime[63:0]
+(35)top.timer.mtime[63:0]
+(36)top.timer.mtime[63:0]
+(37)top.timer.mtime[63:0]
+(38)top.timer.mtime[63:0]
+(39)top.timer.mtime[63:0]
+(40)top.timer.mtime[63:0]
+(41)top.timer.mtime[63:0]
+(42)top.timer.mtime[63:0]
+(43)top.timer.mtime[63:0]
+(44)top.timer.mtime[63:0]
+(45)top.timer.mtime[63:0]
+(46)top.timer.mtime[63:0]
+(47)top.timer.mtime[63:0]
+(48)top.timer.mtime[63:0]
+(49)top.timer.mtime[63:0]
+(50)top.timer.mtime[63:0]
+(51)top.timer.mtime[63:0]
+(52)top.timer.mtime[63:0]
+(53)top.timer.mtime[63:0]
+(54)top.timer.mtime[63:0]
+(55)top.timer.mtime[63:0]
+(56)top.timer.mtime[63:0]
+(57)top.timer.mtime[63:0]
+(58)top.timer.mtime[63:0]
+(59)top.timer.mtime[63:0]
+(60)top.timer.mtime[63:0]
+(61)top.timer.mtime[63:0]
+(62)top.timer.mtime[63:0]
+(63)top.timer.mtime[63:0]
+@1401200
+-group_end
+@22
+top.timer.mtimecmp[63:0]
+@23
+top.rd_rdt[31:0]
+@28
+top.timer.addr[1:0]
+@22
+top.clock[63:0]
+top.now[63:0]
+[pattern_trace] 1
+[pattern_trace] 0

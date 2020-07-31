@@ -733,9 +733,19 @@ void engine()
 
     set_control(0); // stop audio writes
     reset_engine();
-    print("loop ..\r\n");
+
+    print("running ..\r\n");
+    uint16_t mask = 1;
+
     while (true)
     {
+        *LEDS = mask;
+        mask <<= 1;
+        if (mask > 0x20)
+            mask = 1;
+        uint32_t v = 0;
+        for (int i = 0; i < 1000; i++)
+            v |= *LEDS;
     }
 
 }
