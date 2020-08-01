@@ -135,15 +135,13 @@ void reset_engine()
     if (verbose) print("reset engine\r\n");
 
     // Reset the audio engine
-    uint32_t *reset = ADDR_RESET;
-    *reset = 0;
+    ADDR_RESET[0] = 0;
 
     // Wait for done
-    uint32_t *status = ADDR_STAT;
 
     while (true)
     {
-        uint32_t t = status[0];
+        uint32_t t = ADDR_STAT[0];
         if (t & 0x01)
             return;
 
@@ -265,12 +263,33 @@ void engine()
     *reset = 0;
 
     print("wait for 'done'\r\n");
-    //while ((*status & 0x01))
-    //    ;
+    while (ADDR_STAT[0] & 0x01)
+        ;
 
-    verbose = true;
+    verbose = false;
     uint32_t *coef;
+    int gain = 0;
+    int op = 0;
 
+    // prevent compiler warning when all tests turned off
+    gain = gain;
+    op = op;
+
+#define TEST_FETCH_OPCODE
+//#define TEST_AUDIO_RAM
+#define TEST_MAC
+#define TEST_FILTER
+#define TEST_WRITE_OUTPUT
+
+#define ANY_TEST defined(TEST_FETCH_OPCODE) | defined(TEST_MAC) | defined(TEST_FILTER) \
+    | defined(TEST_AUDIO_RAM) | defined(TEST_AUDIO_RAM) | defined(SLEW_TEST) \
+    | defined(PULSE_TEST) | defined(TEST_WRITE_OUTPUT)
+
+//#define SLEW_TEST
+#define BANDPASS
+//#define PULSE_TEST
+
+#ifdef TEST_FETCH_OPCODE
     //  Test
     print("Test fetching opcode\r\n");
     coef = ADDR_COEF;
@@ -279,19 +298,15 @@ void engine()
     *coef++ = halt();
     *coef++ = halt();
 
-    //print("Early exit\r\n");
-    //return;
-
-    TRACE();
     run(opcode(MACZ, 1, 0, 0x1234));
-    TRACE();
+#endif
 
-//#define ALL_TESTS
-
-#ifdef ALL_TESTS
+#ifdef TEST_AUDIO_RAM
     //  Check reading all channels
     print("Writing to audio input\r\n");
 
+    int old = verbose;
+    verbose = 0;
     // Write an audio signal to all the input RAM locations
     for (int chan = 0; chan < CHANNELS; chan++)
     {
@@ -303,6 +318,7 @@ void engine()
         }
     }
 
+    print("Checking audio input\r\n");
     for (int chan = 0; chan < CHANNELS; chan++)
     {
         for (int offset = 0; offset < FRAMES; offset++)
@@ -320,9 +336,10 @@ void engine()
             run(expect);
         }
     }
+    verbose = old;
 #endif
 
-    verbose = true;
+#ifdef TEST_MAC
     //  Check multiplier input
     print("Check multiplier input\r\n");
     clr_audio(0);
@@ -542,10 +559,10 @@ void engine()
     const uint32_t m4 = 0x2222 * 0x1111;
     const uint32_t acc = m1 + m2 - m3 + m4;
     run(acc);
+#endif
 
     //  Check write output
-    verbose = true;
-#ifdef ALL_TESTS
+#ifdef TEST_WRITE_OUTPUT
     print("Check write shift/output\r\n");
     clr_audio(0);
     set_audio(4 + (1 * FRAMES), 0x1111);
@@ -598,6 +615,7 @@ void engine()
     }
 #endif
 
+#ifdef TEST_FILTER
     //  Check filter performance
     print("Check filter performance\r\n");
     clr_audio(0);
@@ -618,23 +636,14 @@ void engine()
 
     //  
     clr_audio(0x7fff);
-
-    verbose = true;
-
-    //  End of tests
-    print("Tests run OKAY\r\n");
-    print("==============\r\n");
+#endif 
 
     coef = ADDR_COEF;
 
-//#define SLEW_TEST
-//#define PULSE_TEST
-#define BANDPASS
-
 #if defined(PULSE_TEST)
     #define TESTING
-    int gain = 1024;
-    int op = MACZ;
+    gain = 1024;
+    op = MACZ;
     for (int i = 0; i >= 0; i += 1)
     {
         *coef++ = opcode(op, i, 0, gain);
@@ -653,8 +662,8 @@ void engine()
 
 #if defined(SLEW_TEST)
     #define TESTING
-    int gain = 1024;
-    int op = MACZ;
+    gain = 1024;
+    op = MACZ;
     for (int i = 20; i >= 0; i += 1)
     {
         *coef++ = opcode(op, i, 0, gain);
@@ -720,6 +729,11 @@ void engine()
     *coef++ = halt();
     *coef++ = halt();
 #endif // BANDPASS
+
+#if ANY_TEST
+    print("Tests run OKAY\r\n");
+    print("==============\r\n");
+#endif
 
 #if !defined(TESTING)
     *coef++ = opcode(MACZ, 0, 0, 0x1000);

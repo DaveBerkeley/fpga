@@ -224,32 +224,16 @@ void main()
     print("\r\n");
 #endif
 
-    TIMER[2] = 0x01000000;
-    TIMER[3] = 0x00000000;
-
-    uint32_t w, v;
-    print("Timer 0x"); 
-    w = TIMER[0]; // mtime_lo
-    v = TIMER[1]; // mtime_hi
-    print_num(v, 16, 8);
-    print_num(w, 16, 8);
-    print("\r\n"); 
-    print("Compare 0x"); 
-    w = TIMER[2]; // mtime_lo
-    v = TIMER[3]; // mtime_hi
-    print_num(v, 16, 8);
-    print_num(w, 16, 8);
-    print("\r\n"); 
+    timer_set(0x01000000);
 
     irq_set_enable(0x01); // timer irq
     //irq_set_enable(0x02); // audio_ready irq
 
-    // This instruction does not work!
+    // This write_mie() instruction does not work!
     write_mie(0x08);
-
     write_mstatus(0x8);
     write_mtvec((uint32_t) irq_handler);
-    
+ 
     print("Run audio engine\r\n");
 
     engine();
