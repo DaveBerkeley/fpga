@@ -1,7 +1,7 @@
 
 
 module dpram 
-# (parameter BITS=16, SIZE=256, AWIDTH=$clog2(SIZE), FILE="")
+# (parameter BITS=16, SIZE=256, AWIDTH=$clog2(SIZE))
 (   
     input wire ck,
     input wire we,
@@ -15,18 +15,16 @@ module dpram
 
     reg [BITS-1:0] ram [0:SIZE-1];
 
-`ifdef SIMULATION
-	//$display("Preloading %m from %s", FILE);    
-    initial begin
-        $readmemh(FILE, ram);
-    end
-`endif
-
     always @(posedge ck) begin
-        if (we)
+
+        if (we) begin
             ram[waddr] <= wdata;
-        if (re)
+        end
+
+        if (re) begin
             rdata <= ram[raddr];
+        end
+
     end
 
 endmodule 

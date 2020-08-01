@@ -39,7 +39,11 @@ module top(
     output wire P1B1,
     output wire P1B2,
     output wire P1B3,
-    output wire P1B4
+    output wire P1B4,
+
+    output wire P1B7,
+    output wire P1B8,
+    output wire P1B9
 );
 
     // Device addresses (addr[31:24])
@@ -397,7 +401,7 @@ module top(
     wire [31:0] irq_rdt;
 
     wire [1:0] irqs;
-    assign irqs = { audio_ready, timer_irq };
+    assign irqs = { 1'b0, timer_irq };
 
     wire soc_irq;
 
@@ -418,10 +422,15 @@ module top(
     
     //  Test pins
 
-    assign P1A1 = tx;
-    assign P1A2 = audio_ready;
-    assign P1A3 = timer_irq;
-    assign P1A4 = soc_irq;
+    assign P1A1 = test[0];
+    assign P1A2 = test[1];
+    assign P1A3 = test[2];
+    assign P1A4 = test[3];
+
+    assign P1B1 = test[4];
+    assign P1B2 = test[5];
+    assign P1B3 = test[6];
+    assign P1B4 = test[7];
 
     // I2S Input
     assign P1A7  = sck;
@@ -430,10 +439,9 @@ module top(
     assign sd_in1 = P1A10;
 
     // I2S Output
-    assign P1B1 = sck;
-    assign P1B2 = ws;
-    assign P1B3 = sd_out;
-    assign P1B4 = tx;
+    assign P1B7 = sck;
+    assign P1B8 = ws;
+    assign P1B9 = sd_out;
 
     // OR the dbus peripherals *_rdt & *_ack together
     // They must be 0 when not active.

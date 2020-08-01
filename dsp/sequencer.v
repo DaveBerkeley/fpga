@@ -24,7 +24,7 @@ module sequencer(
     parameter AUDIO_W = 9;
     parameter ACC_W = 40;
 
-    // Align the reset to the -ve edge
+    // Align the reset to the +ve edge
     // to ensure the pipeline operates correctly
     reg reset = 1;
 

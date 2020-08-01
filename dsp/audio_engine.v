@@ -18,9 +18,9 @@ module audio_engine (
     input wire [31:0] wb_dbus_dat,
     output wire [31:0] rdt,
 
-    output wire sck, // I2S clock
-    output wire ws,  // I2S word select
-    output wire sd_out,  // I2S data out
+    output wire sck,    // I2S clock
+    output wire ws,     // I2S word select
+    output wire sd_out, // I2S data out
     input wire sd_in0,  // I2S data in
     input wire sd_in1,  // I2S data in
     input wire sd_in2,  // I2S data in
@@ -61,7 +61,6 @@ module audio_engine (
         end
     end
 
-    wire done;
     // TODO : reset is active low!!!!!
     wire reset;
     assign reset = !((!wb_rst) && (resetx == 2'b10));
@@ -86,14 +85,21 @@ module audio_engine (
     wire i2s_clock;
 
     // Divide the 32Mhz clock down to 2MHz
+    // Gives 2e6/64 = 31250 Hz frame rate
     localparam I2S_DIVIDER = 16;
     localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
     assign i2s_clock = ck;
 
     wire [5:0] frame_posn;
     wire i2s_en;
-    i2s_clock #(.DIVIDER(I2S_DIVIDER)) i2s_out(.ck(i2s_clock), .en(i2s_en),
-            .sck(sck), .ws(ws), .frame_posn(frame_posn));
+    i2s_clock #(.DIVIDER(I2S_DIVIDER)) 
+    i2s_out(
+        .ck(i2s_clock),
+        .en(i2s_en),
+        .sck(sck),
+        .ws(ws),
+        .frame_posn(frame_posn)
+    );
 
     //  I2S Input
 
@@ -131,7 +137,14 @@ module audio_engine (
     reg [15:0] left = 0;
     reg [15:0] right = 0;
 
-    i2s_tx tx(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .left(left), .right(right), .sd(sd_out));
+    i2s_tx tx(
+        .ck(ck),
+        .en(i2s_en),
+        .frame_posn(frame_posn),
+        .left(left),
+        .right(right),
+        .sd(sd_out)
+    );
 
     //  Write Input data to the Audio RAM
 
@@ -177,19 +190,10 @@ module audio_engine (
         end
     end
 
-    assign test[0] = status_ack;
-    assign test[1] = coef_ack;
-    assign test[2] = input_ack;
-    assign test[3] = reset_ack;
-    assign test[4] = result_ack;
-    assign test[5] = 0;
-    assign test[6] = 0;
-    assign test[7] = 0;
+    //  Drive the engine
 
     wire [7:0] cs_adr;
     assign cs_adr = wb_dbus_adr[31:24];
-
-    //  Drive the engine
 
     wire coef_ack, coef_cyc;
 
@@ -258,7 +262,7 @@ module audio_engine (
         .rdata(audio_rdata)
     );
 
-    // Sequencer
+    // Sequencer : main DSP Engine
 
     /* verilator lint_off UNUSED */
     wire [3:0] out_wr_addr;
@@ -266,18 +270,28 @@ module audio_engine (
     wire [15:0] out_audio;
     wire out_we;
     wire error;
-
+    wire done;
     wire [31:0] capture;
 
-    sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W), .AUDIO_W(AUDIO_W)) seq (
-            .ck(ck), .rst(reset), .frame(frame),
-            .coef_addr(coef_raddr), .coef_data(coef_rdata), 
-            .audio_raddr(audio_raddr), .audio_in(audio_rdata),
-            .out_addr(out_wr_addr), .out_audio(out_audio), .out_we(out_we),
-            .done(done), .error(error), 
-            .capture_out(capture));
+    sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W), .AUDIO_W(AUDIO_W))
+    seq (
+        .ck(ck),
+        .rst(reset),
+        .frame(frame),
+        .coef_addr(coef_raddr),
+        .coef_data(coef_rdata), 
+        .audio_raddr(audio_raddr),
+        .audio_in(audio_rdata),
+        .out_addr(out_wr_addr),
+        .out_audio(out_audio),
+        .out_we(out_we),
+        .done(done),
+        .error(error), 
+        .capture_out(capture)
+    );
 
     //  Results RAM
+    //  currently just using a pair of registers, left & right
 
     always @(posedge ck) begin
         if (out_we) begin
@@ -296,9 +310,7 @@ module audio_engine (
 
     // Interface the peripheral to the Risc-V bus
 
-    /* verilator lint_off UNUSED */
-    wire nowt_2, nowt_3, nowt_4;
-    /* verilator lint_on UNUSED */
+    //  Request DSP reset (begin processing from start)
 
     wire reset_ack, reset_cyc;
 
@@ -354,19 +366,32 @@ module audio_engine (
     
     always @(posedge ck) begin
         if (status_cyc & wb_dbus_we) begin
-            control_reg <= wb_dbus_dat[8:0];
+            control_reg <= wb_dbus_dat[(CONTROL_W-1):0];
         end
     end
 
+    wire [31:0] control_rdt;
     wire [31:0] status_rdt;
 
-    assign status_rdt = (status_cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? capture : { 30'h0, error, done }) : 0;
+    assign control_rdt = { 30'h0, error, done };
+    assign status_rdt = (status_cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? capture : control_rdt) : 0;
 
-    //
+    //  OR the ACK and RST signals together
 
+    assign ack = result_ack | status_ack | coef_ack | input_ack | reset_ack;
     assign rdt = result_rdt | status_rdt;
-    assign ack = coef_ack | input_ack | reset_ack | result_ack | status_ack;
     assign ready = done;
+
+    //  Test output
+
+    assign test[0] = done;
+    assign test[1] = reset;
+    assign test[2] = input_ack;
+    assign test[3] = reset_ack;
+    assign test[4] = result_ack;
+    assign test[5] = 0;
+    assign test[6] = 0;
+    assign test[7] = 0;
 
 endmodule
 
