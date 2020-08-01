@@ -8,8 +8,6 @@ endif
 
 CORE=$(SERV)/rtl
 
-VCONFIG = /tmp/config.vlt
-
 PROJ = serv
 ADD_SRC = 
 ADD_CLEAN = pll.v firmware.elf firmware.bin firmware.hex $(PROJ).bin *_tb $(VCONFIG)
@@ -20,6 +18,8 @@ ADD_IVERILOG = -I $(CORE)
 TB_DEPS = pll.v $(VCONFIG)
 TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v sim.v
 ADD_TB_IVERILOG = sim.v tb.v
+
+VCONFIG = /tmp/$(PROJ)_config.vlt
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -35,6 +35,7 @@ FILES += gpio.v
 FILES += chip_select.v
 FILES += bus_arb.v
 FILES += timer.v
+FILES += irq.v
 
 HW_FILES  = ice40up5k_spram.v
 HW_FILES += ram.v
@@ -89,6 +90,6 @@ firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: serv_tb bus_arb_tb ibus_tb uart_tb reset_tb spi_tb timer_tb
+tb: serv_tb bus_arb_tb ibus_tb uart_tb reset_tb spi_tb timer_tb irq_tb
 
 #	FIN

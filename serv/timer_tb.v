@@ -73,18 +73,19 @@ module top();
 
     endtask
 
+    reg [31:0] rd_rdt = 0;
+
     task read (input [31:0] addr);
 
         begin
             wb_dbus_adr <= addr;
             wb_dbus_we <= 0;
             wb_dbus_cyc <= 1;
+            rd_rdt <= 32'hZ;
             @(posedge wb_clk);
         end
 
     endtask
-
-    reg [31:0] rd_rdt = 0;
 
     // simulate the CPU
     always @(posedge wb_clk) begin

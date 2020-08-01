@@ -202,8 +202,6 @@ int main(void)
     print("\r\n");
 #endif
 
-    uint16_t mask = 1;
-
     uint32_t v, w;
 
     TIMER[2] = 0x01000000;
