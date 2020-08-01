@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Sat Aug  1 19:48:36 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Sat Aug  1 19:22:42 2020"
+[dumpfile_size] 145783
+[savefile] "/home/dave/Desktop/git/fpga/dsp/pipe_tb.gtkw"
+[timestart] 0
+[size] 1329 625
+[pos] -1 -1
+*-19.000000 70000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[sst_width] 196
+[signals_width] 118
+[sst_expanded] 1
+[sst_vpaned_height] 164
+@28
+tb.ck
+tb.rst
+tb.pipe_test.in
+tb.pipe_test.out
+@200
+-
+@22
+tb.p_in[15:0]
+tb.p_out[15:0]
+@28
+tb.pipe1.in
+@29
+tb.pipe1.out
+[pattern_trace] 1
+[pattern_trace] 0

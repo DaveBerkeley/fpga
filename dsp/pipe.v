@@ -13,31 +13,27 @@ module pipe
     output wire out
 );
 
+    reg [(LENGTH-1):0] delay = INIT;
+
     generate 
 
         if (LENGTH == 1) begin
-
-            reg delay = INIT;
 
             always @(posedge ck) begin
                 delay <= in;
             end
 
-            assign out = delay;
-
         end else begin
-
-            reg [(LENGTH-1):0] delay = INIT;
 
             always @(posedge ck) begin
                 delay <= { delay[LENGTH-2:0], in };
             end
 
-            assign out = delay[LENGTH-1];
-
         end
 
     endgenerate
+
+    assign out = delay[LENGTH-1];
 
 endmodule
 
