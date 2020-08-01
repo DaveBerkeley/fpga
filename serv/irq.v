@@ -7,8 +7,8 @@ module irq_reg
     input wire wb_rst,
     /* verilator lint_off UNUSED */
     input wire [31:0] wb_dbus_adr,
-    /* verilator lint_on UNUSED */
     input wire [31:0] wb_dbus_dat,
+    /* verilator lint_on UNUSED */
     input wire wb_dbus_we,
     input wire wb_dbus_cyc,
     output wire ack,
@@ -91,7 +91,7 @@ module irq_reg
 
     end
 
-    assign rdt = (rd & ack) ? rd_data : 0;
+    assign rdt = (rd & ack) ? { {(32-REG_WIDTH){ 1'b0 }}, rd_data } : 0;
     assign irq = | (state_reg & enable_reg);
 
 endmodule

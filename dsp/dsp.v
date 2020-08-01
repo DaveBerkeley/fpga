@@ -8,21 +8,34 @@
 module top(
     input wire CLK, 
     output wire TX, 
+
+    // XIP Flash
     output wire FLASH_SCK,
     output wire FLASH_SSB,
     output wire FLASH_IO0,
     input  wire FLASH_IO1,
     output wire FLASH_IO2,
     output wire FLASH_IO3,
+
     output wire LED1,
     output wire LED2,
     output wire LED3,
     output wire LED4,
     output wire LED5,
+
+    // Test pins
     output wire P1A1,
     output wire P1A2,
     output wire P1A3,
     output wire P1A4,
+
+    // I2S Input
+    output wire P1A7,
+    output wire P1A8,
+    input wire P1A9,
+    input wire P1A10,
+    
+    // I2S Output
     output wire P1B1,
     output wire P1B2,
     output wire P1B3,
@@ -33,11 +46,14 @@ module top(
     localparam GPIO_ADDR  = 8'h40;
     localparam UART_ADDR  = 8'h50;
     localparam FLASH_ADDR = 8'h70;
+    localparam IRQ_ADDR   = 8'h80;
+    localparam TIMER_ADDR = 8'hc0;
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam RUN_SLOW = 0;    // Divide the CPU clock down for development
-    localparam RESET_LOOP = 0;  // Repeatedly reset the CPU
+    localparam RUN_SLOW = 0;        // Divide the CPU clock down for development
+    localparam RESET_LOOP = 0;      // Repeatedly reset the CPU
+    localparam TIMER_ENABLED = 1;   // Hardware Timer
 
     // PLL
     wire pll_ck;
@@ -133,6 +149,50 @@ module top(
         .wdata(wb_dbus_dat),
         .rdata(ram_rdt)
     );
+
+    //  Risc-V 64-bit Timer
+
+    wire timer_ack;
+    wire timer_irq;
+    wire [31:0] timer_rdt;
+
+    generate
+
+        if (TIMER_ENABLED) begin
+
+            wire timer_cyc;
+
+            chip_select #(.ADDR(TIMER_ADDR), .WIDTH(8))
+            cs_timer (
+                .wb_ck(wb_clk),
+                .addr(wb_dbus_adr[31:24]),
+                .wb_cyc(wb_dbus_cyc),
+                .wb_rst(wb_rst),
+                .ack(timer_ack),
+                .cyc(timer_cyc)
+            );
+
+            timer timer (
+                .wb_clk(wb_clk),
+                .wb_rst(wb_rst),
+                .ck_en(1'b1), // no prescale
+                .wb_dbus_dat(wb_dbus_dat),
+                .wb_dbus_adr(wb_dbus_adr),
+                .wb_dbus_we(wb_dbus_we),
+                .cyc(timer_cyc),
+                .irq(timer_irq),
+                .rdt(timer_rdt)
+            );
+
+        end else begin
+
+            //  No timer hardware
+            assign timer_ack = 0;
+            assign timer_irq = 0;
+            assign timer_rdt = 0;
+
+        end
+    endgenerate
 
     //  UART
 
@@ -301,8 +361,8 @@ module top(
     /* verilator lint_on UNUSED */
 
     // TODO : remove me
-    assign sd_in0 = 0;
-    assign sd_in1 = 0;
+    //assign sd_in0 = 0;
+    //assign sd_in1 = 0;
     assign sd_in2 = 0;
     assign sd_in3 = 0;
 
@@ -330,23 +390,56 @@ module top(
         .ready(audio_ready),
         .test(test)
     );
+
+    //  Interrupt controller
+
+    wire irq_ack;
+    wire [31:0] irq_rdt;
+
+    wire [1:0] irqs;
+    assign irqs = { audio_ready, timer_irq };
+
+    wire soc_irq;
+
+    irq_reg #(.ADDR(IRQ_ADDR), .ADDR_W(8), .REG_WIDTH(2))
+    irq_reg 
+    (
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .ack(irq_ack),
+        .rdt(irq_rdt),
+        .irq_in(irqs),
+        .irq(soc_irq)
+    );
     
     //  Test pins
 
-    assign P1A1 = sck;
-    assign P1A2 = ws;
-    assign P1A3 = sd_out;
-    assign P1A4 = test[0];
-    assign P1B1 = test[1];
-    assign P1B2 = test[2];
-    assign P1B3 = test[3];
+    assign P1A1 = tx;
+    assign P1A2 = audio_ready;
+    assign P1A3 = timer_irq;
+    assign P1A4 = soc_irq;
+
+    // I2S Input
+    assign P1A7  = sck;
+    assign P1A8  = ws;
+    assign sd_in0 = P1A9;
+    assign sd_in1 = P1A10;
+
+    // I2S Output
+    assign P1B1 = sck;
+    assign P1B2 = ws;
+    assign P1B3 = sd_out;
     assign P1B4 = tx;
 
     // OR the dbus peripherals *_rdt & *_ack together
-    // They are 0 when not active.
+    // They must be 0 when not active.
 
-    assign wb_dbus_rdt = ram_rdt | uart_rdt | gpio_rdt | flash_rdt | engine_rdt;
-    assign wb_dbus_ack = ram_ack | uart_ack | gpio_ack | flash_ack | engine_ack;
+    assign wb_dbus_rdt = irq_rdt | timer_rdt | ram_rdt | uart_rdt | gpio_rdt | flash_rdt | engine_rdt;
+    assign wb_dbus_ack = irq_ack | timer_ack | ram_ack | uart_ack | gpio_ack | flash_ack | engine_ack;
 
     // SERV CPU
 
@@ -354,22 +447,22 @@ module top(
 
     serv_rf_top #(.RESET_PC(RESET_PC), .WITH_CSR(with_csr))
     cpu (
-        .clk      (wb_clk),
-        .i_rst    (wb_rst),
-        .i_timer_irq  (1'b0),
+        .clk(wb_clk),
+        .i_rst(wb_rst),
+        .i_timer_irq(soc_irq),
         // iBus
-        .o_ibus_adr   (wb_ibus_adr),
-        .o_ibus_cyc   (wb_ibus_cyc),
-        .i_ibus_rdt   (wb_ibus_rdt),
-        .i_ibus_ack   (wb_ibus_ack),
+        .o_ibus_adr(wb_ibus_adr),
+        .o_ibus_cyc(wb_ibus_cyc),
+        .i_ibus_rdt(wb_ibus_rdt),
+        .i_ibus_ack(wb_ibus_ack),
         // dBus
-        .o_dbus_adr   (wb_dbus_adr),
-        .o_dbus_dat   (wb_dbus_dat),
-        .o_dbus_sel   (wb_dbus_sel),
-        .o_dbus_we    (wb_dbus_we),
-        .o_dbus_cyc   (wb_dbus_cyc),
-        .i_dbus_rdt   (wb_dbus_rdt),
-        .i_dbus_ack   (wb_dbus_ack)
+        .o_dbus_adr(wb_dbus_adr),
+        .o_dbus_dat(wb_dbus_dat),
+        .o_dbus_sel(wb_dbus_sel),
+        .o_dbus_we(wb_dbus_we),
+        .o_dbus_cyc(wb_dbus_cyc),
+        .i_dbus_rdt(wb_dbus_rdt),
+        .i_dbus_ack(wb_dbus_ack)
     );
 
     //  IO

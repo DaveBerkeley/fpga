@@ -8,8 +8,6 @@ endif
 
 CORE=$(SERV)/rtl
 
-VCONFIG = /tmp/config.vlt
-
 PROJ = dsp
 ADD_SRC = 
 ADD_CLEAN = pll.v firmware.elf firmware.bin firmware.hex $(PROJ).bin *_tb $(VCONFIG)
@@ -20,6 +18,8 @@ ADD_IVERILOG = -I $(CORE)
 TB_DEPS = pll.v $(VCONFIG)
 TB_VERILATOR = /usr/share/yosys/ice40/cells_sim.v $(SOC)/sim.v
 ADD_TB_IVERILOG = $(SOC)/sim.v $(SOC)/tb.v
+
+VCONFIG = /tmp/$(PROJ)_config.vlt
 
 PACKAGE = sg48
 DEVICE = up5k
@@ -51,6 +51,8 @@ FILES += $(SOC)/spi.v
 FILES += $(SOC)/gpio.v
 FILES += $(SOC)/chip_select.v
 FILES += $(SOC)/bus_arb.v
+FILES += $(SOC)/timer.v
+FILES += $(SOC)/irq.v
 
 # Files using SB_* modules we don't want in sim
 HW_FILES  = $(SOC)/ice40up5k_spram.v
