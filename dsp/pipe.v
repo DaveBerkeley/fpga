@@ -6,23 +6,38 @@
 module pipe
     #(parameter LENGTH=1, parameter INIT=0)
    (input wire ck, 
-    input wire rst, 
+    /* verilator lint_off UNUSED */
+    input wire rst, // TODO : remove me 
+    /* verilator lint_on UNUSED */
     input wire in, 
     output wire out
 );
 
-    reg [(LENGTH-1):0] delay = INIT;
+    generate 
 
-    /* verilator lint_off WIDTH */
-    always @(posedge ck) begin
-        if (rst)
-            delay <= (delay << 1) | in;
-        else
-            delay <= 0;
-    end
-    /* verilator lint_on WIDTH */
+        if (LENGTH == 1) begin
 
-    assign out = delay[LENGTH-1];
+            reg delay = INIT;
+
+            always @(posedge ck) begin
+                delay <= in;
+            end
+
+            assign out = delay;
+
+        end else begin
+
+            reg [(LENGTH-1):0] delay = INIT;
+
+            always @(posedge ck) begin
+                delay <= { delay[LENGTH-2:0], in };
+            end
+
+            assign out = delay[LENGTH-1];
+
+        end
+
+    endgenerate
 
 endmodule
 

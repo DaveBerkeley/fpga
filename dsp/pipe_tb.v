@@ -76,5 +76,85 @@ module tb ();
         end
     end
 
+    // Try n-wide pipe
+
+    reg  [15:0] p_in  = 0;
+    wire [15:0] p_out;
+
+    pipe #(.LENGTH(3)) pipes [15:0] (.ck(ck), .rst(pt_rst), .in(p_in), .out(p_out));
+
+    initial begin
+
+        @(posedge ck);
+        wait(!rst);
+        @(posedge ck);
+
+        p_in <= 16'h1234;
+        @(posedge ck);
+        tb_assert(p_out == 16'h0);
+
+        p_in <= 16'haaaa;
+        @(posedge ck);
+        tb_assert(p_out == 16'h0);
+        
+        p_in <= 16'h5555;
+        @(posedge ck);
+        tb_assert(p_out == 16'h0);
+        
+        p_in <= 16'h4545;
+        @(posedge ck);
+        tb_assert(p_out == 16'h1234);
+        
+        p_in <= 16'h4321;
+        @(posedge ck);
+        tb_assert(p_out == 16'haaaa);
+        
+        @(posedge ck);
+        tb_assert(p_out == 16'h5555);
+        
+        @(posedge ck);
+        tb_assert(p_out == 16'h4545);
+        
+        @(posedge ck);
+        tb_assert(p_out == 16'h4321);
+        
+        @(posedge ck);
+        tb_assert(p_out == 16'h4321);
+        
+    end
+
+
+    // Try n-wide pipe
+
+    reg  p1_in  = 0;
+    wire p1_out;
+
+    pipe #(.LENGTH(1)) pipe1 (.ck(ck), .rst(pt_rst), .in(p1_in), .out(p1_out));
+
+    initial begin
+
+        @(posedge ck);
+        wait(!rst);
+        @(posedge ck);
+
+        p1_in <= 1;
+        @(posedge ck);
+        tb_assert(p1_out == 0);
+
+        @(posedge ck);
+        tb_assert(p1_out == 1);
+
+        @(posedge ck);
+        tb_assert(p1_out == 1);
+
+        p1_in <= 0;
+        @(posedge ck);
+        tb_assert(p1_out == 1);
+
+        @(posedge ck);
+        tb_assert(p1_out == 0);
+
+    end
+
 endmodule
 
