@@ -134,9 +134,10 @@ uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, int32_t gain)
      *
      */
 
-void wait_done()
+void wait_done(uint32_t d)
 {
     uint64_t start = timer_get();
+    d = d ? d : 320000;
 
     while (true)
     {
@@ -152,7 +153,7 @@ void wait_done()
         }
 
         uint64_t now = timer_get();
-        if ((now - start) > 320000)
+        if ((now - start) > d)
         {
             print("Timeout error\r\n");
             ASSERT(0);
@@ -167,7 +168,7 @@ void reset_engine()
     // Reset the audio engine
     ADDR_STAT[STAT_END_CMD] = 0;
 
-    wait_done();
+    wait_done(0);
 }
 
 void set_audio(uint32_t addr, uint32_t value)
@@ -278,19 +279,18 @@ void engine()
 
     verbose = false;
 
+    // Clear both COEF banks
+    coef = ADDR_COEF;
+    *coef++ = halt();
+    *coef++ = halt();
+    reset_engine();
+
+    coef = ADDR_COEF;
+    *coef++ = halt();
+    *coef++ = halt();
+    reset_engine();
+
     set_control(1); // allow audio writes
-
-    // Set the pending bank commands
-    coef = ADDR_COEF;
-    *coef++ = halt();
-    *coef++ = halt();
-    reset_engine();
-
-    // Set the pending bank commands
-    coef = ADDR_COEF;
-    *coef++ = halt();
-    *coef++ = halt();
-    reset_engine();
 
     // prevent compiler warning when all tests turned off
     gain = gain;

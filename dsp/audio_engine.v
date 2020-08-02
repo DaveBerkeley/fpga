@@ -63,7 +63,6 @@ module audio_engine (
         end
     end
 
-    // TODO : reset is active low!!!!!
     wire reset;
     assign reset = !((!wb_rst) && (resetx == 2'b10));
 
@@ -214,12 +213,12 @@ module audio_engine (
     wire [COEF_W-1:0] coef_waddr;
     wire [COEF_W-1:0] coef_raddr;
 
-    reg bank_addr = 1;
-    reg bank_done = 1;
+    reg bank_addr = 0;
+    reg bank_done = 0;
 
     assign coef_we = wb_dbus_we & coef_cyc;
-    assign coef_waddr = { 1'b1, wb_dbus_adr[CODE_W+2-1:2] };
-    assign coef_raddr = { 1'b1, code_raddr };
+    assign coef_waddr = { !bank_addr, wb_dbus_adr[CODE_W+2-1:2] };
+    assign coef_raddr = { bank_addr, code_raddr };
 
     dpram #(.BITS(32), .SIZE(CODE*2))
     coef (
@@ -373,15 +372,15 @@ module audio_engine (
         if (status_we & (status_addr == 3)) begin
             // End of Command request : ie request bank switch
             bank_done <= 0;
-        end
-
-        if (done & !bank_done) begin
-            // switch banks
-            bank_done <= 1;
-            bank_addr <= !bank_addr; 
             if (allow_audio_writes) begin
                 reset_req <= 1;
             end
+        end
+
+        if (reset & !bank_done) begin
+            // switch banks
+            bank_done <= 1;
+            bank_addr <= !bank_addr; 
         end
 
         if (reset_req) begin
@@ -421,8 +420,8 @@ module audio_engine (
     assign test[2] = bank_addr;
     assign test[3] = bank_done;
     assign test[4] = error;
-    assign test[5] = 0;
-    assign test[6] = 0;
+    assign test[5] = reset_req;
+    assign test[6] = ck;
     assign test[7] = 0;
 
 endmodule

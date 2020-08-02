@@ -9,6 +9,40 @@
 #include "firmware.h"
 
     /*
+     *  Timer
+     */
+
+#define TIMER_MTIME_LO    0
+#define TIMER_MTIME_HI    1
+#define TIMER_MTIMECMP_LO 2
+#define TIMER_MTIMECMP_HI 3
+
+void timer_set(uint64_t t)
+{
+    TIMER[TIMER_MTIMECMP_LO] = t & 0xffffffff;
+    asm volatile ("" : : : "memory");
+    TIMER[TIMER_MTIMECMP_HI] = t >> 32;
+}
+
+uint64_t timer_get()
+{
+    const uint32_t lo = TIMER[TIMER_MTIME_LO];
+    asm volatile ("" : : : "memory");
+    const uint32_t hi = TIMER[TIMER_MTIME_HI];
+
+    return lo + (((uint64_t) hi) << 32);
+}
+
+uint64_t timer_get_cmp()
+{
+    const uint32_t lo = TIMER[TIMER_MTIMECMP_LO];
+    asm volatile ("" : : : "memory");
+    const uint32_t hi = TIMER[TIMER_MTIMECMP_HI];
+
+    return lo + (((uint64_t) hi) << 32);
+}
+
+    /*
      *
      */
 
@@ -153,7 +187,7 @@ void main()
 {
     *LEDS = 0;
 
-#if 1
+#if 0
     print(banner);
 
     print("RAM ");
