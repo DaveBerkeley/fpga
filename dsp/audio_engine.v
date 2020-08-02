@@ -34,15 +34,17 @@ module audio_engine (
     localparam ADDR_COEF   = ADDR;
     localparam ADDR_RESULT = ADDR + 8'h01;
     localparam ADDR_STATUS = ADDR + 8'h02;
-    localparam ADDR_RESET  = ADDR + 8'h03;
     localparam ADDR_INPUT  = ADDR + 8'h04;
 
     localparam CHANNELS = 8;
     localparam FRAMES = 256;
-    localparam CODE = 256;
+
+    localparam CODE = 256; // but there are 2 banks of this
+    localparam CODE_W = $clog2(CODE);
+    localparam COEF_W = CODE_W + 1; // includes 2 banks
+
     localparam CHAN_W = $clog2(CHANNELS);
     localparam FRAME_W = $clog2(FRAMES);
-    localparam CODE_W = $clog2(CODE);
     localparam AUDIO = CHANNELS * FRAMES;
     localparam AUDIO_W = $clog2(AUDIO);
 
@@ -70,15 +72,10 @@ module audio_engine (
 
     //  Control Register
 
-    // bit-0 : set to allow writes to the audio input RAM
-    // bits 1..6 optionally control the frame register
-    localparam CONTROL_W = FRAME_W + 1;
-    reg [(CONTROL_W-1):0] control_reg = 0;
+    reg [FRAME_W-1:0] control_reg_frame = 0;
+    reg allow_audio_writes = 0;
 
-    wire allow_audio_writes;
-    assign allow_audio_writes = control_reg[0];
-
-    assign frame = allow_audio_writes ? control_reg[(CONTROL_W-1):1] : frame_counter;
+    assign frame = allow_audio_writes ? control_reg_frame : frame_counter;
 
     //  I2S clock generation
 
@@ -209,18 +206,31 @@ module audio_engine (
 
     // Coefficient / Program DP RAM
     // This is written to by the host, read by the engine.
+
+    wire [CODE_W-1:0] code_raddr;
+
     wire coef_we;
-    wire [(CODE_W-1):0] coef_waddr;
     wire [31:0] coef_rdata;
-    wire [(CODE_W-1):0] coef_raddr;
+    wire [COEF_W-1:0] coef_waddr;
+    wire [COEF_W-1:0] coef_raddr;
+
+    reg bank_addr = 1;
+    reg bank_done = 1;
 
     assign coef_we = wb_dbus_we & coef_cyc;
-    assign coef_waddr = wb_dbus_adr[CODE_W+2-1:2];
+    assign coef_waddr = { 1'b1, wb_dbus_adr[CODE_W+2-1:2] };
+    assign coef_raddr = { 1'b1, code_raddr };
 
-    dpram #(.BITS(32), .SIZE(CODE))
-        coef (.ck(ck),
-            .we(coef_we), .waddr(coef_waddr), .wdata(wb_dbus_dat),
-            .re(1'h1), .raddr(coef_raddr), .rdata(coef_rdata));
+    dpram #(.BITS(32), .SIZE(CODE*2))
+    coef (
+        .ck(ck),
+        .we(coef_we),
+        .waddr(coef_waddr),
+        .wdata(wb_dbus_dat),
+        .re(1'h1),
+        .raddr(coef_raddr),
+        .rdata(coef_rdata)
+    );
 
     // Audio Input DP RAM
     // Audio Input data is written into this RAM
@@ -273,12 +283,12 @@ module audio_engine (
     wire done;
     wire [31:0] capture;
 
-    sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W), .AUDIO_W(AUDIO_W))
+    sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W), .AUDIO_W(AUDIO_W), .CODE_W(CODE_W))
     seq (
         .ck(ck),
         .rst(reset),
         .frame(frame),
-        .coef_addr(coef_raddr),
+        .coef_addr(code_raddr),
         .coef_data(coef_rdata), 
         .audio_raddr(audio_raddr),
         .audio_in(audio_rdata),
@@ -310,30 +320,6 @@ module audio_engine (
 
     // Interface the peripheral to the Risc-V bus
 
-    //  Request DSP reset (begin processing from start)
-
-    wire reset_ack, reset_cyc;
-
-    chip_select #(.ADDR(ADDR_RESET)) 
-    cs_reset(
-        .wb_ck(ck),
-        .addr(cs_adr),
-        .wb_cyc(wb_dbus_cyc),
-        .wb_rst(wb_rst),
-        .ack(reset_ack),
-        .cyc(reset_cyc)
-    );
-
-    // A write to the reset register causes a reset to be issued to the engine
-    always @(posedge ck) begin
-        if (reset_cyc & wb_dbus_we) begin
-            reset_req <= 1;
-        end
-        if (reset_req) begin
-            reset_req <= 0;
-        end
-    end
-
     wire result_ack, result_cyc;
 
     chip_select #(.ADDR(ADDR_RESULT)) 
@@ -351,6 +337,11 @@ module audio_engine (
     assign result_rdt = (result_cyc & !wb_dbus_we) ? { 16'h0, result_rdata } : 0;
 
     //  Read / Write the control reg
+    //
+    //  Provides : 0 control_reg r/w
+    //             1 status_reg  r
+    //             2 capture_reg r
+    //             3 end_of_cmd  w
 
     wire status_ack, status_cyc;
 
@@ -363,22 +354,63 @@ module audio_engine (
         .ack(status_ack),
         .cyc(status_cyc)
     );
-    
+
+    wire [1:0] status_addr;
+    wire status_we;
+    wire status_re;
+
+    assign status_addr = wb_dbus_adr[3:2];
+    assign status_we = status_cyc & wb_dbus_we;
+    assign status_re = status_cyc & !wb_dbus_we;
+ 
     always @(posedge ck) begin
-        if (status_cyc & wb_dbus_we) begin
-            control_reg <= wb_dbus_dat[(CONTROL_W-1):0];
+
+        if (status_we & (status_addr == 0)) begin
+            control_reg_frame <= wb_dbus_dat[FRAME_W+1-1:1];
+            allow_audio_writes <= wb_dbus_dat[0];
         end
+
+        if (status_we & (status_addr == 3)) begin
+            // End of Command request : ie request bank switch
+            bank_done <= 0;
+        end
+
+        if (done & !bank_done) begin
+            // switch banks
+            bank_done <= 1;
+            bank_addr <= !bank_addr; 
+            if (allow_audio_writes) begin
+                reset_req <= 1;
+            end
+        end
+
+        if (reset_req) begin
+            reset_req <= 0;
+        end
+
     end
 
-    wire [31:0] control_rdt;
+    wire [31:0] control_reg;
+    assign control_reg =  { { (32-(FRAME_W+1)){ 1'b0 } }, control_reg_frame, allow_audio_writes };
+
+    function [31:0] sreg_rdt(input [1:0] s_addr);
+
+        case (s_addr)
+            0   :   sreg_rdt = control_reg;
+            1   :   sreg_rdt = { 29'h0, bank_done, error, done };
+            2   :   sreg_rdt = capture;
+            3   :   sreg_rdt = 32'h0;
+        endcase
+
+    endfunction
+
     wire [31:0] status_rdt;
 
-    assign control_rdt = { 30'h0, error, done };
-    assign status_rdt = (status_cyc & !wb_dbus_we) ? (wb_dbus_adr[2] ? capture : control_rdt) : 0;
+    assign status_rdt = status_re ? sreg_rdt(status_addr) : 0;
 
     //  OR the ACK and RST signals together
 
-    assign ack = result_ack | status_ack | coef_ack | input_ack | reset_ack;
+    assign ack = result_ack | status_ack | coef_ack | input_ack;
     assign rdt = result_rdt | status_rdt;
     assign ready = done;
 
@@ -386,9 +418,9 @@ module audio_engine (
 
     assign test[0] = done;
     assign test[1] = reset;
-    assign test[2] = input_ack;
-    assign test[3] = reset_ack;
-    assign test[4] = result_ack;
+    assign test[2] = bank_addr;
+    assign test[3] = bank_done;
+    assign test[4] = error;
     assign test[5] = 0;
     assign test[6] = 0;
     assign test[7] = 0;

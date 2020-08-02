@@ -33,9 +33,13 @@ void __assert_func(const char *file, int line, const char *function, const char 
 #define ADDR_COEF   ((uint32_t*) 0x60000000)
 #define ADDR_RESULT ((uint32_t*) 0x61000000)
 #define ADDR_STAT   ((uint32_t*) 0x62000000)
-#define ADDR_RESET  ((uint32_t*) 0x63000000)
 #define ADDR_AUDIO  ((uint32_t*) 0x64000000)
 #define ADDR_LED    ((uint32_t*) 0x03000000)
+
+#define STAT_CONTROL 0
+#define STAT_STATUS  1
+#define STAT_CAPTURE 2
+#define STAT_END_CMD 3
 
 #define AUDIO_ITEMS 512
 #define CHANNELS    8
@@ -130,18 +134,13 @@ uint32_t opcode(uint8_t opcode, uint16_t offset, uint8_t chan, int32_t gain)
      *
      */
 
-void reset_engine()
+void wait_done()
 {
-    if (verbose) print("reset engine\r\n");
-
-    // Reset the audio engine
-    ADDR_RESET[0] = 0;
-
-    // Wait for done
+    uint64_t start = timer_get();
 
     while (true)
     {
-        uint32_t t = ADDR_STAT[0];
+        uint32_t t = ADDR_STAT[STAT_STATUS];
         if (t & 0x01)
             return;
 
@@ -151,7 +150,24 @@ void reset_engine()
             print_hex(t, 8);
             print("\r\n");
         }
+
+        uint64_t now = timer_get();
+        if ((now - start) > 320000)
+        {
+            print("Timeout error\r\n");
+            ASSERT(0);
+        }
     }
+}
+
+void reset_engine()
+{
+    if (verbose) print("reset engine\r\n");
+
+    // Reset the audio engine
+    ADDR_STAT[STAT_END_CMD] = 0;
+
+    wait_done();
 }
 
 void set_audio(uint32_t addr, uint32_t value)
@@ -209,20 +225,19 @@ void test(const char *text, uint32_t *result, uint32_t expect)
 
 void run(uint32_t expect)
 {
-    uint32_t *status = ADDR_STAT;
-    test("status ", & status[1], expect);
+    test("capture ", & ADDR_STAT[STAT_CAPTURE], expect);
 }
 
 void calc(uint32_t expect)
 {
     uint32_t *result = ADDR_RESULT;
-    test("result ", result, expect);
+    test("result  ", result, expect);
 }
 
 void set_control(uint32_t v)
 {
-    uint32_t *status = ADDR_STAT;
-    *status = v;
+    ADDR_STAT[STAT_CONTROL] = v;
+
     if (1) // verbose)
     {
         print("set control=");
@@ -257,19 +272,25 @@ uint16_t twoc(uint16_t n)
 
 void engine()
 {
-    set_control(1); // allow audio writes
-    // Reset the audio engine
-    uint32_t *reset = ADDR_RESET;
-    *reset = 0;
-
-    print("wait for 'done'\r\n");
-    while (ADDR_STAT[0] & 0x01)
-        ;
-
-    verbose = false;
     uint32_t *coef;
     int gain = 0;
     int op = 0;
+
+    verbose = false;
+
+    set_control(1); // allow audio writes
+
+    // Set the pending bank commands
+    coef = ADDR_COEF;
+    *coef++ = halt();
+    *coef++ = halt();
+    reset_engine();
+
+    // Set the pending bank commands
+    coef = ADDR_COEF;
+    *coef++ = halt();
+    *coef++ = halt();
+    reset_engine();
 
     // prevent compiler warning when all tests turned off
     gain = gain;
@@ -282,8 +303,8 @@ void engine()
 #define TEST_WRITE_OUTPUT
 
 #define ANY_TEST defined(TEST_FETCH_OPCODE) | defined(TEST_MAC) | defined(TEST_FILTER) \
-    | defined(TEST_AUDIO_RAM) | defined(TEST_AUDIO_RAM) | defined(SLEW_TEST) \
-    | defined(PULSE_TEST) | defined(TEST_WRITE_OUTPUT)
+    | defined(TEST_AUDIO_RAM) | defined(TEST_AUDIO_RAM) \
+    | defined(TEST_WRITE_OUTPUT)
 
 //#define SLEW_TEST
 #define BANDPASS

@@ -14,7 +14,7 @@
 extern "C" uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack, _ivector;
 
     /*
-     *
+     *  CSR
      */
 
 inline uint32_t read_mie()
@@ -66,39 +66,34 @@ inline void write_mcause(uint32_t value)
 }
 
     /*
-     *
+     *  Timer
      */
 
-extern "C" void irq_handler(void)__attribute__((interrupt));;
+#define TIMER_MTIME_LO    0
+#define TIMER_MTIME_HI    1
+#define TIMER_MTIMECMP_LO 2
+#define TIMER_MTIMECMP_HI 3
 
-void irq_handler(void)
+void timer_set(uint64_t t)
 {
-#if 0
-    uint32_t hi, lo;
+    TIMER[TIMER_MTIMECMP_LO] = t & 0xffffffff;
+    TIMER[TIMER_MTIMECMP_HI] = t >> 32;
+}
 
-    lo = TIMER[2]; // mtime_lo
-    hi = TIMER[3]; // mtime_hi
-    TIMER[2] = lo + 0x04000000;
-    TIMER[3] = hi;
-#else
+uint64_t timer_get()
+{
+    const uint32_t lo = TIMER[TIMER_MTIME_LO];
+    const uint32_t hi = TIMER[TIMER_MTIME_HI];
 
-    // check for timer interrupt
-    uint32_t cause = read_mcause();
-    if ((cause & 0xff) != 0x07)
-    {
-        return;
-    }
+    return lo + (((uint64_t) hi) << 32);
+}
 
-    static uint64_t s = 0x01000000;
+uint64_t timer_get_cmp()
+{
+    const uint32_t lo = TIMER[TIMER_MTIMECMP_LO];
+    const uint32_t hi = TIMER[TIMER_MTIMECMP_HI];
 
-    s +=  0x01000000;
-    TIMER[2] = s & 0xffffffff;
-    TIMER[3] = s >> 32;
-    //write_mcause(0);
-
-    static int i = 0;
-    LEDS[0] = i++;
-#endif
+    return lo + (((uint64_t) hi) << 32);
 }
 
     /*
@@ -121,6 +116,30 @@ extern "C" void *_sbrk(intptr_t increment)
 
     heap = next;
     return base;
+}
+
+    /*
+     *
+     */
+
+extern "C" void irq_handler(void)__attribute__((interrupt));;
+
+void irq_handler(void)
+{
+    // check for timer interrupt
+    uint32_t cause = read_mcause();
+    if ((cause & 0xff) != 0x07)
+    {
+        return;
+    }
+
+    static uint64_t s = 0x01000000;
+
+    s += 0x01000000;
+    timer_set(s);
+
+    static int i = 0;
+    LEDS[0] = i++;
 }
 
 // banner made with : figlet "SERV Risc-V" | sed 's/\\/\\\\/g'
@@ -202,22 +221,19 @@ int main(void)
     print("\r\n");
 #endif
 
-    uint32_t v, w;
+    uint32_t v;
 
-    TIMER[2] = 0x01000000;
-    TIMER[3] = 0x00000000;
+    timer_set(0x01000000);
 
+    uint64_t t = timer_get();
     print("Timer 0x"); 
-    w = TIMER[0]; // mtime_lo
-    v = TIMER[1]; // mtime_hi
-    print_num(v, 16, 8);
-    print_num(w, 16, 8);
+    print_num(t >> 32, 16, 8);
+    print_num(t & 0xFFFFFFFF, 16, 8);
     print("\r\n"); 
     print("Compare 0x"); 
-    w = TIMER[2]; // mtime_lo
-    v = TIMER[3]; // mtime_hi
-    print_num(v, 16, 8);
-    print_num(w, 16, 8);
+    t = timer_get_cmp();
+    print_num(t >> 32, 16, 8);
+    print_num(t & 0xFFFFFFFF, 16, 8);
     print("\r\n"); 
 
     // This instruction does not work!
@@ -230,11 +246,10 @@ int main(void)
 
     while (true)
     {
-        w = TIMER[0]; // mtime_lo
-        v = TIMER[1]; // mtime_hi
-        print_num(v, 16, 8);
+        t = timer_get();
+        print_num(t >> 32, 16, 8);
         print("_");
-        print_num(w, 16, 8);
+        print_num(t & 0xFFFFFFFF, 16, 8);
         
         print(" E:");
         v = read_mie();
@@ -249,11 +264,10 @@ int main(void)
         print_num(v, 16, 8);
 
         print(" ");
-        w = TIMER[2]; // mtimecmp_lo
-        v = TIMER[3]; // mtimecmp_hi
-        print_num(v, 16, 8);
+        t = timer_get_cmp();
+        print_num(t >> 32, 16, 8);
         print("_");
-        print_num(w, 16, 8);
+        print_num(t & 0xFFFFFFFF, 16, 8);
         print(" ");
         
         // loop
