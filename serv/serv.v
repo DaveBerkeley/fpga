@@ -31,7 +31,7 @@ module top(
 
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
-    localparam UART_ADDR  = 8'h60;
+    localparam UART_ADDR  = 8'h50;
     localparam FLASH_ADDR = 8'h70;
     localparam TIMER_ADDR = 8'hc0;
     // Run code from this location in memory (Flash)

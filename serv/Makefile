@@ -84,8 +84,8 @@ CFLAGS += -Wall -Werror
 CFLAGS += -O1
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
 
-firmware.elf: firmware.c start.s Makefile icebreaker_sections.lds
-	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ start.s firmware.c
+firmware.elf: firmware.c start.s soc.c Makefile icebreaker_sections.lds
+	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ start.s firmware.c soc.c
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@

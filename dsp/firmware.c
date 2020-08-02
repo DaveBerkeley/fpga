@@ -6,41 +6,9 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "../serv/soc.h"
+
 #include "firmware.h"
-
-    /*
-     *  Timer
-     */
-
-#define TIMER_MTIME_LO    0
-#define TIMER_MTIME_HI    1
-#define TIMER_MTIMECMP_LO 2
-#define TIMER_MTIMECMP_HI 3
-
-void timer_set(uint64_t t)
-{
-    TIMER[TIMER_MTIMECMP_LO] = t & 0xffffffff;
-    asm volatile ("" : : : "memory");
-    TIMER[TIMER_MTIMECMP_HI] = t >> 32;
-}
-
-uint64_t timer_get()
-{
-    const uint32_t lo = TIMER[TIMER_MTIME_LO];
-    asm volatile ("" : : : "memory");
-    const uint32_t hi = TIMER[TIMER_MTIME_HI];
-
-    return lo + (((uint64_t) hi) << 32);
-}
-
-uint64_t timer_get_cmp()
-{
-    const uint32_t lo = TIMER[TIMER_MTIMECMP_LO];
-    asm volatile ("" : : : "memory");
-    const uint32_t hi = TIMER[TIMER_MTIMECMP_HI];
-
-    return lo + (((uint64_t) hi) << 32);
-}
 
     /*
      *
@@ -90,28 +58,6 @@ void irq_handler(void)
 // Memory locations defined in the linker config.
 extern "C" uint32_t _stext, _etext, _sdata, _edata, _sheap, _eheap, _sstack, _estack;
 
-    /*
-     *  _sbrk() is used by malloc() to alloc heap memory.
-     */
-
-extern "C" void *_sbrk(intptr_t increment)
-{
-    static void *heap = (void*) & _sheap;
-
-    void *base = heap;
-
-    void *next = & ((char *) base)[increment];
-
-    if (next >= (void*) & _eheap)
-    {
-        errno = ENOMEM;
-        return (void*) -1;
-    }
-
-    heap = next;
-    return base;
-}
-
 // banner made with : figlet "SERV Risc-V" | sed 's/\\/\\\\/g'
 char banner[] = 
 "\r\n"
@@ -124,43 +70,6 @@ char banner[] =
 "The World's smallest RISC-V CPU. Using Bit-serial Architecture.\r\n"
 "\r\n"
 "https://github.com/olofk/serv\r\n\r\n";
-
-    /*
-     *
-     */
-
-void print_num(uint32_t n, uint32_t base, uint32_t digits)
-{
-    if (digits > 1)
-    {
-        print_num(n / base, base, digits-1);
-    }
-
-    n %= base;
-    *uart = (n > 9) ? ('a' + n - 10) : ('0' + n);
-}
-
-void print_dec(uint32_t n)
-{
-    print_num(n, 10, 8);
-}
-
-void print_hex(uint32_t n, uint32_t digits)
-{
-    print_num(n, 16, digits);
-}
-
-    /*
-     *
-     */
-
-void print(const char *text)
-{
-    for (const char *s = text; *s; s++)
-    {
-        *uart = *s;
-    }
-}
 
     /*
      *
@@ -183,11 +92,13 @@ void show_section(const char* text, uint32_t *start, uint32_t *end)
      *
      */
 
+extern void engine();
+
 void main()
 {
     *LEDS = 0;
 
-#if 0
+#if 1
     print(banner);
 
     print("RAM ");

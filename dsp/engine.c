@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include "../serv/soc.h"
+
 #include "firmware.h"
 
     /*
@@ -264,7 +266,7 @@ uint32_t noop()
 
 uint16_t twoc(uint16_t n)
 {
-    return 0xffff & ((~0xabcd) + 1);
+    return 0xffff & ((~n) + 1);
 }
 
     /*
