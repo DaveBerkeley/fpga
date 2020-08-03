@@ -126,6 +126,8 @@ void main()
 
     engine();
 
+    print("Engine started ...\r\n");
+
     while (true)
         ;
 }

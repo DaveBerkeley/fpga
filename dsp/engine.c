@@ -7,6 +7,14 @@
 
 #include "firmware.h"
 
+void delay(int64_t n)
+{
+    for (int64_t i = 0; i < n; i++)
+    {
+        *LEDS += 1;
+    }
+}
+
     /*
      *
      */
@@ -591,7 +599,7 @@ void engine()
     set_audio(6 + (1 * FRAMES), 0xabcd);
     set_audio(7 + (1 * FRAMES), 0x2222);
 
-    for (int addr = 0; addr < 16; addr++)
+    for (int addr = 0; addr < 8; addr++)
     {
         for (int shift = 0; shift < 24; shift++)
         {
@@ -622,7 +630,7 @@ void engine()
             run(out);
 
             uint32_t *result = ADDR_RESULT;
-            uint32_t v = result[addr & 0x01];
+            uint32_t v = result[addr];
             if (verbose)
             {
                 print("output ");
@@ -758,6 +766,8 @@ void engine()
     print("==============\r\n");
 #endif
 
+    set_control(0); // stop audio writes
+
 // test rig from L to R : 2 3 0 1
 
 #define CH0 2
@@ -766,24 +776,82 @@ void engine()
 #define CH3 1
 
 #if !defined(TESTING)
-    *coef++ = opcode(MACZ, 0, CH0, 0x1000);
-    *coef++ = opcode(MAC,  0, CH1, (2 * 0x1000) /3);
-    *coef++ = opcode(MAC,  0, CH2, 0x1000/3);
-    *coef++ = opcode(SAVE, 12, 0, 0);
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 0, CH1, 0x1000);
+    *coef++ = opcode(SAVE, 9, 0, 0);
 
-    *coef++ = opcode(MACZ, 0, CH3, 0x1000);
-    *coef++ = opcode(MAC,  0, CH2, (2 * 0x1000) / 3);
-    *coef++ = opcode(MAC,  0, CH1, 0x1000 / 3);
-    *coef++ = opcode(SAVE, 12, 0, 1);
+    *coef++ = opcode(MACZ, 0, CH1, 0x1000);
+    *coef++ = opcode(SAVE, 9, 0, 1);
 
     *coef++ = halt();
     *coef++ = halt();
 #endif
 
-    set_control(0); // stop audio writes
     reset_engine();
 
     print("running ..\r\n");
+
+    uint32_t shift = 8;
+    uint32_t g1 = 0x1000;
+    uint32_t g2 = 0x1000;
+
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ,  0, CH1, g1);
+    //*coef++ = opcode(MAC,   8, CH2, g2);
+    //*coef++ = opcode(MAC,  16, CH3, g2);
+    *coef++ = opcode(SAVE, shift, 0, 0);
+
+    *coef++ = opcode(MACZ, 0, CH3, g2);
+    //*coef++ = opcode(MAC, 16, CH1, 0x1000);
+    *coef++ = opcode(SAVE, shift, 0, 1);
+
+    *coef++ = halt();
+    *coef++ = halt();
+    reset_engine();
+
+    verbose = false;
+
+    delay(10000);
+
+#if 0
+
+    while (true)
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            coef = ADDR_COEF;
+            *coef++ = opcode(MACZ, 32, CH1, g1);
+            *coef++ = opcode(MAC,  i,  CH3, g2);
+            *coef++ = opcode(SAVE, shift, 0, 0);
+
+            *coef++ = opcode(MACZ, i, CH3, g2);
+            *coef++ = opcode(SAVE, shift, 0, 1);
+
+            *coef++ = halt();
+            *coef++ = halt();
+            reset_engine();
+
+            delay(10000);
+        }
+
+        for (int i = 0; i < 64; i++)
+        {
+            coef = ADDR_COEF;
+            *coef++ = opcode(MACZ, 32, CH1, g1);
+            *coef++ = opcode(SAVE, shift, 0, 0);
+
+            *coef++ = opcode(MACZ, 64-i, CH3, g2);
+            *coef++ = opcode(SAVE, shift, 0, 1);
+
+            *coef++ = halt();
+            *coef++ = halt();
+            reset_engine();
+
+            delay(10000);
+        }
+
+    }
+#endif
 }
 
 //  FIN

@@ -13,7 +13,7 @@ module sequencer(
     input wire [15:0] audio_in,
     output reg error,
     output wire done,
-    output wire [3:0] out_addr,
+    output wire [(CHAN_W-1):0] out_addr,
     output wire [15:0] out_audio,
     output reg out_we,
     output reg [31:0] capture_out
@@ -129,7 +129,7 @@ module sequencer(
             3 : capture_out <= mul_out; // multiplier out
 
             5 : capture_out <= acc_out[31:0]; // accumulator out
-            6 : capture_out <= { 12'h0, out_addr, out_audio };
+            6 : capture_out <= { 13'h0, out_addr, out_audio };
             7 : capture_out <= { 32'h12345678 };
         endcase
     endtask
@@ -269,18 +269,18 @@ module sequencer(
         out_we <= shift_en;
     end
 
-    reg [3:0] out_addr_0;
-    reg [3:0] out_addr_1;
-    reg [3:0] out_addr_2;
+    reg [(CHAN_W-1):0] out_addr_0;
+    reg [(CHAN_W-1):0] out_addr_1;
+    reg [(CHAN_W-1):0] out_addr_2;
 
     always @(posedge ck) begin
-        out_addr_0 <= gain_1[3:0];
+        out_addr_0 <= gain_1[(CHAN_W-1):0];
         out_addr_1 <= out_addr_0;
         out_addr_2 <= out_addr_1;
     end
 
     assign out_audio = out_we ? shift_out : 0;
-    assign out_addr = out_we ? out_addr_2[3:0] : 0;
+    assign out_addr = out_we ? out_addr_2[(CHAN_W-1):0] : 0;
 
     // Sequence ended. Assert 'done'
 

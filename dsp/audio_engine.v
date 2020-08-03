@@ -282,7 +282,7 @@ module audio_engine (
     // Sequencer : main DSP Engine
 
     /* verilator lint_off UNUSED */
-    wire [3:0] out_wr_addr;
+    wire [(CHAN_W-1):0] out_wr_addr;
     /* verilator lint_on UNUSED */
     wire [15:0] out_audio;
     wire out_we;
@@ -307,25 +307,26 @@ module audio_engine (
         .capture_out(capture)
     );
 
-    //  Results RAM
-    //  currently just using a pair of registers, left & right
+    //  Write Results to DP_RAM.
+    //  Also write to the left & right output registers
 
     always @(posedge ck) begin
         if (out_we) begin
-            if (out_wr_addr[0] == 0)
+
+            if (out_wr_addr[0] == 0) begin
                 left <= out_audio;
-            else
+            end
+
+            if (out_wr_addr[0] == 1) begin
                 right <= out_audio;
+            end
+
         end
     end
 
-    wire [15:0] result_rdata;
-    wire [0:0] result_raddr;
+    wire [(CHAN_W-1):0] result_raddr;
 
-    assign result_raddr = wb_dbus_adr[2];
-    assign result_rdata = result_raddr ? right : left;
-
-    // Interface the peripheral to the Risc-V bus
+    assign result_raddr = wb_dbus_adr[(CHAN_W+2-1):2];
 
     wire result_ack, result_cyc;
 
@@ -339,9 +340,21 @@ module audio_engine (
         .cyc(result_cyc)
     );
 
+    wire [15:0] result_out;
+
+    dpram #(.BITS(16), .SIZE(CHANNELS)) 
+    audio_out (.ck(ck),
+        .we(out_we), 
+        .waddr(out_wr_addr), 
+        .wdata(out_audio),
+        .re(!wb_dbus_we), 
+        .raddr(result_raddr), 
+        .rdata(result_out)
+    );
+
     wire [31:0] result_rdt;
 
-    assign result_rdt = (result_cyc & !wb_dbus_we) ? { 16'h0, result_rdata } : 0;
+    assign result_rdt = (result_cyc & !wb_dbus_we) ? { 16'h0, result_out } : 0;
 
     //  Read / Write the control reg
     //
@@ -427,8 +440,8 @@ module audio_engine (
     assign test[1] = reset;
     assign test[2] = bank_addr;
     assign test[3] = bank_done;
-    assign test[4] = i2s_sample;
-    assign test[5] = i2s_en;
+    assign test[4] = sck;
+    assign test[5] = ws;
     assign test[6] = ck;
     assign test[7] = 0;
 
