@@ -282,15 +282,13 @@ void engine()
     verbose = false;
 
     // Clear both COEF banks
-    coef = ADDR_COEF;
-    *coef++ = halt();
-    *coef++ = halt();
-    reset_engine();
-
-    coef = ADDR_COEF;
-    *coef++ = halt();
-    *coef++ = halt();
-    reset_engine();
+    for (int i = 0; i < 2; i++)
+    {
+        coef = ADDR_COEF;
+        *coef++ = halt();
+        *coef++ = halt();
+        reset_engine();
+    }
 
     set_control(1); // allow audio writes
 
@@ -298,18 +296,18 @@ void engine()
     gain = gain;
     op = op;
 
-#define TEST_FETCH_OPCODE
+//#define TEST_FETCH_OPCODE
 //#define TEST_AUDIO_RAM
-#define TEST_MAC
-#define TEST_FILTER
-#define TEST_WRITE_OUTPUT
+//#define TEST_MAC
+//#define TEST_FILTER
+//#define TEST_WRITE_OUTPUT
 
 #define ANY_TEST defined(TEST_FETCH_OPCODE) | defined(TEST_MAC) | defined(TEST_FILTER) \
     | defined(TEST_AUDIO_RAM) | defined(TEST_AUDIO_RAM) \
     | defined(TEST_WRITE_OUTPUT)
 
 //#define SLEW_TEST
-#define BANDPASS
+//#define BANDPASS
 //#define PULSE_TEST
 
 #ifdef TEST_FETCH_OPCODE
@@ -663,6 +661,8 @@ void engine()
 
     coef = ADDR_COEF;
 
+    verbose = true;
+
 #if defined(PULSE_TEST)
     #define TESTING
     gain = 1024;
@@ -758,12 +758,24 @@ void engine()
     print("==============\r\n");
 #endif
 
+// test rig from L to R : 2 3 0 1
+
+#define CH0 2
+#define CH1 3
+#define CH2 0
+#define CH3 1
+
 #if !defined(TESTING)
-    *coef++ = opcode(MACZ, 0, 0, 0x1000);
+    *coef++ = opcode(MACZ, 0, CH0, 0x1000);
+    *coef++ = opcode(MAC,  0, CH1, (2 * 0x1000) /3);
+    *coef++ = opcode(MAC,  0, CH2, 0x1000/3);
     *coef++ = opcode(SAVE, 12, 0, 0);
 
-    *coef++ = opcode(MACZ, 0, 1, 0x1000);
+    *coef++ = opcode(MACZ, 0, CH3, 0x1000);
+    *coef++ = opcode(MAC,  0, CH2, (2 * 0x1000) / 3);
+    *coef++ = opcode(MAC,  0, CH1, 0x1000 / 3);
     *coef++ = opcode(SAVE, 12, 0, 1);
+
     *coef++ = halt();
     *coef++ = halt();
 #endif

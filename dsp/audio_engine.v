@@ -119,14 +119,22 @@ module audio_engine (
     wire [15:0] mic_6;
     wire [15:0] mic_7;
 
+    // Delay the I2S data input sample point from the start of the clock
+    wire i2s_sample;
+    pipe #(.LENGTH(I2S_DIVIDER / 3)) sd_sample (.ck(ck), .rst(wb_rst), .in(i2s_en), .out(i2s_sample));
+
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-        rx_0(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
+    rx_0(.ck(ck), .sample(i2s_sample), 
+            .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-        rx_1(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
+    rx_1(.ck(ck), .sample(i2s_sample), 
+            .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-        rx_2(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
+    rx_2(.ck(ck), .sample(i2s_sample), 
+            .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-        rx_3(.ck(ck), .en(i2s_en), .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
+    rx_3(.ck(ck), .sample(i2s_sample), 
+            .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
 
     //  I2S Output
 
@@ -419,8 +427,8 @@ module audio_engine (
     assign test[1] = reset;
     assign test[2] = bank_addr;
     assign test[3] = bank_done;
-    assign test[4] = error;
-    assign test[5] = reset_req;
+    assign test[4] = i2s_sample;
+    assign test[5] = i2s_en;
     assign test[6] = ck;
     assign test[7] = 0;
 

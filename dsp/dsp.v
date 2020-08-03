@@ -422,10 +422,10 @@ module top(
     
     //  Test pins
 
-    assign P1A1 = test[0];
-    assign P1A2 = test[1];
-    assign P1A3 = test[2];
-    assign P1A4 = test[3];
+    assign P1A1 = sck;
+    assign P1A2 = ws;
+    assign P1A3 = sd_in0;
+    assign P1A4 = sd_in1;
 
     assign P1B1 = test[4];
     assign P1B2 = test[5];
