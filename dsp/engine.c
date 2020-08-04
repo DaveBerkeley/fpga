@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include "../serv/soc.h"
+#include <soc.h>
 
 #include "firmware.h"
 

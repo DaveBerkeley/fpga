@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "../serv/soc.h"
+#include <soc.h>
 
 #include "firmware.h"
 

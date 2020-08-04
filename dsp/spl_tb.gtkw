@@ -1,0 +1,50 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue Aug  4 18:38:06 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Tue Aug  4 18:37:27 2020"
+[dumpfile_size] 2868844
+[savefile] "/home/dave/Desktop/git/fpga/dsp/spl_tb.gtkw"
+[timestart] 3026167000
+[size] 1717 647
+[pos] -1 -1
+*-19.000000 3028662000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[sst_width] 196
+[signals_width] 110
+[sst_expanded] 1
+[sst_vpaned_height] 171
+@28
+tb.ck
+@22
+tb.spl.in[15:0]
+@c00023
+tb.spl.uint[15:0]
+@28
+(0)tb.spl.uint[15:0]
+(1)tb.spl.uint[15:0]
+(2)tb.spl.uint[15:0]
+(3)tb.spl.uint[15:0]
+(4)tb.spl.uint[15:0]
+(5)tb.spl.uint[15:0]
+(6)tb.spl.uint[15:0]
+(7)tb.spl.uint[15:0]
+(8)tb.spl.uint[15:0]
+(9)tb.spl.uint[15:0]
+(10)tb.spl.uint[15:0]
+(11)tb.spl.uint[15:0]
+(12)tb.spl.uint[15:0]
+(13)tb.spl.uint[15:0]
+(14)tb.spl.uint[15:0]
+(15)tb.spl.uint[15:0]
+@1401201
+-group_end
+@22
+tb.spl.out[15:0]
+@28
+tb.spl.decay_en
+tb.spl.peak_en
+tb.spl.rst
+[pattern_trace] 1
+[pattern_trace] 0

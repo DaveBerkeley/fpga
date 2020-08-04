@@ -45,6 +45,7 @@ FILES += accumulator.v
 FILES += multiplier.v
 FILES += twos_complement.v
 FILES += addr_adder.v
+FILES += spl.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
@@ -103,6 +104,7 @@ CFLAGS += -ffreestanding
 CFLAGS += -nostartfiles
 CFLAGS += -Wall -Werror
 CFLAGS += -O1
+CFLAGS += -I $(SOC)
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
 
 firmware.elf: firmware.c engine.c $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections.lds
@@ -111,6 +113,6 @@ firmware.elf: firmware.c engine.c $(SOC)/start.s $(SOC)/soc.c Makefile icebreake
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb
+tb: dsp_tb pipe_tb shifter_tb spl_tb
 
 #	FIN
