@@ -6,6 +6,11 @@ S = https://github.com/olofk/serv
 $(error SERV is not set, see $(S))
 endif
 
+ifndef SOC
+S = https://github.com/DaveBerkeley/serv_soc
+$(error SOC is not set, see $(S))
+endif
+
 CORE=$(SERV)/rtl
 
 PROJ = dsp
@@ -25,8 +30,6 @@ PACKAGE = sg48
 DEVICE = up5k
 
 PIN_DEF = ../icebreaker.pcf
-
-SOC = ../serv
 
 FILES  = pll.v
 FILES += audio_engine.v
