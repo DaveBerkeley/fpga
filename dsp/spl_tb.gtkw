@@ -1,25 +1,25 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Tue Aug  4 18:38:06 2020
+[*] Wed Aug  5 07:50:52 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Tue Aug  4 18:37:27 2020"
-[dumpfile_size] 2868844
+[dumpfile_mtime] "Wed Aug  5 07:50:44 2020"
+[dumpfile_size] 3282682
 [savefile] "/home/dave/Desktop/git/fpga/dsp/spl_tb.gtkw"
-[timestart] 3026167000
-[size] 1717 647
+[timestart] 0
+[size] 1641 656
 [pos] -1 -1
-*-19.000000 3028662000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.000000 317000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [sst_width] 196
-[signals_width] 110
+[signals_width] 142
 [sst_expanded] 1
-[sst_vpaned_height] 171
+[sst_vpaned_height] 172
 @28
 tb.ck
 @22
 tb.spl.in[15:0]
-@c00023
+@c00022
 tb.spl.uint[15:0]
 @28
 (0)tb.spl.uint[15:0]
@@ -38,13 +38,27 @@ tb.spl.uint[15:0]
 (13)tb.spl.uint[15:0]
 (14)tb.spl.uint[15:0]
 (15)tb.spl.uint[15:0]
-@1401201
+@1401200
 -group_end
 @22
 tb.spl.out[15:0]
 @28
 tb.spl.decay_en
 tb.spl.peak_en
-tb.spl.rst
+@200
+-
+@28
+tb.spl_xfer.ck
+tb.spl_xfer.rst
+tb.spl_xfer.run
+tb.spl_xfer.addr[2:0]
+@22
+tb.spl_xfer.data_in[15:0]
+tb.spl_xfer.data_out[15:0]
+@29
+tb.spl_xfer.busy
+@28
+tb.spl_xfer.done
+tb.spl_xfer.we
 [pattern_trace] 1
 [pattern_trace] 0

@@ -24,6 +24,8 @@ module tb ();
 
     integer i;
 
+    //  Test spl module
+
     initial begin
         $display("test spl()");
         @(posedge ck);
@@ -125,6 +127,119 @@ module tb ();
         @(posedge ck);
         $finish;
     end
+
+    //  Test spl_xfer module
+
+    reg run = 0;
+    reg rst_2 = 0;
+    reg [15:0] data_in = 0;
+    wire [15:0] data_out;
+    wire [2:0] addr;
+    wire we;
+    wire done;
+    wire busy;
+
+    spl_xfer #(.WIDTH(16), .ADDR_W(3))
+    spl_xfer (
+        .ck(ck),
+        .rst(rst_2),
+        .run(run),
+        .data_in(data_in),
+        .data_out(data_out),
+        .addr(addr),
+        .we(we),
+        .done(done),
+        .busy(busy)
+    );
+
+    initial begin
+
+        rst_2 <= 1;
+        @(posedge ck);
+        @(posedge ck);
+
+        rst_2 <= 0;
+        @(posedge ck);
+        @(posedge ck);
+        tb_assert(!done);
+        tb_assert(!busy);
+        tb_assert(!we);
+
+        run <= 1;
+        data_in <= 16'h1234;
+        @(posedge ck);
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 0);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'habcd;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 1);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'hcafe;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 2);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'hface;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 3);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'h1111;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 4);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'h2222;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 5);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'h4444;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 6);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'h8888;
+        @(posedge ck);
+        tb_assert(data_out == data_in);
+        tb_assert(addr == 7);
+        tb_assert(!done);
+        tb_assert(busy);
+        tb_assert(we);
+
+        data_in <= 16'h1234;
+        @(posedge ck);
+        tb_assert(data_out == 0);
+        tb_assert(addr == 0);
+        tb_assert(done);
+        tb_assert(!busy);
+        tb_assert(!we);
+
+    end 
 
 endmodule
 
