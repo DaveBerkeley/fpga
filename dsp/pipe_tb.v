@@ -20,11 +20,10 @@ module tb ();
 
     //  Test pipe()
 
-    reg pt_rst = 0;
     reg pt_in = 0;
     wire pt_out;
 
-    pipe #(.LENGTH(4)) pipe_test(.ck(ck), .rst(pt_rst), .in(pt_in), .out(pt_out));
+    pipe #(.LENGTH(4)) pipe_test(.ck(ck), .in(pt_in), .out(pt_out));
 
     integer pt_i;
 
@@ -32,7 +31,6 @@ module tb ();
         $display("test pipe()");
         tb_assert(pt_out == 0);
         @(posedge ck);
-        pt_rst <= 1;
         pt_in <= 1;
         tb_assert(pt_out == 0);
 
@@ -81,7 +79,7 @@ module tb ();
     reg  [15:0] p_in  = 0;
     wire [15:0] p_out;
 
-    pipe #(.LENGTH(3)) pipes [15:0] (.ck(ck), .rst(pt_rst), .in(p_in), .out(p_out));
+    pipe #(.LENGTH(3)) pipes [15:0] (.ck(ck), .in(p_in), .out(p_out));
 
     initial begin
 
@@ -129,7 +127,7 @@ module tb ();
     reg  p1_in  = 0;
     wire p1_out;
 
-    pipe #(.LENGTH(1)) pipe1 (.ck(ck), .rst(pt_rst), .in(p1_in), .out(p1_out));
+    pipe #(.LENGTH(1)) pipe1 (.ck(ck), .in(p1_in), .out(p1_out));
 
     initial begin
 

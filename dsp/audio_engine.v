@@ -73,6 +73,7 @@ module audio_engine (
 
     reg [FRAME_W-1:0] control_reg_frame = 0;
     reg allow_audio_writes = 0;
+    reg spl_reset = 0;
 
     assign frame = allow_audio_writes ? control_reg_frame : frame_counter;
 
@@ -96,6 +97,9 @@ module audio_engine (
         .ws(ws),
         .frame_posn(frame_posn)
     );
+
+    wire start_of_frame;
+    assign start_of_frame = ws & (frame_posn == 0);
 
     //  I2S Input
 
@@ -121,7 +125,7 @@ module audio_engine (
 
     // Delay the I2S data input sample point from the start of the clock
     wire i2s_sample;
-    pipe #(.LENGTH(I2S_DIVIDER / 3)) sd_sample (.ck(ck), .rst(wb_rst), .in(i2s_en), .out(i2s_sample));
+    pipe #(.LENGTH(I2S_DIVIDER / 3)) sd_sample (.ck(ck), .in(i2s_en), .out(i2s_sample));
 
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
     rx_0(.ck(ck), .sample(i2s_sample), 
@@ -151,20 +155,42 @@ module audio_engine (
     );
 
     //  Write Input data to the Audio RAM
+    //
+    //  At start_of_frame the mic_x input from the I2S input
+    //  is written into the audio RAM.
+    //  
+    //  The sequencer is then reset to start the DSP command sequence.
+
+    function [15:0] get_source(input [2:0] chan,
+        input [15:0] s0,
+        input [15:0] s1,
+        input [15:0] s2,
+        input [15:0] s3,
+        input [15:0] s4,
+        input [15:0] s5,
+        input [15:0] s6,
+        input [15:0] s7
+    );
+ 
+        begin
+            case (chan)
+                0   :   get_source = s0;
+                1   :   get_source = s1;
+                2   :   get_source = s2;
+                3   :   get_source = s3;
+                4   :   get_source = s4;
+                5   :   get_source = s5;
+                6   :   get_source = s6;
+                7   :   get_source = s7;
+            endcase
+        end
+
+    endfunction
 
     function [15:0] mic_source(input [(CHAN_W-1):0] chan);
  
         begin
-            case (chan)
-                0   :   mic_source = mic_0;
-                1   :   mic_source = mic_1;
-                2   :   mic_source = mic_2;
-                3   :   mic_source = mic_3;
-                4   :   mic_source = mic_4;
-                5   :   mic_source = mic_5;
-                6   :   mic_source = mic_6;
-                7   :   mic_source = mic_7;
-            endcase
+            mic_source = get_source(chan, mic_0, mic_1, mic_2, mic_3, mic_4, mic_5, mic_6, mic_7);
         end
 
     endfunction
@@ -173,7 +199,7 @@ module audio_engine (
         // Check that the host processor isn't in write mode
         if (!allow_audio_writes) begin
 
-            if (ws && (frame_posn == 0)) begin
+            if (start_of_frame) begin
                 chan_addr <= 0;
                 writing <= 1;
                 frame_counter <= frame_counter - 1;
@@ -281,13 +307,11 @@ module audio_engine (
 
     // Sequencer : main DSP Engine
 
-    /* verilator lint_off UNUSED */
-    wire [(CHAN_W-1):0] out_wr_addr;
-    /* verilator lint_on UNUSED */
-    wire [15:0] out_audio;
-    wire out_we;
+    wire [(CHAN_W-1):0] seq_wr_addr;
+    wire [15:0] seq_audio;
+    wire seq_we;
     wire error;
-    wire done;
+    wire seq_done;
     wire [31:0] capture;
 
     sequencer #(.CHAN_W(CHAN_W), .FRAME_W(FRAME_W), .AUDIO_W(AUDIO_W), .CODE_W(CODE_W))
@@ -299,36 +323,121 @@ module audio_engine (
         .coef_data(coef_rdata), 
         .audio_raddr(audio_raddr),
         .audio_in(audio_rdata),
-        .out_addr(out_wr_addr),
-        .out_audio(out_audio),
-        .out_we(out_we),
-        .done(done),
+        .out_addr(seq_wr_addr),
+        .out_audio(seq_audio),
+        .out_we(seq_we),
+        .done(seq_done),
         .error(error), 
         .capture_out(capture)
     );
 
-    //  Write Results to DP_RAM.
-    //  Also write to the left & right output registers
+    //  write sequencer output to the left & right output registers
+
+    localparam LEFT_CHAN  = 0;
+    localparam RIGHT_CHAN = 1;
 
     always @(posedge ck) begin
-        if (out_we) begin
+        if (seq_we) begin
 
-            if (out_wr_addr[0] == 0) begin
-                left <= out_audio;
+            if (seq_wr_addr[0] == LEFT_CHAN) begin
+                left <= seq_audio;
             end
 
-            if (out_wr_addr[0] == 1) begin
-                right <= out_audio;
+            if (seq_wr_addr[0] == RIGHT_CHAN) begin
+                right <= seq_audio;
             end
 
         end
     end
 
-    wire [(CHAN_W-1):0] result_raddr;
+    //  Measure peak audio level on inputs
 
-    assign result_raddr = wb_dbus_adr[(CHAN_W+2-1):2];
+    wire spl_en;
+    wire decay_en;
+    wire [15:0] spl_0;
+    wire [15:0] spl_1;
+    wire [15:0] spl_2;
+    wire [15:0] spl_3;
+    wire [15:0] spl_4;
+    wire [15:0] spl_5;
+    wire [15:0] spl_6;
+    wire [15:0] spl_7;
+
+    assign spl_en = 1;// mic_x is updated once a frame
+    assign decay_en = frame[3] && start_of_frame;
+
+    spl #(.WIDTH(16))
+        spl0 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_0), .out(spl_0));
+    spl #(.WIDTH(16))
+        spl1 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_1), .out(spl_1));
+    spl #(.WIDTH(16))
+        spl2 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_2), .out(spl_2));
+    spl #(.WIDTH(16))
+        spl3 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_3), .out(spl_3));
+    spl #(.WIDTH(16))
+        spl4 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_4), .out(spl_4));
+    spl #(.WIDTH(16))
+        spl5 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_5), .out(spl_5));
+    spl #(.WIDTH(16))
+        spl6 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_6), .out(spl_6));
+    spl #(.WIDTH(16))
+        spl7 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_7), .out(spl_7));
+ 
+    function [15:0] spl_src(input [(CHAN_W-1):0] chan);
+
+        begin
+            spl_src = get_source(chan, spl_0, spl_1, spl_2, spl_3, spl_4, spl_5, spl_6, spl_7);
+        end
+
+    endfunction
+    
+    wire spl_xfer_run;
+    wire [15:0] spl_xfer_data_in;
+    wire [15:0] spl_xfer_data_out;
+    wire [(CHAN_W-1):0] spl_xfer_addr;
+    wire spl_xfer_we;
+    wire spl_xfer_done;
+    /* verilator lint_off UNUSED */
+    wire spl_xfer_busy;
+    /* verilator lint_on UNUSED */
+
+    assign spl_xfer_run = seq_done;
+    assign spl_xfer_data_in = spl_src(spl_xfer_addr);
+
+    spl_xfer #(.WIDTH(16), .ADDR_W(CHAN_W))
+    spl_xfer (
+        .ck(ck),
+        .rst(reset),
+        .run(spl_xfer_run),
+        .data_in(spl_xfer_data_in),
+        .data_out(spl_xfer_data_out),
+        .addr(spl_xfer_addr),
+        .we(spl_xfer_we),
+        .done(spl_xfer_done),
+        .busy(spl_xfer_busy)
+    );
+
+    wire done;
+    assign done = spl_xfer_done;
+
+    //  Write Results to DP_RAM.
+    //
+    //  First the sequencer output is written to addr 0..7
+    //  Then the spl data is written to addr 8..15
+
+    wire [CHAN_W:0] result_raddr;
+
+    assign result_raddr = wb_dbus_adr[(CHAN_W+2):2];
 
     wire result_ack, result_cyc;
+
+    wire [CHAN_W:0] result_waddr;
+    wire [15:0] result_wdata;
+    wire result_we;
+
+    assign result_we = seq_we | spl_xfer_we;
+    assign result_waddr = spl_xfer_we ? { 1'b1, spl_xfer_addr } : { 1'b0, seq_wr_addr };
+    assign result_wdata = spl_xfer_we ? spl_xfer_data_out : seq_audio;
 
     chip_select #(.ADDR(ADDR_RESULT)) 
     cs_result(
@@ -342,11 +451,11 @@ module audio_engine (
 
     wire [15:0] result_out;
 
-    dpram #(.BITS(16), .SIZE(CHANNELS)) 
+    dpram #(.BITS(16), .SIZE(CHANNELS*2)) 
     audio_out (.ck(ck),
-        .we(out_we), 
-        .waddr(out_wr_addr), 
-        .wdata(out_audio),
+        .we(result_we), 
+        .waddr(result_waddr), 
+        .wdata(result_wdata),
         .re(!wb_dbus_we), 
         .raddr(result_raddr), 
         .rdata(result_out)
@@ -386,8 +495,9 @@ module audio_engine (
     always @(posedge ck) begin
 
         if (status_we & (status_addr == 0)) begin
-            control_reg_frame <= wb_dbus_dat[FRAME_W+1-1:1];
             allow_audio_writes <= wb_dbus_dat[0];
+            spl_reset <= wb_dbus_dat[1];
+            control_reg_frame <= wb_dbus_dat[FRAME_W+2-1:2];
         end
 
         if (status_we & (status_addr == 3)) begin
@@ -438,10 +548,10 @@ module audio_engine (
 
     assign test[0] = done;
     assign test[1] = reset;
-    assign test[2] = bank_addr;
-    assign test[3] = bank_done;
-    assign test[4] = sck;
-    assign test[5] = ws;
+    assign test[2] = seq_done;
+    assign test[3] = spl_xfer_done;
+    assign test[4] = spl_reset;
+    assign test[5] = spl_xfer_we;
     assign test[6] = ck;
     assign test[7] = 0;
 

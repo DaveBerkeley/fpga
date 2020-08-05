@@ -6,9 +6,6 @@
 module pipe
     #(parameter LENGTH=1, parameter INIT=0)
    (input wire ck, 
-    /* verilator lint_off UNUSED */
-    input wire rst, // TODO : remove me 
-    /* verilator lint_on UNUSED */
     input wire in, 
     output wire out
 );

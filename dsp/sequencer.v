@@ -24,13 +24,10 @@ module sequencer(
     parameter AUDIO_W = 9;
     parameter ACC_W = 40;
 
-    // Align the reset to the +ve edge
-    // to ensure the pipeline operates correctly
-    reg reset = 1;
+    // 'reset' is active lo! TODO : Fix This
 
-    always @(posedge ck) begin
-        reset <= !rst;
-    end
+    wire reset;
+    assign reset = !rst;
 
     initial begin 
         coef_addr = 0;
@@ -163,7 +160,7 @@ module sequencer(
             done_req <= 0;
         end
     end
- 
+
     // Calculate the input audio addr to fetch the next sample from
 
     addr_adder#(.FRAME_W(FRAME_W), .CHAN_W(CHAN_W)) 
@@ -220,8 +217,8 @@ module sequencer(
     wire signed [(ACC_W-1):0] acc_out;
 
     wire acc_reset, acc_en;
-    pipe #(.LENGTH(3)) pipe_acc_reset (.ck(ck), .rst(reset), .in(acc_rst_req), .out(acc_reset));
-    pipe #(.LENGTH(3)) pipe_acc_en    (.ck(ck), .rst(reset), .in(acc_en_req), .out(acc_en));
+    pipe #(.LENGTH(3)) pipe_acc_reset (.ck(ck), .in(acc_rst_req), .out(acc_reset));
+    pipe #(.LENGTH(3)) pipe_acc_en    (.ck(ck), .in(acc_en_req), .out(acc_en));
 
     reg acc_add_0 = 0;
     reg acc_add_1 = 0;
@@ -257,7 +254,7 @@ module sequencer(
     wire [15:0] shift_out;
 
     wire shift_en;
-    pipe #(.LENGTH(3)) pipe_shift_en (.ck(ck), .rst(reset), .in(out_en_req), .out(shift_en));
+    pipe #(.LENGTH(3)) pipe_shift_en (.ck(ck), .in(out_en_req), .out(shift_en));
  
     shifter #(.SHIFT_W(FRAME_W)) shift_data (.ck(ck), .en(shift_en), .shift(shift_3), .in(acc_out), .out(shift_out));
 
@@ -284,7 +281,11 @@ module sequencer(
 
     // Sequence ended. Assert 'done'
 
-    pipe #(.LENGTH(3)) pipe_done (.ck(ck), .rst(reset), .in(done_req), .out(done));
+    wire done_delay;
+
+    pipe #(.LENGTH(4)) pipe_done (.ck(ck), .in(done_req), .out(done_delay));
+
+    assign done = done_delay & done_req;
 
 endmodule
 
