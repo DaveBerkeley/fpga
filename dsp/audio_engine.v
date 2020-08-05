@@ -73,7 +73,9 @@ module audio_engine (
 
     reg [FRAME_W-1:0] control_reg_frame = 0;
     reg allow_audio_writes = 0;
-    reg spl_reset = 0;
+    wire spl_reset;
+
+    assign spl_reset = wb_rst;
 
     assign frame = allow_audio_writes ? control_reg_frame : frame_counter;
 
@@ -496,7 +498,6 @@ module audio_engine (
 
         if (status_we & (status_addr == 0)) begin
             allow_audio_writes <= wb_dbus_dat[0];
-            spl_reset <= wb_dbus_dat[1];
             control_reg_frame <= wb_dbus_dat[FRAME_W+2-1:2];
         end
 

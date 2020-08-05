@@ -7,13 +7,12 @@
 
 #include "firmware.h"
 
-void delay(int64_t n)
-{
-    for (int64_t i = 0; i < n; i++)
-    {
-        *LEDS += 1;
-    }
-}
+// test rig from L to R : 2 3 0 1
+
+#define CH0 2
+#define CH1 3
+#define CH2 0
+#define CH3 1
 
     /*
      *
@@ -51,11 +50,11 @@ void __assert_func(const char *file, int line, const char *function, const char 
 #define STAT_CAPTURE 2
 #define STAT_END_CMD 3
 
-#define AUDIO_ITEMS 512
 #define CHANNELS    8
 #define CHAN_W      3
 #define FRAMES      256
 #define OFFSET_W    8
+#define AUDIO_ITEMS (CHANNELS*FRAMES)
 
 enum Opcode {
     HALT    = 0xf,
@@ -183,8 +182,7 @@ void reset_engine()
 
 void set_audio(uint32_t addr, uint32_t value)
 {
-    uint32_t *input = ADDR_AUDIO;
-    input[addr] = value;
+    ADDR_AUDIO[addr] = value;
 
     if (!verbose)
         return;
@@ -281,6 +279,113 @@ uint16_t twoc(uint16_t n)
      *
      */
 
+class AGC
+{
+public:
+    uint32_t get_max()
+    {
+        uint32_t vmax = 0;
+        uint32_t v;
+   
+        vmax = 0;
+        v = ADDR_RESULT[CH1+8];
+        if (v > vmax)
+            vmax = v;
+        v = ADDR_RESULT[CH2+8];
+        if (v > vmax)
+            vmax = v;
+        v = ADDR_RESULT[CH3+8];
+        if (v > vmax)
+            vmax = v;
+
+        return vmax;
+    }
+
+    uint32_t get_top(uint32_t v)
+    {
+        const uint32_t G = 16;
+
+        if (v > 1024)
+            return G;
+
+        return (G * (1024 - v)) / 8;
+    }
+};
+
+void set_gain(uint32_t g, uint32_t shift)
+{
+    uint32_t *coef;
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 0, CH1, g);
+    *coef++ = opcode(SAVE, shift, 0, 0);
+    *coef++ = opcode(MACZ, 0, CH3, g);
+    *coef++ = opcode(SAVE, shift, 0, 1);
+    *coef++ = halt();
+    *coef++ = halt();
+
+    reset_engine();
+}
+
+void test_spl()
+{
+    AGC agc;
+
+    uint32_t *coef;
+    //  Check spl
+    verbose = false;
+    print("Check spl\r\n");
+    set_control(3); // enable audio writes, reset spl
+    coef = ADDR_COEF;
+    *coef++ = opcode(MACZ, 0, CH1, 16);
+    *coef++ = opcode(SAVE, 0, 0, 0);
+    *coef++ = opcode(MACZ, 0, CH3, 16);
+    *coef++ = opcode(SAVE, 0, 0, 1);
+    *coef++ = halt();
+    *coef++ = halt();
+    set_control(0); // enable audio writes
+
+    reset_engine();
+
+    uint32_t vmax = 0;
+    uint32_t vgain = 16;
+
+    while (true)
+    {
+        vmax = agc.get_max();
+
+        uint32_t top = agc.get_top(vmax);
+
+        uint32_t was = vgain;
+        const uint32_t gg = 4;
+
+        if (vgain >= (top*gg))
+        {
+            vgain = top * gg;
+        }
+        else
+        {
+            vgain += 1;
+        }
+
+        if (vgain != was)
+        {
+            print_hex(vmax, 4);
+            print(" ");
+            print_hex(vgain, 4);
+            print(" ");
+            print_hex(top, 4);
+            print("\r\n");
+        }
+
+        set_gain(vgain, 4);
+        timer_wait(1000);
+    }
+}
+
+    /*
+     *
+     */
+
 void engine()
 {
     uint32_t *coef;
@@ -309,10 +414,11 @@ void engine()
 //#define TEST_MAC
 //#define TEST_FILTER
 //#define TEST_WRITE_OUTPUT
+//#define TEST_SPL
 
 #define ANY_TEST defined(TEST_FETCH_OPCODE) | defined(TEST_MAC) | defined(TEST_FILTER) \
     | defined(TEST_AUDIO_RAM) | defined(TEST_AUDIO_RAM) \
-    | defined(TEST_WRITE_OUTPUT)
+    | defined(TEST_WRITE_OUTPUT) | defined(TEST_SPL)
 
 //#define SLEW_TEST
 //#define BANDPASS
@@ -667,6 +773,10 @@ void engine()
     clr_audio(0x7fff);
 #endif 
 
+#ifdef TEST_SPL
+    test_spl();
+#endif
+
     coef = ADDR_COEF;
 
     verbose = true;
@@ -768,19 +878,12 @@ void engine()
 
     set_control(0); // stop audio writes
 
-// test rig from L to R : 2 3 0 1
-
-#define CH0 2
-#define CH1 3
-#define CH2 0
-#define CH3 1
-
 #if !defined(TESTING)
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 0, CH1, 0x1000);
     *coef++ = opcode(SAVE, 9, 0, 0);
 
-    *coef++ = opcode(MACZ, 0, CH1, 0x1000);
+    *coef++ = opcode(MACZ, 0, CH3, 0x1000);
     *coef++ = opcode(SAVE, 9, 0, 1);
 
     *coef++ = halt();
@@ -791,37 +894,21 @@ void engine()
 
     print("running ..\r\n");
 
-    uint32_t shift = 8;
+#if 1
+    verbose = false;
     uint32_t g1 = 0x1000;
     uint32_t g2 = 0x1000;
-
-    coef = ADDR_COEF;
-    *coef++ = opcode(MACZ,  0, CH1, g1);
-    //*coef++ = opcode(MAC,   8, CH2, g2);
-    //*coef++ = opcode(MAC,  16, CH3, g2);
-    *coef++ = opcode(SAVE, shift, 0, 0);
-
-    *coef++ = opcode(MACZ, 0, CH3, g2);
-    //*coef++ = opcode(MAC, 16, CH1, 0x1000);
-    *coef++ = opcode(SAVE, shift, 0, 1);
-
-    *coef++ = halt();
-    *coef++ = halt();
-    reset_engine();
-
-    verbose = false;
-
-    delay(10000);
-
-#if 0
+    uint32_t shift = 8;
 
     while (true)
     {
+        uint64_t delay = 2000000;
+
         for (int i = 0; i < 64; i++)
         {
             coef = ADDR_COEF;
             *coef++ = opcode(MACZ, 32, CH1, g1);
-            *coef++ = opcode(MAC,  i,  CH3, g2);
+            //*coef++ = opcode(MAC,  i,  CH3, g2);
             *coef++ = opcode(SAVE, shift, 0, 0);
 
             *coef++ = opcode(MACZ, i, CH3, g2);
@@ -831,7 +918,7 @@ void engine()
             *coef++ = halt();
             reset_engine();
 
-            delay(10000);
+            timer_wait(delay);
         }
 
         for (int i = 0; i < 64; i++)
@@ -847,7 +934,7 @@ void engine()
             *coef++ = halt();
             reset_engine();
 
-            delay(10000);
+            timer_wait(delay);
         }
 
     }

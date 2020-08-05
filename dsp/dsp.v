@@ -353,12 +353,12 @@ module top(
 
     wire engine_ack;
     wire [31:0] engine_rdt;
-    /* verilator lint_off UNUSED */
     wire sck; // I2S clock
     wire ws;  // I2S word select
     wire sd_out;  // I2S data out
     wire sd_in0;  // I2S data in
     wire sd_in1;  // I2S data in
+    /* verilator lint_off UNUSED */
     wire sd_in2;  // I2S data in
     wire sd_in3;  // I2S data in
     wire [7:0] test;

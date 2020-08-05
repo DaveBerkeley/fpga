@@ -1,0 +1,77 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Aug  5 16:08:42 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Wed Aug  5 16:07:57 2020"
+[dumpfile_size] 1881714
+[savefile] "/home/dave/Desktop/git/fpga/dsp/ram_arb_tb.gtkw"
+[timestart] 0
+[size] 1723 726
+[pos] -1 -1
+*-18.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[sst_width] 196
+[signals_width] 118
+[sst_expanded] 1
+[sst_vpaned_height] 198
+@28
+tb.wb_clk
+tb.wb_rst
+@200
+-
+@28
+tb.a_cyc
+tb.a_we
+@22
+tb.ram_arb.a_sel[3:0]
+tb.a_dat[31:0]
+tb.ram_arb.a_adr[31:0]
+@28
+tb.a_ack
+@22
+tb.a_rdt[31:0]
+@200
+-
+@28
+tb.b_cyc
+tb.b_we
+@22
+tb.ram_arb.b_sel[3:0]
+tb.b_dat[31:0]
+tb.ram_arb.b_adr[31:0]
+@28
+tb.b_ack
+@22
+tb.b_rdt[31:0]
+@200
+-
+@28
+tb.x_cyc
+tb.x_we
+@22
+tb.ram_arb.x_sel[3:0]
+tb.x_dat[31:0]
+tb.ram_arb.x_adr[31:0]
+@28
+tb.x_ack
+@22
+tb.x_rdt[31:0]
+@28
+tb.ram_arb.dev_a
+tb.ram_arb.dev_b
+tb.ram_arb.start
+@200
+-
+@28
+tb.sp_ram.cyc
+tb.sp_ram.we
+@22
+tb.sp_ram.sel[3:0]
+@23
+tb.sp_ram.wdata[31:0]
+@22
+tb.sp_ram.addr[31:0]
+tb.sp_ram.rdata[31:0]
+[pattern_trace] 1
+[pattern_trace] 0
