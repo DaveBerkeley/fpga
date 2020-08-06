@@ -46,7 +46,6 @@ FILES += multiplier.v
 FILES += twos_complement.v
 FILES += addr_adder.v
 FILES += spl.v
-FILES += ram_arb.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
@@ -55,6 +54,7 @@ FILES += $(SOC)/uart.v
 FILES += $(SOC)/spi.v
 FILES += $(SOC)/gpio.v
 FILES += $(SOC)/chip_select.v
+FILES += $(SOC)/ram_arb.v
 FILES += $(SOC)/bus_arb.v
 FILES += $(SOC)/timer.v
 FILES += $(SOC)/irq.v
@@ -114,6 +114,6 @@ firmware.elf: firmware.c engine.c $(SOC)/start.s $(SOC)/soc.c Makefile icebreake
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb spl_tb ram_arb_tb
+tb: dsp_tb pipe_tb shifter_tb spl_tb
 
 #	FIN

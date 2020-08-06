@@ -73,9 +73,11 @@ module audio_engine (
 
     reg [FRAME_W-1:0] control_reg_frame = 0;
     reg allow_audio_writes = 0;
+    /*
     wire spl_reset;
 
     assign spl_reset = wb_rst;
+    */
 
     assign frame = allow_audio_writes ? control_reg_frame : frame_counter;
 
@@ -354,6 +356,7 @@ module audio_engine (
 
     //  Measure peak audio level on inputs
 
+`ifdef XXXXXXXXXXXXXXX
     wire spl_en;
     wire decay_en;
     wire [15:0] spl_0;
@@ -421,6 +424,21 @@ module audio_engine (
 
     wire done;
     assign done = spl_xfer_done;
+`else
+    wire spl_xfer_we;
+    assign spl_xfer_we = 0;
+    wire [CHAN_W-1:0] spl_xfer_addr;
+    assign spl_xfer_addr = 0;
+    wire [15:0] spl_xfer_data_out;
+    assign spl_xfer_data_out = 0;
+
+    wire done;
+    assign done = seq_done;
+    wire spl_xfer_done;
+    assign spl_xfer_done = 0;
+    wire spl_reset;
+    assign spl_reset = 0;
+`endif
 
     //  Write Results to DP_RAM.
     //
