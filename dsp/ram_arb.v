@@ -48,7 +48,7 @@ module ram_arb
         if (a_cyc & !busy) begin
             dev_a <= 1;
         end
-        if (b_cyc & !busy) begin
+        if (b_cyc & !(busy | a_cyc)) begin
             dev_b <= 1;
         end
 
@@ -60,17 +60,16 @@ module ram_arb
         end
     end
 
-
     wire a;
     assign a = (dev_a | start) & a_cyc;
     wire b;
     assign b = (dev_b | (start & !a_cyc)) & b_cyc;
 
     wire ar, aw;
-    assign ar = a & !a_we;
+    assign ar = a_ack & !a_we;
     assign aw = a & a_we;
     wire br, bw;
-    assign br = b & !b_we;
+    assign br = b_ack & !b_we;
     assign bw = b & b_we;
 
     assign x_cyc = start | (dev_a & a_cyc) | (dev_b & b_cyc);

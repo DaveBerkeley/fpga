@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Wed Aug  5 16:08:42 2020
+[*] Thu Aug  6 06:34:50 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Wed Aug  5 16:07:57 2020"
-[dumpfile_size] 1881714
+[dumpfile_mtime] "Thu Aug  6 06:34:43 2020"
+[dumpfile_size] 1906763
 [savefile] "/home/dave/Desktop/git/fpga/dsp/ram_arb_tb.gtkw"
-[timestart] 0
-[size] 1723 726
+[timestart] 13746000
+[size] 1648 725
 [pos] -1 -1
-*-18.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.000000 3764000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [sst_width] 196
 [signals_width] 118
@@ -48,6 +48,7 @@ tb.b_rdt[31:0]
 -
 @28
 tb.x_cyc
+@29
 tb.x_we
 @22
 tb.ram_arb.x_sel[3:0]
@@ -61,17 +62,8 @@ tb.x_rdt[31:0]
 tb.ram_arb.dev_a
 tb.ram_arb.dev_b
 tb.ram_arb.start
-@200
--
-@28
-tb.sp_ram.cyc
-tb.sp_ram.we
 @22
-tb.sp_ram.sel[3:0]
-@23
-tb.sp_ram.wdata[31:0]
-@22
-tb.sp_ram.addr[31:0]
-tb.sp_ram.rdata[31:0]
+tb.rd_a[31:0]
+tb.rd_b[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

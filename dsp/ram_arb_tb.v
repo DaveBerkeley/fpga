@@ -101,6 +101,9 @@ module tb ();
         .x_rdt(x_rdt)
     );
 
+    reg [31:0] rd_a = 0;
+    reg [31:0] rd_b = 0;
+
     always @(posedge wb_clk) begin
         if (a_ack) begin
             a_cyc <= 0;
@@ -108,6 +111,9 @@ module tb ();
             a_dat <= 32'hZ;
             a_we <= 0;
             a_sel <= 0;
+            if (!a_we) begin
+                rd_a <= a_rdt;
+            end
         end
         if (b_ack) begin
             b_cyc <= 0;
@@ -115,6 +121,9 @@ module tb ();
             b_dat <= 32'hZ;
             b_we <= 0;
             b_sel <= 0;
+            if (!b_we) begin
+                rd_b <= b_rdt;
+            end
         end
     end
 
@@ -130,11 +139,12 @@ module tb ();
 
     endtask
 
-    task read_a(input [31:0] addr, input [3:0] sel);
+    task read_a(input [31:0] addr);
 
         begin
             a_adr <= addr;
             a_we <= 0;
+            a_sel = 0;
             a_cyc <= 1;
         end
 
@@ -152,12 +162,51 @@ module tb ();
 
     endtask
 
-    task read_b(input [31:0] addr, input [3:0] sel);
+    task read_b(input [31:0] addr);
 
         begin
             b_adr <= addr;
             b_we <= 0;
+            b_sel = 0;
             b_cyc <= 1;
+        end
+
+    endtask
+
+    // check for *_rdt errors
+    always @(posedge wb_clk) begin
+        if (!a_cyc) begin
+            tb_assert(a_rdt == 0);
+        end
+        if (!b_cyc) begin
+            tb_assert(b_rdt == 0);
+        end
+    end
+
+    task check_a(input [31:0] addr, input [31:0] data);
+
+        begin
+            
+            read_a(addr);
+            @(posedge wb_clk);
+            wait(!a_cyc);
+            @(posedge wb_clk);
+            tb_assert(rd_a == data);
+
+        end
+
+    endtask
+
+    task check_b(input [31:0] addr, input [31:0] data);
+
+        begin
+            
+            read_b(addr);
+            @(posedge wb_clk);
+            wait(!b_cyc);
+            @(posedge wb_clk);
+            tb_assert(rd_b == data);
+
         end
 
     endtask
@@ -170,14 +219,14 @@ module tb ();
         wb_rst <= 0;
         @(posedge wb_clk);
 
-        write_a(32'h8000_0020, 32'h1234_3456, 4'b1111);
+        write_a(32'h0000_0020, 32'h1234_3456, 4'b1111);
         @(posedge wb_clk);
 
         // check that x_bus sees the signals
         tb_assert(x_cyc);
         tb_assert(x_we);
         tb_assert(x_sel == 4'b1111);
-        tb_assert(x_adr == 32'h8000_0020);
+        tb_assert(x_adr == 32'h0000_0020);
         tb_assert(x_dat == 32'h1234_3456);
 
         // wait for a_ack : x_bus still valid
@@ -185,7 +234,7 @@ module tb ();
         tb_assert(x_cyc);
         tb_assert(x_we);
         tb_assert(x_sel == 4'b1111);
-        tb_assert(x_adr == 32'h8000_0020);
+        tb_assert(x_adr == 32'h0000_0020);
         tb_assert(x_dat == 32'h1234_3456);
 
         wait(!a_cyc);
@@ -197,13 +246,13 @@ module tb ();
         tb_assert(x_adr == 0);
         tb_assert(x_dat == 0);
 
-        write_b(32'h8000_0010, 32'hcafe_cafe, 4'b1111);
+        write_b(32'h0000_0010, 32'hcafe_cafe, 4'b1111);
         @(posedge wb_clk);
         // check that x_bus sees the signals
         tb_assert(x_cyc);
         tb_assert(x_we);
         tb_assert(x_sel == 4'b1111);
-        tb_assert(x_adr == 32'h8000_0010);
+        tb_assert(x_adr == 32'h0000_0010);
         tb_assert(x_dat == 32'hcafe_cafe);
 
         // wait for b_ack : x_bus still valid
@@ -211,7 +260,7 @@ module tb ();
         tb_assert(x_cyc);
         tb_assert(x_we);
         tb_assert(x_sel == 4'b1111);
-        tb_assert(x_adr == 32'h8000_0010);
+        tb_assert(x_adr == 32'h0000_0010);
         tb_assert(x_dat == 32'hcafe_cafe);
 
         wait(!b_cyc);
@@ -223,11 +272,212 @@ module tb ();
         tb_assert(x_adr == 0);
         tb_assert(x_dat == 0);
 
-        read_a(32'h8000_0020, 4'b1111);
+        check_a(32'h0000_0020, 32'h1234_3456);
+        check_a(32'h0000_0010, 32'hcafe_cafe);
+        check_b(32'h0000_0020, 32'h1234_3456);
+        check_b(32'h0000_0010, 32'hcafe_cafe);
+
+        // Test overlapping writes
+
+        // A before B
+        write_a(32'h0000_0028, 32'h08080808, 4'b1111);
+        @(posedge wb_clk);
+        write_b(32'h0000_0024, 32'h04040404, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        check_a(32'h0000_0028, 32'h08080808);
+        check_a(32'h0000_0024, 32'h04040404);
+
+        // A and B together
+        write_a(32'h0000_0000, 32'h12341234, 4'b1111);
+        write_b(32'h0000_0004, 32'habcdabcd, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        check_a(32'h0000_0000, 32'h12341234);
+        check_a(32'h0000_0004, 32'habcdabcd);
+
+        // A and B writing to the same location
+        write_a(32'h0000_0008, 32'h12341234, 4'b1111);
+        write_b(32'h0000_0008, 32'habcdabcd, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        // A goes first, B overwrites data
+        check_a(32'h0000_0008, 32'habcdabcd);
+
+        // B before A
+        write_b(32'h0000_0004, 32'hcafecafe, 4'b1111);
+        @(posedge wb_clk);
+        write_a(32'h0000_0000, 32'h34563456, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        check_a(32'h0000_0004, 32'hcafecafe);
+        check_a(32'h0000_0000, 32'h34563456);
+
+        // B 2 before A
+        write_b(32'h0000_0004, 32'h23232323, 4'b1111);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        write_a(32'h0000_0000, 32'h56565656, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        check_a(32'h0000_0004, 32'h23232323);
+        check_b(32'h0000_0000, 32'h56565656);
+
+        // A 2 before B
+        write_a(32'h0000_0004, 32'h78787878, 4'b1111);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        write_b(32'h0000_0000, 32'h12341234, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        check_a(32'h0000_0004, 32'h78787878);
+        check_b(32'h0000_0000, 32'h12341234);
+
+        // Now try staged reads
+        
+        // Add some test data
+        write_a(32'h0000_0000, 32'h00000000, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        write_a(32'h0000_0004, 32'h11111111, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        write_a(32'h0000_0008, 32'h22222222, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        write_a(32'h0000_000c, 32'h44444444, 4'b1111);
+        @(posedge wb_clk);
         wait(!a_cyc);
         @(posedge wb_clk);
 
+        // A 2 before B
+        read_a(32'h0000_0000);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        read_b(32'h0000_0004);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_a == 32'h00000000);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_b == 32'h11111111);
 
+        // A 1 before B
+        read_a(32'h0000_0004);
+        @(posedge wb_clk);
+        read_b(32'h0000_0000);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_a == 32'h11111111);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_b == 32'h00000000);
+
+        // A and B together
+        read_a(32'h0000_0000);
+        read_b(32'h0000_0004);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_a == 32'h00000000);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_b == 32'h11111111);
+
+        // B 1 before A
+        read_b(32'h0000_0008);
+        @(posedge wb_clk);
+        read_a(32'h0000_000c);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_a == 32'h44444444);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_b == 32'h22222222);
+
+        // B 2 before A
+        read_b(32'h0000_0000);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        read_a(32'h0000_0004);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_a == 32'h11111111);
+        wait(!b_cyc);
+        @(posedge wb_clk);
+        tb_assert(rd_b == 32'h00000000);
+
+        // Now try mixing reads and writes
+
+        // read A 2 before write B
+        read_a(32'h0000_0008);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        write_b(32'h0000_0010, 32'h44444444, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        tb_assert(rd_a == 32'h22222222);
+
+        // read A 1 before write B
+        read_a(32'h0000_0008);
+        @(posedge wb_clk);
+        write_b(32'h0000_0010, 32'h44444444, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        tb_assert(rd_a == 32'h22222222);
+        @(posedge wb_clk);
+        check_a(32'h0000_0010, 32'h44444444);
+
+        // read A same time as write B
+        read_a(32'h0000_0008);
+        write_b(32'h0000_0014, 32'hfaceface, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        tb_assert(rd_a == 32'h22222222);
+        @(posedge wb_clk);
+        check_a(32'h0000_0014, 32'hfaceface);
+
+        // read A same time as write B, same address
+        // A gets priority, so read should happen first.
+        // a second read will get the updated value.
+        read_a(32'h0000_0014);
+        write_b(32'h0000_0014, 32'h12345678, 4'b1111);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        tb_assert(rd_a == 32'hfaceface);
+        @(posedge wb_clk);
+        check_a(32'h0000_0014, 32'h12345678);
+
+        // write B 1 before read A, same address
+        write_b(32'h0000_0010, 32'h12345678, 4'b1111);
+        @(posedge wb_clk);
+        read_a(32'h0000_0010);
+        @(posedge wb_clk);
+        wait(!a_cyc);
+        wait(!b_cyc);
+        tb_assert(rd_a == 32'h12345678);
+
+        $display("done");
     end
 
 endmodule

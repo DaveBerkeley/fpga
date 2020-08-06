@@ -114,6 +114,6 @@ firmware.elf: firmware.c engine.c $(SOC)/start.s $(SOC)/soc.c Makefile icebreake
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb spl_tb ram_arb
+tb: dsp_tb pipe_tb shifter_tb spl_tb ram_arb_tb
 
 #	FIN
