@@ -74,6 +74,15 @@ module tb ();
 
     endtask
 
+    task read_wait;
+
+        begin
+            wait(dbus_ack);
+            wait(!dbus_ack);
+        end
+
+    endtask
+
     task write(input [31:0] addr, input [31:0] data);
 
         begin
@@ -82,6 +91,29 @@ module tb ();
             wb_dbus_adr <= addr;
             wb_dbus_we <= 1;
             wb_dbus_dat <= data;
+
+        end
+
+    endtask
+
+    task write_wait;
+
+        begin
+            wait(dbus_ack);
+            wait(!dbus_ack);
+            @(posedge wb_clk);
+        end
+
+    endtask
+
+    task xfer_pulse();
+
+        begin
+
+            xfer_block <= 1;
+            @(posedge wb_clk);
+            xfer_block <= 0;
+            @(posedge wb_clk);
 
         end
 
@@ -118,10 +150,19 @@ module tb ();
     // Check rdt is never non-zero outside ack
     always @(posedge wb_clk) begin
         if (!dbus_ack) begin
-            //tb_assert(dbus_rdt == 0);
+            tb_assert(dbus_rdt == 0);
         end
     end
+
+    reg auto_poll = 0;
     
+    always @(posedge wb_clk) begin
+        if (auto_poll) begin
+            if (block_done) begin
+                xfer_pulse();
+            end
+        end
+    end
 
     assign xfer_dat = xfer_re ? (16'h1111 << xfer_adr) : 0;
 
@@ -130,7 +171,7 @@ module tb ();
     localparam REG_CYCLES = 32'h65000008;
     localparam REG_BLOCKS = 32'h6500000c;
     localparam REG_START  = 32'h65000010;
-    localparam REG_END    = 32'h65000014;
+    localparam REG_STOP   = 32'h65000014;
     localparam REG_STATUS = 32'h65000018;
 
     integer i;
@@ -144,29 +185,20 @@ module tb ();
         @(posedge wb_clk);
 
         write(REG_ADDR,   32'h00010000);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write_wait();
 
         write(REG_STEPS,  32'h00001000);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write_wait();
 
         write(REG_CYCLES, 32'h00000010);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write_wait();
 
         write(REG_BLOCKS, 32'h8);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write_wait();
 
         write(REG_START,  32'h1);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write_wait();
+
         @(posedge wb_clk);
 
         for (i = 0; i < 16; i = i + 1) begin
@@ -175,27 +207,20 @@ module tb ();
             @(posedge wb_clk);
             @(posedge wb_clk);
 
-            xfer_block <= 1;
-            @(posedge wb_clk);
-            xfer_block <= 0;
-            @(posedge wb_clk);
-
+            xfer_pulse();
             wait(block_done);
 
         end
 
-        write(REG_END,  32'h1);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write(REG_STOP,  32'h1);
+        write_wait();
+
         @(posedge wb_clk);
         @(posedge wb_clk);
         @(posedge wb_clk);
 
         write(REG_START,  32'h1);
-        @(posedge wb_clk);
-        wait(!wb_dbus_cyc);
-        @(posedge wb_clk);
+        write_wait();
 
         for (i = 0; i < 16; i = i + 1) begin
 
@@ -203,11 +228,7 @@ module tb ();
             @(posedge wb_clk);
             @(posedge wb_clk);
 
-            xfer_block <= 1;
-            @(posedge wb_clk);
-            xfer_block <= 0;
-            @(posedge wb_clk);
-
+            xfer_pulse();
             wait(block_done);
 
         end
@@ -217,33 +238,105 @@ module tb ();
         // Test reading the control registers
 
         read(REG_ADDR);
-        wait(dbus_ack);
-        wait(!dbus_ack);
+        read_wait();
         tb_assert(rd_data == 32'h10000);
         @(posedge wb_clk);
 
         read(REG_STEPS);
-        wait(dbus_ack);
-        wait(!dbus_ack);
+        read_wait();
         tb_assert(rd_data == 32'h1000);
         @(posedge wb_clk);
 
         read(REG_CYCLES);
-        wait(dbus_ack);
-        wait(!dbus_ack);
+        read_wait();
         tb_assert(rd_data == 32'h10);
         @(posedge wb_clk);
 
         read(REG_BLOCKS);
-        wait(dbus_ack);
-        wait(!dbus_ack);
+        read_wait();
         tb_assert(rd_data == 32'h8);
         @(posedge wb_clk);
 
         read(REG_STATUS);
-        wait(dbus_ack);
-        wait(!dbus_ack);
+        read_wait();
         tb_assert(rd_data == 32'h3); // block/xfer done
+        @(posedge wb_clk);
+
+        //  check that xfer_block is ignored if xfer_done
+        tb_assert(xfer_done);
+        tb_assert(block_done);
+
+        xfer_pulse();
+
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        tb_assert(xfer_done);
+        tb_assert(block_done);
+        
+        //  Start another cycle
+        write(REG_STOP,  32'h1);
+        write_wait();
+
+        // Check the status reg
+        read(REG_STATUS);
+        read_wait();
+        tb_assert(rd_data == 32'h0); 
+        @(posedge wb_clk);
+
+        write(REG_START,  32'h1);
+        write_wait();
+        @(posedge wb_clk);
+
+        for (i = 0; i < 16; i = i + 1) begin
+
+            @(posedge wb_clk);
+            @(posedge wb_clk);
+            @(posedge wb_clk);
+
+            xfer_pulse();
+            wait(block_done);
+
+        end
+
+        // poll for xfer_done
+
+        read(REG_STATUS);
+        read_wait();
+        //tb_assert(rd_data == 32'h3); // block/xfer done
+        @(posedge wb_clk);
+
+        // Check that reset works
+        wb_rst <= 1;
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+        wb_rst <= 0;
+        @(posedge wb_clk);
+        @(posedge wb_clk);
+
+        read(REG_ADDR);
+        read_wait();
+        tb_assert(rd_data == 32'h0);
+        @(posedge wb_clk);
+
+        read(REG_STEPS);
+        read_wait();
+        tb_assert(rd_data == 32'h0);
+        @(posedge wb_clk);
+
+        read(REG_CYCLES);
+        read_wait();
+        tb_assert(rd_data == 32'h0);
+        @(posedge wb_clk);
+
+        read(REG_BLOCKS);
+        read_wait();
+        tb_assert(rd_data == 32'h0);
+        @(posedge wb_clk);
+
+        read(REG_STATUS);
+        read_wait();
+        tb_assert(rd_data == 32'h0);
         @(posedge wb_clk);
 
         $display("done");

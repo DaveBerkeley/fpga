@@ -45,7 +45,8 @@ FILES += accumulator.v
 FILES += multiplier.v
 FILES += twos_complement.v
 FILES += addr_adder.v
-FILES += spl.v
+#FILES += spl.v
+FILES += dma.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
@@ -90,7 +91,7 @@ prog_firmware: firmware.bin
 all: prog_firmware prog
 
 pll.v : Makefile
-	icepll -o 32 -m -f $@
+	icepll -o 30 -m -f $@
 	# Change *_CORE macro to *_PAD macro
 	# See SiliconBlue ICE TM Technology Library Version 2.3
 	sed -i 's/SB_PLL40_CORE/SB_PLL40_PAD/g' $@
@@ -108,12 +109,16 @@ CFLAGS += -O1
 CFLAGS += -I $(SOC)
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
 
-firmware.elf: firmware.c engine.c $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections.lds
-	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ $(SOC)/start.s $(SOC)/soc.c firmware.c engine.c
+CFILES  = firmware.c
+CFILES += engine.c
+CFILES += dma.c
+
+firmware.elf: $(CFILES) $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections.lds
+	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ $(SOC)/start.s $(SOC)/soc.c $(CFILES)
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb spl_tb
+tb: dsp_tb pipe_tb shifter_tb dma_tb
 
 #	FIN

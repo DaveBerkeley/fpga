@@ -55,7 +55,7 @@ module top(
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam RUN_SLOW = 0;        // Divide the CPU clock down for development
+    localparam RUN_SLOW = 1;        // Divide the CPU clock down for development
     localparam RESET_LOOP = 0;      // Repeatedly reset the CPU
     localparam TIMER_ENABLED = 1;   // Hardware Timer
 
@@ -129,29 +129,76 @@ module top(
     //  RAM
 
     wire ram_ack;
-    wire ram_cyc;
     wire [31:0] ram_rdt;
+
+    //  DMA from DSP, connected to port B of ram_arb
+
+    wire dma_cyc;
+    wire dma_we;
+    wire [3:0] dma_sel;
+    wire [31:0] dma_adr;
+    wire [31:0] dma_dat;
+    wire dma_ack;
+    wire [31:0] dma_rdt;
+
+    // Output Port X of ram_arb
+    wire x_cyc;
+    wire x_we;
+    wire [3:0] x_sel;
+    wire [31:0] x_adr;
+    wire [31:0] x_dat;
+    wire [31:0] x_rdt;
+    wire x_ack;
+
+    ram_arb # (.WIDTH(32))
+    ram_arb
+    (
+        .wb_clk(wb_clk),
+        .a_cyc(wb_dbus_cyc),
+        .a_we(wb_dbus_we),
+        .a_sel(wb_dbus_sel),
+        .a_adr(wb_dbus_adr),
+        .a_dat(wb_dbus_dat),
+        .a_ack(ram_ack),
+        .a_rdt(ram_rdt),
+        .b_cyc(dma_cyc),
+        .b_we(dma_we),
+        .b_sel(dma_sel),
+        .b_adr(dma_adr),
+        .b_dat(dma_dat),
+        .b_ack(dma_ack),
+        .b_rdt(dma_rdt),
+        .x_cyc(x_cyc),
+        .x_we(x_we),
+        .x_sel(x_sel),
+        .x_adr(x_adr),
+        .x_dat(x_dat),
+        .x_ack(x_ack),
+        .x_rdt(x_rdt)
+    );
+
+    //  Dbus RAM
+    
+    wire ram_cs;
 
     chip_select #(.ADDR(0), .WIDTH(8))
     cs_ram (
         .wb_ck(wb_clk),
-        .addr(wb_dbus_adr[31:24]),
-        .wb_cyc(wb_dbus_cyc),
+        .addr(x_adr[31:24]),
+        .wb_cyc(x_cyc),
         .wb_rst(wb_rst),
-        .ack(ram_ack),
-        .cyc(ram_cyc)
+        .ack(x_ack),
+        .cyc(ram_cs)
     );
   
-    //  Dbus RAM
-
     sp_ram ram (
         .ck(wb_clk),
-        .addr(wb_dbus_adr),
-        .cyc(ram_cyc),
-        .we(wb_dbus_we),
-        .sel(wb_dbus_sel),
-        .wdata(wb_dbus_dat),
-        .rdata(ram_rdt)
+        .addr(x_adr),
+        .cyc(ram_cs),
+        .we(x_we),
+        .sel(x_sel),
+        .wdata(x_dat),
+        .rdata(x_rdt)
     );
 
     //  Risc-V 64-bit Timer
@@ -202,7 +249,8 @@ module top(
 
     wire baud_en;
 
-    uart_baud #(.DIVIDE(RUN_SLOW ? 17 : 278)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
+    localparam BAUD = (RUN_SLOW ? 2000000 : 30000000) / 115200;
+    uart_baud #(.DIVIDE(BAUD)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
 
     wire [31:0] uart_rdt;
     wire uart_ack;
@@ -210,7 +258,7 @@ module top(
     /* verilator lint_off UNUSED */
     wire tx_busy;
     /* verilator lint_on UNUSED */
-    
+ 
     uart #(.ADDR(UART_ADDR), .AWIDTH(8))
     uart_io (
         // cpu bus
@@ -384,6 +432,15 @@ module top(
         .wb_dbus_dat(wb_dbus_dat),
         .ack(engine_ack),
         .rdt(engine_rdt),
+
+        .dma_cyc(dma_cyc),
+        .dma_we(dma_we),
+        .dma_sel(dma_sel),
+        .dma_adr(dma_adr),
+        .dma_dat(dma_dat),
+        .dma_ack(dma_ack),
+        .dma_rdt(dma_rdt),
+        
         .sck(sck),
         .ws(ws),
         .sd_out(sd_out),

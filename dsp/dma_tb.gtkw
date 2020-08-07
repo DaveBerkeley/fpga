@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Aug  7 11:23:53 2020
+[*] Fri Aug  7 14:25:04 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Aug  7 11:23:06 2020"
-[dumpfile_size] 221448
+[dumpfile_mtime] "Fri Aug  7 14:24:53 2020"
+[dumpfile_size] 260982
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dma_tb.gtkw"
-[timestart] 79666000
+[timestart] 78473000
 [size] 1697 751
 [pos] -1 -1
-*-19.000000 80514000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.000000 81860000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.dma.
 [sst_width] 196
@@ -24,9 +24,8 @@ tb.dma.wb_dbus_cyc
 @22
 tb.dma.wb_dbus_adr[31:0]
 tb.dma.wb_dbus_dat[31:0]
-@29
-tb.dma.dbus_ack
 @28
+tb.dma.dbus_ack
 tb.dma.xfer_block
 @22
 tb.dma.dbus_rdt[31:0]
@@ -58,6 +57,7 @@ tb.dma.xfer_re
 tb.dma.block_en
 tb.dma.block_done
 tb.dma.running
+@29
 tb.dma.xfer_done
 @22
 tb.dma.run_addr[23:0]

@@ -7,6 +7,8 @@
 
 module audio_engine (
     input wire ck,
+
+    // CPU bus interface
     input wire wb_rst,
     input wire wb_dbus_cyc,
     output wire ack,
@@ -18,6 +20,18 @@ module audio_engine (
     input wire [31:0] wb_dbus_dat,
     output wire [31:0] rdt,
 
+    // DMA interface
+    output reg dma_cyc,
+    output reg dma_we,
+    output reg [3:0] dma_sel,
+    output reg [31:0] dma_adr,
+    output reg [31:0] dma_dat,
+    /* verilator lint_off UNUSED */
+    input wire dma_ack,
+    input wire [31:0] dma_rdt,
+    /* verilator lint_on UNUSED */
+
+    //  I2S interface
     output wire sck,    // I2S clock
     output wire ws,     // I2S word select
     output wire sd_out, // I2S data out
@@ -25,6 +39,7 @@ module audio_engine (
     input wire sd_in1,  // I2S data in
     input wire sd_in2,  // I2S data in
     input wire sd_in3,  // I2S data in
+
     output wire ready,
     output wire [7:0] test
 );
@@ -35,6 +50,7 @@ module audio_engine (
     localparam ADDR_RESULT = ADDR + 8'h01;
     localparam ADDR_STATUS = ADDR + 8'h02;
     localparam ADDR_INPUT  = ADDR + 8'h04;
+    localparam ADDR_DMA    = ADDR + 8'h05;
 
     localparam CHANNELS = 8;
     localparam FRAMES = 256;
@@ -47,6 +63,16 @@ module audio_engine (
     localparam FRAME_W = $clog2(FRAMES);
     localparam AUDIO = CHANNELS * FRAMES;
     localparam AUDIO_W = $clog2(AUDIO);
+
+    // TODO : Add DMA interface code
+
+    initial begin
+        //dma_cyc = 0;
+        //dma_we = 0;
+        //dma_sel = 0;
+        //dma_adr = 0;
+        //dma_dat = 0;
+    end
 
     // Send an extended reset pulse to the audio engine
 
@@ -356,7 +382,7 @@ module audio_engine (
 
     //  Measure peak audio level on inputs
 
-`ifdef XXXXXXXXXXXXXXX
+`ifdef XXXXXXXXXXXXX
     wire spl_en;
     wire decay_en;
     wire [15:0] spl_0;
@@ -400,9 +426,9 @@ module audio_engine (
     wire [15:0] spl_xfer_data_in;
     wire [15:0] spl_xfer_data_out;
     wire [(CHAN_W-1):0] spl_xfer_addr;
+    /* verilator lint_off UNUSED */
     wire spl_xfer_we;
     wire spl_xfer_done;
-    /* verilator lint_off UNUSED */
     wire spl_xfer_busy;
     /* verilator lint_on UNUSED */
 
@@ -434,10 +460,12 @@ module audio_engine (
 
     wire done;
     assign done = seq_done;
+    /* verilator lint_off UNUSED */
     wire spl_xfer_done;
     assign spl_xfer_done = 0;
     wire spl_reset;
     assign spl_reset = 0;
+    /* verilator lint_on UNUSED */
 `endif
 
     //  Write Results to DP_RAM.
@@ -557,22 +585,82 @@ module audio_engine (
 
     assign status_rdt = status_re ? sreg_rdt(status_addr) : 0;
 
+    //  DMA Test
+
+    /* verilator lint_off UNUSED */
+    wire [31:0] dma_dbus_rdt;
+    wire dma_dbus_ack;
+    wire block_done;
+    wire xfer_done;
+    wire [15:0] xfer_adr;
+    wire xfer_re;
+
+    function [15:0] testx(input [15:0] addr);
+
+        begin
+            case (addr)
+                0 : testx = 16'h1511;
+                1 : testx = 16'h2522;
+                2 : testx = 16'h3533;
+                3 : testx = 16'h4544;
+                4 : testx = 16'h5555;
+                5 : testx = 16'h6566;
+                6 : testx = 16'h7577;
+                7 : testx = 16'h8588;
+            endcase
+        end
+
+    endfunction
+
+
+    wire [15:0] xfer_dat;
+    assign xfer_dat = testx(xfer_adr); // TODO : fetch mic_x
+    /* verilator lint_on UNUSED */
+
+    wire xfer_block;
+    assign xfer_block = start_of_frame; 
+
+    dma #(.ADDR(ADDR_DMA), .WIDTH(8))
+    dma (
+        .wb_clk(ck),
+        .wb_rst(wb_rst),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .dbus_rdt(dma_dbus_rdt),
+        .dbus_ack(dma_dbus_ack),
+        .xfer_block(xfer_block),
+        .block_done(block_done),
+        .xfer_done(xfer_done),
+        .xfer_adr(xfer_adr),
+        .xfer_re(xfer_re),
+        .xfer_dat(xfer_dat),
+        .dma_cyc(dma_cyc),
+        .dma_we(dma_we),
+        .dma_sel(dma_sel),
+        .dma_adr(dma_adr),
+        .dma_dat(dma_dat),
+        .dma_ack(dma_ack),
+        .dma_rdt(dma_rdt)
+    );
+    
     //  OR the ACK and RST signals together
 
-    assign ack = result_ack | status_ack | coef_ack | input_ack;
-    assign rdt = result_rdt | status_rdt;
+    assign ack = result_ack | status_ack | dma_dbus_ack | coef_ack | input_ack;
+    assign rdt = result_rdt | status_rdt | dma_dbus_rdt;
     assign ready = done;
 
     //  Test output
 
-    assign test[0] = done;
-    assign test[1] = reset;
-    assign test[2] = seq_done;
-    assign test[3] = spl_xfer_done;
-    assign test[4] = spl_reset;
-    assign test[5] = spl_xfer_we;
-    assign test[6] = ck;
-    assign test[7] = 0;
+    assign test[0] = block_done;
+    assign test[1] = xfer_done;
+    assign test[2] = dma_dbus_ack;
+    assign test[3] = start_of_frame;
+    assign test[4] = dma_cyc;
+    assign test[5] = dma_ack;
+    assign test[6] = dma_sel[0];
+    assign test[7] = dma_sel[2];
 
 endmodule
 

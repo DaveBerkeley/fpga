@@ -1,11 +1,13 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <assert.h>
 
 #include <soc.h>
 
 #include "firmware.h"
+#include "dma.h"
 
 // test rig from L to R : 2 3 0 1
 
@@ -43,6 +45,11 @@ void __assert_func(const char *file, int line, const char *function, const char 
 #define ADDR_RESULT ((uint32_t*) 0x61000000)
 #define ADDR_STAT   ((uint32_t*) 0x62000000)
 #define ADDR_AUDIO  ((uint32_t*) 0x64000000)
+
+    /*
+     *
+     */
+
 #define ADDR_LED    ((uint32_t*) 0x03000000)
 
 #define STAT_CONTROL 0
@@ -779,7 +786,7 @@ void engine()
 
     coef = ADDR_COEF;
 
-    verbose = true;
+    verbose = false;
 
 #if defined(PULSE_TEST)
     #define TESTING
@@ -892,9 +899,7 @@ void engine()
 
     reset_engine();
 
-    print("running ..\r\n");
-
-#if 1
+#if 0
     verbose = false;
     uint32_t g1 = 0x1000;
     uint32_t g2 = 0x1000;
@@ -939,6 +944,51 @@ void engine()
 
     }
 #endif
+
+    print("running ..\r\n");
+
+#if 1
+#define CHANS 4
+#define SAMPLES 8
+
+    static uint16_t dma[CHANS][SAMPLES*2]; // 4-chans, 16-samples
+
+    dma_set_addr(dma);
+    dma_set_step(sizeof(uint16_t) * SAMPLES);
+    dma_set_cycles(SAMPLES);
+    dma_set_blocks(CHANS);
+
+    memset(dma, 0xff, sizeof(dma));
+
+    dma_start();;
+
+    while (true)
+    {
+        // wait for xfer done
+        while (!(dma_get_status() & DMA_STATUS_XFER_DONE))
+            ;
+
+        for (uint32_t addr = 0; addr < sizeof(dma); addr += 1)
+        {
+            uint8_t *s = (uint8_t *) dma;
+            if (!(addr % 16))
+            {
+                print("\r\n");
+                print_hex((uint32_t) & s[addr], 8);
+                print(" ");
+            }
+            print_hex(s[addr], 2);
+            print(" ");
+        }
+
+        print("\r\n");
+
+
+        dma_stop();;
+        dma_start();
+    }
+#endif
+    
 }
 
 //  FIN

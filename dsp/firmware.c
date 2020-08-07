@@ -67,7 +67,7 @@ char banner[] =
 "  ___) | |___|  _ < \\ V /   |  _ <| \\__ \\ (_|_____\\ V /  \r\n"
 " |____/|_____|_| \\_\\ \\_/    |_| \\_\\_|___/\\___|     \\_/   \r\n"
 "\r\n"
-"The World's smallest RISC-V CPU. Using Bit-serial Architecture.\r\n"
+"The World's smallest RISC-V CPU. Bit-serial Architecture.\r\n"
 "\r\n"
 "https://github.com/olofk/serv\r\n\r\n";
 
@@ -98,7 +98,7 @@ void main()
 {
     *LEDS = 0;
 
-#if 1
+#if 0
     print(banner);
 
     print("RAM ");
@@ -128,6 +128,4 @@ void main()
 
     print("Engine started ...\r\n");
 
-    while (true)
-        ;
 }

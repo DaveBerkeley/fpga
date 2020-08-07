@@ -36,17 +36,6 @@ module dma
     /* verilator lint_on UNUSED */
 );
 
-    initial begin
-        dma_cyc = 0;
-        dma_we = 0;
-        dma_sel = 0;
-        dma_adr = 0;
-
-        block_done = 0;
-        xfer_done = 0;
-        xfer_adr = 0;
-    end
-
     wire cs_ack, cs_cyc;
 
     wire [7:0] cs_adr = wb_dbus_adr[31:24];
@@ -80,7 +69,7 @@ module dma
 
     always @(posedge wb_clk) begin
 
-        if (writing) begin
+        if (writing & !wb_rst) begin
 
             case (io_addr)
                 0   :   reg_addr   <= wb_dbus_dat[23:0];
@@ -90,6 +79,16 @@ module dma
                 4   :   reg_start_req <= 1;
                 5   :   reg_start_req <= 0;
             endcase
+
+        end
+
+        if (wb_rst) begin
+
+            reg_addr <= 0;
+            reg_step <= 0;
+            reg_cycles <= 0;
+            reg_blocks <= 0;
+            reg_start_req <= 0;
 
         end
 
@@ -128,12 +127,32 @@ module dma
 
     always @(posedge wb_clk) begin
 
+        if (wb_rst) begin
+
+            block <= 0;
+            addr <= 0;
+            running <= 0;
+            run_addr <= 0;
+            run_cycles <= 0;
+
+            dma_cyc <= 0;
+            dma_we <= 0;
+            dma_sel <= 0;
+            dma_adr <= 0;
+
+            block_done <= 0;
+            xfer_done <= 0;
+            xfer_adr <= 0;
+
+        end
+
         if (reg_start_req & !running) begin
             // sequence start
             run_addr <= reg_addr;
             run_cycles <= reg_cycles;
             running <= 1;
             block_done <= 0;
+            block <= reg_blocks;
             xfer_done <= 0;
             running <= 1;
         end
@@ -144,7 +163,7 @@ module dma
             running <= 0;
         end
 
-        if (reg_start_req & xfer_block) begin
+        if (reg_start_req & xfer_block & !xfer_done) begin
             // block start
             block_en <= 1;
             addr <= run_addr;
