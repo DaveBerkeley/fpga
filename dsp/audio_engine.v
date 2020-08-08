@@ -44,6 +44,8 @@ module audio_engine (
     output wire [7:0] test
 );
 
+    parameter CK_HZ = 32000000;
+
     parameter                ADDR = 8'h60;
 
     localparam ADDR_COEF   = ADDR;
@@ -63,16 +65,6 @@ module audio_engine (
     localparam FRAME_W = $clog2(FRAMES);
     localparam AUDIO = CHANNELS * FRAMES;
     localparam AUDIO_W = $clog2(AUDIO);
-
-    // TODO : Add DMA interface code
-
-    initial begin
-        //dma_cyc = 0;
-        //dma_we = 0;
-        //dma_sel = 0;
-        //dma_adr = 0;
-        //dma_dat = 0;
-    end
 
     // Send an extended reset pulse to the audio engine
 
@@ -99,11 +91,6 @@ module audio_engine (
 
     reg [FRAME_W-1:0] control_reg_frame = 0;
     reg allow_audio_writes = 0;
-    /*
-    wire spl_reset;
-
-    assign spl_reset = wb_rst;
-    */
 
     assign frame = allow_audio_writes ? control_reg_frame : frame_counter;
 
@@ -111,9 +98,9 @@ module audio_engine (
 
     wire i2s_clock;
 
-    // Divide the 32Mhz clock down to 2MHz
+    // Divide the 24Mhz clock down to 2MHz
     // Gives 2e6/64 = 31250 Hz frame rate
-    localparam I2S_DIVIDER = 16;
+    localparam I2S_DIVIDER = 12;
     localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
     assign i2s_clock = ck;
 
@@ -597,6 +584,7 @@ module audio_engine (
     wire [XFER_ADDR_W-1:0] xfer_adr;
     /* verilator lint_off UNUSED */
     wire xfer_re;
+    wire xfer_match;
     /* verilator lint_on UNUSED */
 
     wire [15:0] xfer_dat;
@@ -618,6 +606,7 @@ module audio_engine (
         .xfer_block(xfer_block),
         .block_done(block_done),
         .xfer_done(xfer_done),
+        .xfer_match(xfer_match),
         .xfer_adr(xfer_adr),
         .xfer_re(xfer_re),
         .xfer_dat(xfer_dat),
@@ -640,12 +629,12 @@ module audio_engine (
 
     assign test[0] = block_done;
     assign test[1] = xfer_done;
-    assign test[2] = dma_dbus_ack;
+    assign test[2] = xfer_match;
     assign test[3] = start_of_frame;
     assign test[4] = dma_cyc;
     assign test[5] = dma_ack;
-    assign test[6] = dma_sel[0];
-    assign test[7] = dma_sel[2];
+    assign test[6] = 0;
+    assign test[7] = 0;
 
 endmodule
 

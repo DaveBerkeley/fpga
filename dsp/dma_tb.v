@@ -107,7 +107,7 @@ module tb ();
 
     endtask
 
-    task xfer_pulse();
+    task xfer_pulse;
 
         begin
 
@@ -174,6 +174,7 @@ module tb ();
     localparam REG_START  = 32'h65000010;
     localparam REG_STOP   = 32'h65000014;
     localparam REG_STATUS = 32'h65000018;
+    localparam REG_MATCH  = 32'h6500001c;
 
     integer i;
 
@@ -186,6 +187,9 @@ module tb ();
         @(posedge wb_clk);
 
         write(REG_ADDR,   32'h00010000);
+        write_wait();
+
+        write(REG_MATCH,  32'h00010010);
         write_wait();
 
         write(REG_STEPS,  32'h00001000);
@@ -246,7 +250,7 @@ module tb ();
 
         read(REG_STATUS);
         read_wait();
-        tb_assert(rd_data == 32'h3); // block/xfer done
+        tb_assert(rd_data == 32'h7); // block/xfer done
         @(posedge wb_clk);
 
         //  check that xfer_block is ignored if xfer_done
@@ -323,6 +327,9 @@ module tb ();
         // Try shorter chan/cycles
 
         write(REG_ADDR,   32'h00010000);
+        write_wait();
+
+        write(REG_MATCH,  32'h00010004);
         write_wait();
 
         write(REG_STEPS,  32'h00001000);

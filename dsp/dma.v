@@ -18,6 +18,7 @@ module dma
     input wire xfer_block,
     output reg block_done,
     output reg xfer_done,
+    output reg xfer_match,
 
     // Src data
     output reg [XFER_ADDR_W-1:0] xfer_adr,
@@ -53,6 +54,7 @@ module dma
     );
 
     reg [23:0] reg_addr = 0;
+    reg [23:0] reg_match = 0;
     reg [15:0] reg_step = 0;
     reg [15:0] reg_cycles = 0;
     reg [15:0] reg_blocks = 0;
@@ -80,6 +82,7 @@ module dma
                 3   :   reg_blocks <= wb_dbus_dat[15:0];
                 4   :   reg_start_req <= 1;
                 5   :   reg_start_req <= 0;
+                7   :   reg_match  <= wb_dbus_dat[23:0];
             endcase
 
         end
@@ -87,6 +90,7 @@ module dma
         if (wb_rst) begin
 
             reg_addr <= 0;
+            reg_match <= 0;
             reg_step <= 0;
             reg_cycles <= 0;
             reg_blocks <= 0;
@@ -97,7 +101,7 @@ module dma
     end
 
     wire [31:0] status;
-    assign status = { 30'h0, block_done, xfer_done };
+    assign status = { 29'h0, xfer_match, block_done, xfer_done };
 
     function [31:0] rdt(input [2:0] rd_addr);
 
@@ -109,6 +113,7 @@ module dma
                 2   :   rdt = { 16'h0, reg_cycles };
                 3   :   rdt = { 16'h0, reg_blocks };
                 6   :   rdt = status;
+                7   :   rdt = { 8'h0, reg_match };
             endcase
 
         end
@@ -144,6 +149,7 @@ module dma
 
             block_done <= 0;
             xfer_done <= 0;
+            xfer_match <= 0;
             xfer_adr <= 0;
 
         end
@@ -152,6 +158,7 @@ module dma
             // stop the engine
             block_done <= 0;
             xfer_done <= 0;
+            xfer_match <= 0;
             running <= 0;
         end
 
@@ -163,6 +170,7 @@ module dma
             block_done <= 0;
             block <= reg_blocks;
             xfer_done <= 0;
+            xfer_match <= 0;
             running <= 1;
         end
 
@@ -206,6 +214,10 @@ module dma
             block_en <= 0;
             run_cycles <= run_cycles - 1;
             run_addr <= run_addr + 2;
+        end
+
+        if ((addr == reg_match) & (reg_match != 0)) begin
+            xfer_match <= 1;
         end
 
         if (running & (block == 0) & !(block_en | xfer_block)) begin

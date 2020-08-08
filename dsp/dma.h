@@ -5,6 +5,7 @@
 uint32_t dma_get_status();
 
 void dma_set_addr(void *addr);
+void dma_set_match(void *addr);
 void dma_set_step(uint32_t v);
 void dma_set_cycles(uint32_t v);
 void dma_set_blocks(uint32_t v);

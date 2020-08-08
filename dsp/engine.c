@@ -58,16 +58,14 @@ void __assert_func(const char *file, int line, const char *function, const char 
      */
 
 // Base address of peripheral blocks
-#define ADDR_COEF   ((uint32_t*) 0x60000000)
-#define ADDR_RESULT ((uint32_t*) 0x61000000)
-#define ADDR_STAT   ((uint32_t*) 0x62000000)
-#define ADDR_AUDIO  ((uint32_t*) 0x64000000)
+#define ADDR_COEF   ((uint32_t volatile*) 0x60000000)
+#define ADDR_RESULT ((uint32_t volatile*) 0x61000000)
+#define ADDR_STAT   ((uint32_t volatile*) 0x62000000)
+#define ADDR_AUDIO  ((uint32_t volatile*) 0x64000000)
 
     /*
      *
      */
-
-#define ADDR_LED    ((uint32_t*) 0x03000000)
 
 #define STAT_CONTROL 0
 #define STAT_STATUS  1
@@ -236,7 +234,7 @@ void clr_audio(uint32_t value)
     verbose = old;
 }
 
-void test(const char *text, uint32_t *result, uint32_t expect)
+void test(const char *text, uint32_t volatile *result, uint32_t expect)
 {
     reset_engine();
 
@@ -263,7 +261,7 @@ void run(uint32_t expect)
 
 void calc(uint32_t expect)
 {
-    uint32_t *result = ADDR_RESULT;
+    uint32_t volatile *result = ADDR_RESULT;
     test("result  ", result, expect);
 }
 
@@ -338,7 +336,7 @@ public:
 
 void set_gain(uint32_t g, uint32_t shift)
 {
-    uint32_t *coef;
+    uint32_t volatile *coef;
     coef = ADDR_COEF;
     *coef++ = opcode(MACZ, 0, CH1, g);
     *coef++ = opcode(SAVE, shift, 0, 0);
@@ -354,7 +352,7 @@ void test_spl()
 {
     AGC agc;
 
-    uint32_t *coef;
+    uint32_t volatile *coef;
     //  Check spl
     verbose = false;
     print("Check spl\r\n");
@@ -412,7 +410,7 @@ void test_spl()
 
 void engine()
 {
-    uint32_t *coef;
+    uint32_t volatile *coef;
     int gain = 0;
     int op = 0;
 
@@ -433,11 +431,11 @@ void engine()
     gain = gain;
     op = op;
 
-//#define TEST_FETCH_OPCODE
+#define TEST_FETCH_OPCODE
 //#define TEST_AUDIO_RAM
-//#define TEST_MAC
-//#define TEST_FILTER
-//#define TEST_WRITE_OUTPUT
+#define TEST_MAC
+#define TEST_FILTER
+#define TEST_WRITE_OUTPUT
 //#define TEST_SPL
 
 #define ANY_TEST defined(TEST_FETCH_OPCODE) | defined(TEST_MAC) | defined(TEST_FILTER) \
@@ -759,7 +757,7 @@ void engine()
             uint32_t out = (addr << 16) + audio;
             run(out);
 
-            uint32_t *result = ADDR_RESULT;
+            uint32_t volatile *result = ADDR_RESULT;
             uint32_t v = result[addr];
             if (verbose)
             {
@@ -966,11 +964,12 @@ void engine()
 
 #if 1
 #define CHANS 4
-#define SAMPLES 8
+#define SAMPLES 256
 
     static uint16_t dma[CHANS][SAMPLES];
 
     dma_set_addr(dma);
+    dma_set_match(& dma[0][(SAMPLES/2)-1]);
     dma_set_step(sizeof(uint16_t) * SAMPLES);
     dma_set_cycles(SAMPLES);
     dma_set_blocks(CHANS);
@@ -985,8 +984,8 @@ void engine()
         while (!(dma_get_status() & DMA_STATUS_XFER_DONE))
             ;
 
-        mem_dump(dma, sizeof(dma));
-        print("\r\n");
+        //mem_dump(dma, sizeof(dma));
+        //print("\r\n");
 
         dma_stop();;
         dma_start();

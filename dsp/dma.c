@@ -3,7 +3,7 @@
 
 #include "dma.h"
 
-#define ADDR_DMA    ((uint32_t*) 0x65000000)
+#define ADDR_DMA    ((uint32_t volatile*) 0x65000000)
 
 #define DMA_ADDR    0
 #define DMA_STEP    1
@@ -12,6 +12,7 @@
 #define DMA_START   4
 #define DMA_STOP    5
 #define DMA_STATUS  6
+#define DMA_MATCH   7
 
 uint32_t dma_get_status()
 {
@@ -21,6 +22,11 @@ uint32_t dma_get_status()
 void dma_set_addr(void *addr)
 {
     ADDR_DMA[DMA_ADDR] = (uint32_t) addr;
+}
+
+void dma_set_match(void *addr)
+{
+    ADDR_DMA[DMA_MATCH] = (uint32_t) addr;
 }
 
 void dma_set_step(uint32_t v)
