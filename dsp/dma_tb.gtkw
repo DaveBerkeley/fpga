@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Aug  8 07:41:49 2020
+[*] Sat Aug  8 10:11:35 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Sat Aug  8 07:41:40 2020"
-[dumpfile_size] 268880
+[dumpfile_mtime] "Sat Aug  8 10:10:58 2020"
+[dumpfile_size] 274146
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dma_tb.gtkw"
-[timestart] 0
-[size] 1697 774
+[timestart] 111670000
+[size] 1697 832
 [pos] -1 -1
-*-26.213655 117726000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.213655 118180000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.dma.
 [sst_width] 196
 [signals_width] 169
 [sst_expanded] 1
-[sst_vpaned_height] 213
+[sst_vpaned_height] 233
 @28
 tb.wb_clk
 tb.wb_rst
@@ -79,6 +79,8 @@ tb.dma.dma_sel[3:0]
 @28
 tb.dma.dma_we
 tb.dma.reg_start_req
+@29
+tb.dma.reg_repeat
 @22
 tb.dma.reg_addr[23:0]
 tb.dma.reg_match[23:0]
@@ -95,8 +97,6 @@ tb.dma.block_en
 tb.dma.block_done
 tb.dma.running
 tb.dma.xfer_done
-@29
-tb.dma.half_done
 @22
 tb.dma.run_addr[23:0]
 tb.dma.run_cycles[15:0]

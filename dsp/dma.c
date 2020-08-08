@@ -48,9 +48,9 @@ void dma_set_blocks(uint32_t v)
      *
      */
 
-void dma_start()
+void dma_start(bool repeat)
 {
-    ADDR_DMA[DMA_START] = 1;
+    ADDR_DMA[DMA_START] = repeat;
 }
 
 void dma_stop()

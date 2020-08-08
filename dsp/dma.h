@@ -10,7 +10,7 @@ void dma_set_step(uint32_t v);
 void dma_set_cycles(uint32_t v);
 void dma_set_blocks(uint32_t v);
 
-void dma_start();
+void dma_start(bool repeat);
 void dma_stop();
 
 //  FIN

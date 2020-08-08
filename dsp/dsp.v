@@ -46,6 +46,8 @@ module top(
     output wire P1B9
 );
 
+    parameter PLL_HZ = 30000000;
+
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
     localparam UART_ADDR  = 8'h50;
@@ -58,6 +60,8 @@ module top(
     localparam RUN_SLOW = 0;        // Divide the CPU clock down for development
     localparam RESET_LOOP = 0;      // Repeatedly reset the CPU
     localparam TIMER_ENABLED = 1;   // Hardware Timer
+
+    localparam CK_HZ = RUN_SLOW ? (PLL_HZ/16) : PLL_HZ;
 
     // PLL
     wire pll_ck;
@@ -249,7 +253,7 @@ module top(
 
     wire baud_en;
 
-    localparam BAUD = (RUN_SLOW ? 2000000 : 30000000) / 115200;
+    localparam BAUD = CK_HZ / 115200;
     uart_baud #(.DIVIDE(BAUD)) uart_clock (.ck(wb_clk), .baud_ck(baud_en));
 
     wire [31:0] uart_rdt;
@@ -421,8 +425,10 @@ module top(
     /* verilator lint_off UNUSED */
     wire audio_ready;
     /* verilator lint_off UNUSED */
+    wire dma_done;
+    wire dma_match;
 
-    audio_engine audio_engine(
+    audio_engine #(.CK_HZ(CK_HZ)) audio_engine(
         .ck(ck),
         .wb_rst(wb_rst),
         .wb_dbus_cyc(wb_dbus_cyc),
@@ -440,6 +446,8 @@ module top(
         .dma_dat(dma_dat),
         .dma_ack(dma_ack),
         .dma_rdt(dma_rdt),
+        .dma_done(dma_done),
+        .dma_match(dma_match),
         
         .sck(sck),
         .ws(ws),
@@ -457,12 +465,12 @@ module top(
     wire irq_ack;
     wire [31:0] irq_rdt;
 
-    wire [1:0] irqs;
-    assign irqs = { 1'b0, timer_irq };
+    wire [2:0] irqs;
+    assign irqs = { dma_match, dma_done, timer_irq };
 
     wire soc_irq;
 
-    irq_reg #(.ADDR(IRQ_ADDR), .ADDR_W(8), .REG_WIDTH(2))
+    irq_reg #(.ADDR(IRQ_ADDR), .ADDR_W(8), .REG_WIDTH(3))
     irq_reg 
     (
         .wb_clk(wb_clk),

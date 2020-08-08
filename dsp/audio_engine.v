@@ -26,10 +26,11 @@ module audio_engine (
     output reg [3:0] dma_sel,
     output reg [31:0] dma_adr,
     output reg [31:0] dma_dat,
-    /* verilator lint_off UNUSED */
     input wire dma_ack,
     input wire [31:0] dma_rdt,
-    /* verilator lint_on UNUSED */
+    // DMA status
+    output wire dma_done,
+    output wire dma_match,
 
     //  I2S interface
     output wire sck,    // I2S clock
@@ -98,15 +99,15 @@ module audio_engine (
 
     wire i2s_clock;
 
-    // Divide the 24Mhz clock down to 2MHz
+    // Divide the clock down to 2MHz
     // Gives 2e6/64 = 31250 Hz frame rate
-    localparam I2S_DIVIDER = 12;
+    localparam I2S_DIVIDER = 15;
     localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
     assign i2s_clock = ck;
 
     wire [5:0] frame_posn;
     wire i2s_en;
-    i2s_clock #(.DIVIDER(I2S_DIVIDER)) 
+    i2s_clock #(.DIVIDER(I2S_DIVIDER), .BITS(I2S_BIT_WIDTH)) 
     i2s_out(
         .ck(i2s_clock),
         .en(i2s_en),
@@ -584,8 +585,11 @@ module audio_engine (
     wire [XFER_ADDR_W-1:0] xfer_adr;
     /* verilator lint_off UNUSED */
     wire xfer_re;
-    wire xfer_match;
     /* verilator lint_on UNUSED */
+    wire xfer_match;
+
+    assign dma_done = xfer_done;
+    assign dma_match = xfer_match;
 
     wire [15:0] xfer_dat;
     assign xfer_dat = mic_source(xfer_adr);

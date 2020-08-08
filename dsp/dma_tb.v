@@ -201,7 +201,7 @@ module tb ();
         write(REG_BLOCKS, 32'h8);
         write_wait();
 
-        write(REG_START,  32'h1);
+        write(REG_START,  32'h0);
         write_wait();
 
         @(posedge wb_clk);
@@ -218,7 +218,7 @@ module tb ();
         @(posedge wb_clk);
         @(posedge wb_clk);
 
-        write(REG_START,  32'h1);
+        write(REG_START,  32'h0);
         write_wait();
 
         while (!xfer_done) begin
@@ -275,7 +275,7 @@ module tb ();
         tb_assert(rd_data == 32'h0); 
         @(posedge wb_clk);
 
-        write(REG_START,  32'h1);
+        write(REG_START,  32'h0);
         write_wait();
         @(posedge wb_clk);
 
@@ -341,6 +341,7 @@ module tb ();
         write(REG_BLOCKS, 32'h4);
         write_wait();
 
+        // Start in repeat mode
         write(REG_START,  32'h1);
         write_wait();
 
@@ -349,8 +350,21 @@ module tb ();
             wait(block_done);
         end
 
-        write(REG_STOP,  32'h1);
-        write_wait();
+        // wait for repeat
+        wait(!xfer_done);
+
+        // turn repeat off        
+        write(REG_START,  32'h0);
+
+        // Do another block
+        while (!xfer_done) begin
+            xfer_pulse();
+            wait(block_done);
+        end
+
+
+        //write(REG_STOP,  32'h1);
+        //write_wait();
 
         $display("done");
 

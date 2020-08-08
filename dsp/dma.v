@@ -59,6 +59,7 @@ module dma
     reg [15:0] reg_cycles = 0;
     reg [15:0] reg_blocks = 0;
     reg reg_start_req = 0;
+    reg reg_repeat = 0;
 
     reg [15:0] block = 0;
     reg [23:0] addr = 0;
@@ -80,11 +81,19 @@ module dma
                 1   :   reg_step   <= wb_dbus_dat[15:0];
                 2   :   reg_cycles <= wb_dbus_dat[15:0];
                 3   :   reg_blocks <= wb_dbus_dat[15:0];
-                4   :   reg_start_req <= 1;
-                5   :   reg_start_req <= 0;
+                4   :   begin   reg_start_req <= 1; reg_repeat <= wb_dbus_dat[0]; end
+                5   :   begin   reg_start_req <= 0; reg_repeat <= 0;              end
                 7   :   reg_match  <= wb_dbus_dat[23:0];
             endcase
 
+        end
+
+        if (xfer_done & reg_repeat & running) begin
+            if (reg_start_req) begin
+                reg_start_req <= 0;
+            end else begin
+                reg_start_req <= 1;
+            end
         end
 
         if (wb_rst) begin
@@ -95,10 +104,13 @@ module dma
             reg_cycles <= 0;
             reg_blocks <= 0;
             reg_start_req <= 0;
+            reg_repeat <= 0;
 
         end
 
     end
+
+    //  Read the control registers
 
     wire [31:0] status;
     assign status = { 29'h0, xfer_match, block_done, xfer_done };
@@ -125,6 +137,8 @@ module dma
     assign dbus_rdt = reading ? rdt(io_addr) : 0;
 
     assign dbus_ack = cs_ack;
+
+    //  State machine logic
 
     reg block_en = 0;
 
