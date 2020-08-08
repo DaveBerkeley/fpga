@@ -16,6 +16,23 @@
 #define CH2 0
 #define CH3 1
 
+void mem_dump(void *v, uint32_t bytes)
+{
+    uint8_t *s = (uint8_t *) v;
+
+    for (uint32_t addr = 0; addr < bytes; addr += 1)
+    {
+        if (!(addr % 16))
+        {
+            print("\r\n");
+            print_hex((uint32_t) & s[addr], 8);
+            print(" ");
+        }
+        print_hex(s[addr], 2);
+        print(" ");
+    }
+}
+
     /*
      *
      */
@@ -951,7 +968,7 @@ void engine()
 #define CHANS 4
 #define SAMPLES 8
 
-    static uint16_t dma[CHANS][SAMPLES*2]; // 4-chans, 16-samples
+    static uint16_t dma[CHANS][SAMPLES];
 
     dma_set_addr(dma);
     dma_set_step(sizeof(uint16_t) * SAMPLES);
@@ -968,21 +985,8 @@ void engine()
         while (!(dma_get_status() & DMA_STATUS_XFER_DONE))
             ;
 
-        for (uint32_t addr = 0; addr < sizeof(dma); addr += 1)
-        {
-            uint8_t *s = (uint8_t *) dma;
-            if (!(addr % 16))
-            {
-                print("\r\n");
-                print_hex((uint32_t) & s[addr], 8);
-                print(" ");
-            }
-            print_hex(s[addr], 2);
-            print(" ");
-        }
-
+        mem_dump(dma, sizeof(dma));
         print("\r\n");
-
 
         dma_stop();;
         dma_start();

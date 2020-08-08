@@ -1,6 +1,6 @@
 
 module dma
-# (parameter ADDR=0, WIDTH=8)
+# (parameter ADDR=0, WIDTH=8, XFER_ADDR_W=3)
 (
     // CPU bus interface
     input wire wb_clk,
@@ -20,9 +20,11 @@ module dma
     output reg xfer_done,
 
     // Src data
-    output reg [15:0] xfer_adr,
+    output reg [XFER_ADDR_W-1:0] xfer_adr,
     output wire xfer_re,
+    /* verilator lint_off UNUSED */
     input wire [15:0] xfer_dat,
+    /* verilator lint_on UNUSED */
 
     // DMA interface
     output reg dma_cyc,
@@ -146,6 +148,13 @@ module dma
 
         end
 
+        if (!reg_start_req) begin
+            // stop the engine
+            block_done <= 0;
+            xfer_done <= 0;
+            running <= 0;
+        end
+
         if (reg_start_req & !running) begin
             // sequence start
             run_addr <= reg_addr;
@@ -155,12 +164,6 @@ module dma
             block <= reg_blocks;
             xfer_done <= 0;
             running <= 1;
-        end
-
-        if (!reg_start_req) begin
-            block_done <= 0;
-            xfer_done <= 0;
-            running <= 0;
         end
 
         if (reg_start_req & xfer_block & !xfer_done) begin
@@ -173,31 +176,28 @@ module dma
         end
 
         if (block_en & !dma_cyc) begin
-
+            // start the DMA write request
             dma_cyc <= 1;
             dma_we <= 1;
             case (addr[1])
-                0 : begin
-                    dma_sel <= 4'b0011;
-                end
-                1 : begin
-                    dma_sel <= 4'b1100;
-                end
+                0 : dma_sel <= 4'b0011;
+                1 : dma_sel <= 4'b1100;
             endcase
-            dma_adr <= { 8'h0, addr };
+            dma_adr <= { 8'h0, addr[23:2], 2'b0 };
  
         end
 
         if (dma_ack) begin
-
+            // response from DMA, clear cyc etc.
             dma_cyc <= 0;
             dma_we <= 0;
             dma_sel <= 4'b0000;
             dma_adr <= 0;
 
+            // increment the pointers for the next xfer
             addr <= addr + { 8'h0, reg_step };
-            block <= block - 1;
             xfer_adr <= xfer_adr + 1;
+            block <= block - 1;
 
         end
 
@@ -221,8 +221,7 @@ module dma
     end
 
     wire [31:0] data_out;
-
-    assign data_out = addr[1] ? { xfer_dat, 16'b0 } : { 16'b0, xfer_dat }; 
+    assign data_out = addr[1] ? { xfer_dat, 16'h0 } : { 16'h0, xfer_dat } ; 
 
     assign dma_dat = dma_ack ? data_out : 0;
     assign xfer_re = block_en & dma_ack;

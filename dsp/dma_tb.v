@@ -39,7 +39,8 @@ module tb ();
     wire [15:0] xfer_adr;
     wire [15:0] xfer_dat;
 
-    dma #(.ADDR(8'h65), .WIDTH(8)) dma(
+    dma #(.ADDR(8'h65), .WIDTH(8), .XFER_ADDR_W(16)) 
+    dma(
         .wb_clk(wb_clk),
         .wb_rst(wb_rst),
         .wb_dbus_cyc(wb_dbus_cyc),
@@ -201,15 +202,9 @@ module tb ();
 
         @(posedge wb_clk);
 
-        for (i = 0; i < 16; i = i + 1) begin
-
-            @(posedge wb_clk);
-            @(posedge wb_clk);
-            @(posedge wb_clk);
-
+        while (!xfer_done) begin
             xfer_pulse();
             wait(block_done);
-
         end
 
         write(REG_STOP,  32'h1);
@@ -222,18 +217,10 @@ module tb ();
         write(REG_START,  32'h1);
         write_wait();
 
-        for (i = 0; i < 16; i = i + 1) begin
-
-            @(posedge wb_clk);
-            @(posedge wb_clk);
-            @(posedge wb_clk);
-
+        while (!xfer_done) begin
             xfer_pulse();
             wait(block_done);
-
         end
-
-        wait(xfer_done);
 
         // Test reading the control registers
 
@@ -288,15 +275,9 @@ module tb ();
         write_wait();
         @(posedge wb_clk);
 
-        for (i = 0; i < 16; i = i + 1) begin
-
-            @(posedge wb_clk);
-            @(posedge wb_clk);
-            @(posedge wb_clk);
-
+        while (!xfer_done) begin
             xfer_pulse();
             wait(block_done);
-
         end
 
         // poll for xfer_done
@@ -338,6 +319,31 @@ module tb ();
         read_wait();
         tb_assert(rd_data == 32'h0);
         @(posedge wb_clk);
+
+        // Try shorter chan/cycles
+
+        write(REG_ADDR,   32'h00010000);
+        write_wait();
+
+        write(REG_STEPS,  32'h00001000);
+        write_wait();
+
+        write(REG_CYCLES, 32'h00000004);
+        write_wait();
+
+        write(REG_BLOCKS, 32'h4);
+        write_wait();
+
+        write(REG_START,  32'h1);
+        write_wait();
+
+        while (!xfer_done) begin
+            xfer_pulse();
+            wait(block_done);
+        end
+
+        write(REG_STOP,  32'h1);
+        write_wait();
 
         $display("done");
 

@@ -587,40 +587,25 @@ module audio_engine (
 
     //  DMA Test
 
-    /* verilator lint_off UNUSED */
+    localparam XFER_ADDR_W = 3;
+    localparam XFER_DATA_W = 16;
+
     wire [31:0] dma_dbus_rdt;
     wire dma_dbus_ack;
     wire block_done;
     wire xfer_done;
-    wire [15:0] xfer_adr;
+    wire [XFER_ADDR_W-1:0] xfer_adr;
+    /* verilator lint_off UNUSED */
     wire xfer_re;
-
-    function [15:0] testx(input [15:0] addr);
-
-        begin
-            case (addr)
-                0 : testx = 16'h1511;
-                1 : testx = 16'h2522;
-                2 : testx = 16'h3533;
-                3 : testx = 16'h4544;
-                4 : testx = 16'h5555;
-                5 : testx = 16'h6566;
-                6 : testx = 16'h7577;
-                7 : testx = 16'h8588;
-            endcase
-        end
-
-    endfunction
-
+    /* verilator lint_on UNUSED */
 
     wire [15:0] xfer_dat;
-    assign xfer_dat = testx(xfer_adr); // TODO : fetch mic_x
-    /* verilator lint_on UNUSED */
+    assign xfer_dat = mic_source(xfer_adr);
 
     wire xfer_block;
     assign xfer_block = start_of_frame; 
 
-    dma #(.ADDR(ADDR_DMA), .WIDTH(8))
+    dma #(.ADDR(ADDR_DMA), .WIDTH(8), .XFER_ADDR_W(XFER_ADDR_W))
     dma (
         .wb_clk(ck),
         .wb_rst(wb_rst),

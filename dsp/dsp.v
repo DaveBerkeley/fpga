@@ -55,7 +55,7 @@ module top(
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam RUN_SLOW = 1;        // Divide the CPU clock down for development
+    localparam RUN_SLOW = 0;        // Divide the CPU clock down for development
     localparam RESET_LOOP = 0;      // Repeatedly reset the CPU
     localparam TIMER_ENABLED = 1;   // Hardware Timer
 
@@ -477,29 +477,6 @@ module top(
         .irq(soc_irq)
     );
     
-    //  Test pins
-
-    assign P1A1 = test[0];
-    assign P1A2 = test[1];
-    assign P1A3 = test[2];
-    assign P1A4 = test[3];
-
-    assign P1B1 = test[4];
-    assign P1B2 = test[5];
-    assign P1B3 = test[6];
-    assign P1B4 = test[7];
-
-    // I2S Input
-    assign P1A7  = sck;
-    assign P1A8  = ws;
-    assign sd_in0 = P1A9;
-    assign sd_in1 = P1A10;
-
-    // I2S Output
-    assign P1B7 = sck;
-    assign P1B8 = ws;
-    assign P1B9 = sd_out;
-
     // OR the dbus peripherals *_rdt & *_ack together
     // They must be 0 when not active.
 
@@ -529,6 +506,37 @@ module top(
         .i_dbus_rdt(wb_dbus_rdt),
         .i_dbus_ack(wb_dbus_ack)
     );
+
+    //  Test pins
+
+    assign P1A1 = test[0];
+    assign P1A2 = test[1];
+    assign P1A3 = test[2];
+    assign P1A4 = test[3];
+    assign P1B1 = test[4];
+    assign P1B2 = test[5];
+    assign P1B3 = test[6];
+    assign P1B4 = test[7];
+
+    //assign P1A1 = wb_dbus_cyc;
+    //assign P1A2 = wb_dbus_ack;
+    //assign P1A3 = wb_dbus_adr[0];
+    //assign P1A4 = wb_dbus_adr[1];
+    //assign P1B1 = wb_dbus_adr[2];
+    //assign P1B2 = wb_dbus_sel[0];
+    //assign P1B3 = wb_dbus_sel[2];
+    //assign P1B4 = wb_clk;
+
+    // I2S Input
+    assign P1A7  = sck;
+    assign P1A8  = ws;
+    assign sd_in0 = P1A9;
+    assign sd_in1 = P1A10;
+
+    // I2S Output
+    assign P1B7 = sck;
+    assign P1B8 = ws;
+    assign P1B9 = sd_out;
 
     //  IO
 
