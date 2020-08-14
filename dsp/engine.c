@@ -16,7 +16,7 @@
 #define CH2 0
 #define CH3 1
 
-static uint32_t colour(uint8_t bright, uint8_t r, uint8_t g, uint8_t b)
+uint32_t colour(uint8_t bright, uint8_t r, uint8_t g, uint8_t b)
 {
     return (bright << 24) + (b << 16) + (g << 8) + r;
 }
@@ -911,12 +911,16 @@ void engine()
 
 #if !defined(TESTING)
     coef = ADDR_COEF;
-    *coef++ = opcode(MACZ, 0, CH0, 0x1000);
-    //*coef++ = opcode(MAC,  0, CH1, 0x1000);
+    *coef++ = opcode(MACZ, 0, 0, 0x1000);
+    *coef++ = opcode(MAC,  0, 1, 0x1000);
+    *coef++ = opcode(MAC,  0, 2, 0x1000);
+    *coef++ = opcode(MAC,  0, 3, 0x1000);
     *coef++ = opcode(SAVE, shift, 0, 0);
 
-    *coef++ = opcode(MACZ, 0, CH2, 0x1000);
-    //*coef++ = opcode(MAC,  0, CH3, 0x1000);
+    *coef++ = opcode(MACZ, 0, 4, 0x1000);
+    *coef++ = opcode(MAC,  0, 5, 0x1000);
+    *coef++ = opcode(MAC,  0, 6, 0x1000);
+    //*coef++ = opcode(MAC,  0, 7, 0x1000);
     *coef++ = opcode(SAVE, shift, 0, 1);
 
     *coef++ = halt();
@@ -925,28 +929,40 @@ void engine()
 
     reset_engine();
 
+    // Zero the LEDS and then turn off the driver (write to 0x0f)
+    for (int i = 0; i < 16; i++)
+    {
+        LED_IO[i] = 0;
+    }
+
+#if 0
     const int bright = 4;
 
     LED_IO[0]  = colour(bright, 255, 0, 0);
-    LED_IO[1]  = colour(bright, 128, 0, 0);
+    //LED_IO[1]  = colour(bright, 64, 0, 0);
     LED_IO[2]  = colour(bright, 0, 255, 0);
-    LED_IO[3]  = colour(bright, 0, 128, 0);
+    //LED_IO[3]  = colour(bright, 0, 64, 0);
     LED_IO[4]  = colour(bright, 0, 0, 255);
-    LED_IO[5]  = colour(bright, 0, 0, 128);
-    LED_IO[6]  = colour(bright, 128, 128, 128);
-    LED_IO[7]  = colour(bright, 255, 255, 255);
-    LED_IO[8]  = colour(bright, 255, 255, 0);
-    LED_IO[9]  = colour(bright, 0, 255, 255);
-    LED_IO[10] = colour(bright, 255, 0, 255);
-    LED_IO[11] = colour(bright, 128, 128, 0);
-    LED_IO[12] = colour(bright, 0, 128, 128);
+    //LED_IO[5]  = colour(bright, 0, 0, 64);
+    LED_IO[6]  = colour(bright, 128, 128, 0);
+    //LED_IO[7]  = colour(bright, 255, 255, 255);
+    LED_IO[8]  = colour(bright, 128, 128, 0);
+    //LED_IO[9]  = colour(bright, 0, 255, 255);
+    LED_IO[10] = colour(bright, 128, 0, 128);
+    //LED_IO[11] = colour(bright, 64, 64, 0);
+    timer_wait(30000000 * 5);
+    //LED_IO[15] = 1; // turn off LED tx 
+#endif
+
+    // Set I2S data phase offsets
+    ADDR_STAT[STAT_I2S_OFFSET] = 4;
 
 #if 0
     while (true)
     {
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 11; i++)
         {
-            ADDR_STAT[STAT_I2S_OFFSET] = i;
+            ADDR_STAT[STAT_I2S_OFFSET] = 4;
             print("i=");
             print_hex(i, 2);
             print("\r\n");

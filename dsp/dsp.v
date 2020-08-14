@@ -24,8 +24,8 @@ module top(
     output wire LED5,
 
     // Test pins
-    output wire P1A1,
-    output wire P1A2,
+    input wire P1A1,
+    input wire P1A2,
     output wire P1A3,
     output wire P1A4,
 
@@ -441,8 +441,8 @@ module top(
     // TODO : remove me
     //assign sd_in0 = 0;
     //assign sd_in1 = 0;
-    assign sd_in2 = 0;
-    assign sd_in3 = 0;
+    //assign sd_in2 = 0;
+    //assign sd_in3 = 0;
 
     wire ext_sck;
     wire ext_ws;
@@ -546,10 +546,12 @@ module top(
 
     //  Test pins
 
-    assign P1A1 = test[0];
-    assign P1A2 = test[1];
+    //assign P1A1 = test[0];
+    //assign P1A2 = test[1];
     //assign P1A3 = test[2];
     //assign P1A4 = test[3];
+    assign sd_in2 = P1A1;
+    assign sd_in3 = P1A2;
     assign P1A3 = led_ck;
     assign P1A4 = led_data;
     //assign P1B1 = test[4];
