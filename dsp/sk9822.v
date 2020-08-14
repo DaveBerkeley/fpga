@@ -15,9 +15,14 @@ module sk9822_peripheral
     output wire led_data
 );
 
-    /* verilator lint_off UNUSED */
+    // For description of protocol see :
+    // https://cpldcpu.wordpress.com/2016/12/13/sk9822-a-clone-of-the-apa102/
+
+    reg enabled = 0;
+
+    //  Chip Select to enable write access to DP_RAM
+
     wire cyc;
-    /* verilator lint_on UNUSED */
  
     chip_select #(.ADDR(ADDR), .WIDTH(8))
     chip_select(
@@ -28,6 +33,16 @@ module sk9822_peripheral
         .ack(ack),
         .cyc(cyc)
     );
+
+    always @(posedge wb_clk) begin
+        if (cyc) begin
+            enabled <= wb_dbus_adr[5:2] != 4'hF;
+        end
+    end
+
+    //  DP_RAM hold the LED values
+    //
+    //  xxLL BB GG RR (LL = brightness)
 
     wire ram_re;
     reg [3:0] ram_addr = 0;
@@ -48,7 +63,9 @@ module sk9822_peripheral
         .rdata(ram_data)
     );
 
-    localparam PRESCALE = 4;
+    //  The LED Clock is divided down from sys clock
+
+    localparam PRESCALE = 2;
     reg [PRESCALE-1:0] prescale = 0;
 
     always @(posedge wb_clk) begin
@@ -63,6 +80,7 @@ module sk9822_peripheral
     reg [31:0] shift = 0;
     reg [4:0] bit_count = 0;
 
+    // Each LED data frame is 0xEx BB GG RR
     wire [31:0] tx_data;
     assign tx_data = { 4'he, ram_data[27:0] };
 
@@ -87,24 +105,26 @@ module sk9822_peripheral
                     9   :   shift <= tx_data;
                     10  :   shift <= tx_data;
                     11  :   shift <= tx_data;
-                    12  :   shift <= 32'h0;
-                    13  :   shift <= 32'hffff_ffff;
+                    12  :   shift <= 32'h0; // reset frame
+                    13  :   shift <= 32'hffff_ffff; // end frame
                     14  :   ; // no clock during this frame
-                    15  :   shift <= 32'h0;
+                    15  :   shift <= 32'h0; // start frame
                 endcase
             end
         end
 
-        if (ram_addr != 14) begin
-            if (led_en)
+        if (enabled && (ram_addr != 14)) begin
+            if (led_en) begin
                 led_ck <= 0;
-            if (led_half)
+            end
+            if (led_half) begin
                 led_ck <= 1;
+            end
         end
 
     end
 
-    assign led_data = shift[31];
+    assign led_data = enabled ? shift[31] : 0;
 
 endmodule
 
