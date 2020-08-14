@@ -77,6 +77,23 @@ module tb ();
         .external(external)
     );
 
+    wire dual_sck;
+    wire dual_ws;
+    wire dual_en;
+    wire [5:0] dual_frame_posn;
+
+    i2s_dual #(.DIVIDER(16))
+    i2s_dual(
+        .ck(ck),
+        .rst(rst),
+        .ext_sck(ext_sck),
+        .ext_ws(ext_ws),
+        .sck(dual_sck),
+        .ws(dual_ws),
+        .en(dual_en),
+        .frame_posn(dual_frame_posn)
+    );
+
     initial begin
 
         $display("start i2s tests");
@@ -119,6 +136,12 @@ module tb ();
         wait(!gen_ws);
 
         tb_assert(!external);
+
+        // Wait for a few frames
+        wait(gen_ws);
+        wait(!gen_ws);
+        wait(gen_ws);
+        wait(!gen_ws);
 
         $display("done");
         $finish;

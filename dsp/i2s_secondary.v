@@ -116,3 +116,69 @@ module i2s_detect
 
 endmodule
 
+   /*
+    *   Sync to EXT I2S signals, or generate locally.
+    */
+
+module i2s_dual
+#(parameter DIVIDER=16, WIDTH=$clog2(DIVIDER)+1)
+(
+    input wire ck,
+    input wire rst,
+    input wire ext_sck,
+    input wire ext_ws,
+    output wire sck,
+    output wire ws,
+    output wire en,
+    output wire [5:0] frame_posn
+);
+
+    // Local I2S clock generation
+    wire local_en;
+    wire local_sck;
+    wire local_ws;
+    wire [5:0] local_frame_posn;
+
+    i2s_clock #(.DIVIDER(DIVIDER))
+    i2s_clock(
+        .ck(ck),
+        .rst(rst),
+        .en(local_en),
+        .sck(local_sck),
+        .ws(local_ws),
+        .frame_posn(local_frame_posn)
+    );
+
+    // Attempt to sync to external I2S
+    wire ext_en;
+    wire [5:0] ext_frame_posn;
+
+    i2s_secondary #(.WIDTH(WIDTH))
+    i2s_secondary(
+        .ck(ck),
+        .sck(ext_sck),
+        .ws(ext_ws),
+        .en(ext_en),
+        .frame_posn(ext_frame_posn)
+    );
+
+    // Detect EXT sync
+    wire external;
+
+    i2s_detect #(.WIDTH(WIDTH))
+    i2s_detect(
+        .ck(ck),
+        .ext_en(ext_en),
+        .gen_en(local_en),
+        .external(external)
+    );
+
+    // Select external or local outputs
+    assign sck          = external ? ext_sck        : local_sck;
+    assign ws           = external ? ext_ws         : local_ws;
+    assign en           = external ? ext_en         : local_en;
+    assign frame_posn   = external ? ext_frame_posn : local_frame_posn;
+
+endmodule
+
+//  FIN
