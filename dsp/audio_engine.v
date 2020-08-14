@@ -1,6 +1,32 @@
 
 `default_nettype none
 
+module i2s_offset
+#(parameter WIDTH=4)
+(
+    input wire ck,
+    input wire i2s_en,
+    input wire [WIDTH-1:0] offset,
+    output wire en
+);
+
+    reg [WIDTH-1:0] counter = 0;
+
+    always @(posedge ck) begin
+
+        if (i2s_en) begin
+            counter <= 0;
+        end else begin
+            counter <= counter + 1;
+        end
+
+    end
+
+    assign en = offset == counter;
+
+
+endmodule
+
    /*
     *   Audio Perihperal
     */
@@ -40,6 +66,9 @@ module audio_engine (
     input wire sd_in1,  // I2S data in
     input wire sd_in2,  // I2S data in
     input wire sd_in3,  // I2S data in
+
+    input wire ext_sck, // I2S ext sync
+    input wire ext_ws,  // I2S ext sync
 
     output wire ready,
     output wire [7:0] test
@@ -107,16 +136,19 @@ module audio_engine (
 
     wire [5:0] frame_posn;
     wire i2s_en;
-    i2s_clock #(.DIVIDER(I2S_DIVIDER), .BITS(I2S_BIT_WIDTH)) 
-    i2s_out(
+
+    i2s_dual #(.DIVIDER(I2S_DIVIDER))
+    i2s_dual(
         .ck(i2s_clock),
         .rst(wb_rst),
+        .ext_sck(ext_sck),
+        .ext_ws(ext_ws),
         .en(i2s_en),
         .sck(sck),
         .ws(ws),
         .frame_posn(frame_posn)
     );
-
+    
     wire start_of_frame;
     assign start_of_frame = ws & (frame_posn == 0);
 
@@ -143,20 +175,38 @@ module audio_engine (
     wire [15:0] mic_7;
 
     // Delay the I2S data input sample point from the start of the clock
-    wire i2s_sample;
-    pipe #(.LENGTH(I2S_DIVIDER / 3)) sd_sample (.ck(ck), .in(i2s_en), .out(i2s_sample));
+    wire i2s_in_sample;
+    wire i2s_out_sample;
+    reg [3:0] i2s_in_offset = 0;
+    reg [3:0] i2s_out_offset = 0;
+
+    i2s_offset #(.WIDTH(4))
+    i2s_offset_in(
+        .ck(ck),
+        .i2s_en(i2s_en),
+        .offset(i2s_in_offset),
+        .en(i2s_in_sample)
+    );
+
+    i2s_offset #(.WIDTH(4))
+    i2s_offset_out(
+        .ck(ck),
+        .i2s_en(i2s_en),
+        .offset(i2s_out_offset),
+        .en(i2s_out_sample)
+    );
 
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-    rx_0(.ck(ck), .sample(i2s_sample), 
+    rx_0(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-    rx_1(.ck(ck), .sample(i2s_sample), 
+    rx_1(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-    rx_2(.ck(ck), .sample(i2s_sample), 
+    rx_2(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
     i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
-    rx_3(.ck(ck), .sample(i2s_sample), 
+    rx_3(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
 
     //  I2S Output
@@ -166,7 +216,7 @@ module audio_engine (
 
     i2s_tx tx(
         .ck(ck),
-        .en(i2s_en),
+        .en(i2s_out_sample),
         .frame_posn(frame_posn),
         .left(left),
         .right(right),
@@ -508,6 +558,7 @@ module audio_engine (
     //             1 status_reg  r
     //             2 capture_reg r
     //             3 end_of_cmd  w
+    //             4 i2s_offsets r/w
 
     wire status_ack, status_cyc;
 
@@ -521,11 +572,11 @@ module audio_engine (
         .cyc(status_cyc)
     );
 
-    wire [1:0] status_addr;
+    wire [2:0] status_addr;
     wire status_we;
     wire status_re;
 
-    assign status_addr = wb_dbus_adr[3:2];
+    assign status_addr = wb_dbus_adr[4:2];
     assign status_we = status_cyc & wb_dbus_we;
     assign status_re = status_cyc & !wb_dbus_we;
  
@@ -544,6 +595,11 @@ module audio_engine (
             end
         end
 
+        if (status_we & (status_addr == 4)) begin
+            i2s_in_offset  <= wb_dbus_dat[3:0];
+            i2s_out_offset <= wb_dbus_dat[7:4];
+        end
+
         if (reset & !bank_done) begin
             // switch banks
             bank_done <= 1;
@@ -559,13 +615,14 @@ module audio_engine (
     wire [31:0] control_reg;
     assign control_reg =  { { (32-(FRAME_W+1)){ 1'b0 } }, control_reg_frame, allow_audio_writes };
 
-    function [31:0] sreg_rdt(input [1:0] s_addr);
+    function [31:0] sreg_rdt(input [2:0] s_addr);
 
         case (s_addr)
             0   :   sreg_rdt = control_reg;
             1   :   sreg_rdt = { 29'h0, bank_done, error, done };
             2   :   sreg_rdt = capture;
             3   :   sreg_rdt = 32'h0;
+            4   :   sreg_rdt = { 24'h0, i2s_out_offset, i2s_in_offset };
         endcase
 
     endfunction

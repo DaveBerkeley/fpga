@@ -1,0 +1,81 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Fri Aug 14 14:25:29 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Fri Aug 14 14:24:04 2020"
+[dumpfile_size] 427788
+[savefile] "/home/dave/Desktop/git/fpga/dsp/sk9822_tb.gtkw"
+[timestart] 57188000
+[size] 1730 629
+[pos] -1 -1
+*-20.000000 59180000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.sk9822_peripheral.
+[sst_width] 196
+[signals_width] 166
+[sst_expanded] 1
+[sst_vpaned_height] 166
+@28
+tb.wb_clk
+tb.wb_rst
+tb.wb_dbus_cyc
+@22
+tb.wb_dbus_adr[31:0]
+@28
+tb.wb_dbus_we
+@22
+tb.wb_dbus_dat[31:0]
+@28
+tb.sk9822_peripheral.chip_select.ack
+tb.sk9822_peripheral.chip_select.cyc
+tb.sk9822_peripheral.dpram.re
+tb.sk9822_peripheral.led_ck
+tb.sk9822_peripheral.led_data
+tb.sk9822_peripheral.dpram.we
+@22
+tb.sk9822_peripheral.dpram.waddr[3:0]
+tb.sk9822_peripheral.dpram.wdata[31:0]
+tb.sk9822_peripheral.bit_count[4:0]
+@c00023
+tb.sk9822_peripheral.shift[31:0]
+@29
+(0)tb.sk9822_peripheral.shift[31:0]
+(1)tb.sk9822_peripheral.shift[31:0]
+(2)tb.sk9822_peripheral.shift[31:0]
+(3)tb.sk9822_peripheral.shift[31:0]
+(4)tb.sk9822_peripheral.shift[31:0]
+(5)tb.sk9822_peripheral.shift[31:0]
+(6)tb.sk9822_peripheral.shift[31:0]
+(7)tb.sk9822_peripheral.shift[31:0]
+(8)tb.sk9822_peripheral.shift[31:0]
+(9)tb.sk9822_peripheral.shift[31:0]
+(10)tb.sk9822_peripheral.shift[31:0]
+(11)tb.sk9822_peripheral.shift[31:0]
+(12)tb.sk9822_peripheral.shift[31:0]
+(13)tb.sk9822_peripheral.shift[31:0]
+(14)tb.sk9822_peripheral.shift[31:0]
+(15)tb.sk9822_peripheral.shift[31:0]
+(16)tb.sk9822_peripheral.shift[31:0]
+(17)tb.sk9822_peripheral.shift[31:0]
+(18)tb.sk9822_peripheral.shift[31:0]
+(19)tb.sk9822_peripheral.shift[31:0]
+(20)tb.sk9822_peripheral.shift[31:0]
+(21)tb.sk9822_peripheral.shift[31:0]
+(22)tb.sk9822_peripheral.shift[31:0]
+(23)tb.sk9822_peripheral.shift[31:0]
+(24)tb.sk9822_peripheral.shift[31:0]
+(25)tb.sk9822_peripheral.shift[31:0]
+(26)tb.sk9822_peripheral.shift[31:0]
+(27)tb.sk9822_peripheral.shift[31:0]
+(28)tb.sk9822_peripheral.shift[31:0]
+(29)tb.sk9822_peripheral.shift[31:0]
+(30)tb.sk9822_peripheral.shift[31:0]
+(31)tb.sk9822_peripheral.shift[31:0]
+@1401201
+-group_end
+@22
+tb.sk9822_peripheral.ram_addr[3:0]
+tb.sk9822_peripheral.ram_data[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

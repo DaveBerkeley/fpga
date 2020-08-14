@@ -41,8 +41,8 @@ module top(
     output wire P1B3,
     output wire P1B4,
 
-    output wire P1B7,
-    output wire P1B8,
+    input wire P1B7,
+    input wire P1B8,
     output wire P1B9
 );
 
@@ -53,6 +53,7 @@ module top(
     localparam UART_ADDR  = 8'h50;
     localparam FLASH_ADDR = 8'h70;
     localparam IRQ_ADDR   = 8'h80;
+    localparam LED_ADDR   = 8'h90;
     localparam TIMER_ADDR = 8'hc0;
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
@@ -306,6 +307,27 @@ module top(
         .gpio(gpio_reg)
     );
 
+    //  sk9822 LED driver
+
+    /* verilator lint_off UNUSED */
+    wire led_ck;
+    wire led_data;
+    /* verilator lint_on UNUSED */
+    wire led_ack;
+
+    sk9822_peripheral #(.ADDR(LED_ADDR))
+    sk9822_peripheral(
+        .wb_clk(wb_clk),
+        .wb_rst(wb_rst),
+        .wb_dbus_cyc(wb_dbus_cyc),
+        .wb_dbus_we(wb_dbus_we),
+        .wb_dbus_adr(wb_dbus_adr),
+        .wb_dbus_dat(wb_dbus_dat),
+        .ack(led_ack),
+        .led_ck(led_ck),
+        .led_data(led_data)
+    );
+
     //  SPI Flash interface
 
     wire spi_cs;
@@ -422,6 +444,9 @@ module top(
     assign sd_in2 = 0;
     assign sd_in3 = 0;
 
+    wire ext_sck;
+    wire ext_ws;
+
     /* verilator lint_off UNUSED */
     wire audio_ready;
     /* verilator lint_off UNUSED */
@@ -448,7 +473,7 @@ module top(
         .dma_rdt(dma_rdt),
         .dma_done(dma_done),
         .dma_match(dma_match),
-        
+
         .sck(sck),
         .ws(ws),
         .sd_out(sd_out),
@@ -456,6 +481,10 @@ module top(
         .sd_in1(sd_in1),
         .sd_in2(sd_in2),
         .sd_in3(sd_in3),
+
+        .ext_sck(ext_sck),
+        .ext_ws(ext_ws),
+
         .ready(audio_ready),
         .test(test)
     );
@@ -489,7 +518,7 @@ module top(
     // They must be 0 when not active.
 
     assign wb_dbus_rdt = irq_rdt | timer_rdt | ram_rdt | uart_rdt | gpio_rdt | flash_rdt | engine_rdt;
-    assign wb_dbus_ack = irq_ack | timer_ack | ram_ack | uart_ack | gpio_ack | flash_ack | engine_ack;
+    assign wb_dbus_ack = irq_ack | timer_ack | ram_ack | uart_ack | gpio_ack | flash_ack | engine_ack | led_ack;
 
     // SERV CPU
 
@@ -519,31 +548,35 @@ module top(
 
     assign P1A1 = test[0];
     assign P1A2 = test[1];
-    assign P1A3 = test[2];
-    assign P1A4 = test[3];
-    assign P1B1 = test[4];
-    assign P1B2 = test[5];
-    assign P1B3 = test[6];
+    //assign P1A3 = test[2];
+    //assign P1A4 = test[3];
+    assign P1A3 = led_ck;
+    assign P1A4 = led_data;
+    //assign P1B1 = test[4];
+    //assign P1B2 = test[5];
+    //assign P1B3 = test[6];
     assign P1B4 = test[7];
 
     //assign P1A1 = wb_dbus_cyc;
     //assign P1A2 = wb_dbus_ack;
     //assign P1A3 = wb_dbus_adr[0];
     //assign P1A4 = wb_dbus_adr[1];
-    //assign P1B1 = wb_dbus_adr[2];
-    //assign P1B2 = wb_dbus_sel[0];
-    //assign P1B3 = wb_dbus_sel[2];
+    assign P1B1 = sck;
+    assign P1B2 = ws;
+    assign P1B3 = sd_out;
     //assign P1B4 = wb_clk;
 
-    // I2S Input
+    // I2S Audio Input
     assign P1A7  = sck;
     assign P1A8  = ws;
     assign sd_in0 = P1A9;
     assign sd_in1 = P1A10;
 
     // I2S Output
-    assign P1B7 = sck;
-    assign P1B8 = ws;
+    //assign P1B7 = sck;
+    //assign P1B8 = ws;
+    assign ext_sck = P1B7;
+    assign ext_ws = P1B8;
     assign P1B9 = sd_out;
 
     //  IO

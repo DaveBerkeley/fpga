@@ -16,6 +16,11 @@
 #define CH2 0
 #define CH3 1
 
+static uint32_t colour(uint8_t bright, uint8_t r, uint8_t g, uint8_t b)
+{
+    return (bright << 24) + (b << 16) + (g << 8) + r;
+}
+
 void mem_dump(void *v, uint32_t bytes)
 {
     uint8_t *s = (uint8_t *) v;
@@ -67,10 +72,11 @@ void __assert_func(const char *file, int line, const char *function, const char 
      *
      */
 
-#define STAT_CONTROL 0
-#define STAT_STATUS  1
-#define STAT_CAPTURE 2
-#define STAT_END_CMD 3
+#define STAT_CONTROL    0
+#define STAT_STATUS     1
+#define STAT_CAPTURE    2
+#define STAT_END_CMD    3
+#define STAT_I2S_OFFSET 4
 
 #define CHANNELS    8
 #define CHAN_W      3
@@ -900,19 +906,54 @@ void engine()
 
     set_control(0); // stop audio writes
 
+    int shift = 9;
+    //int shift = 5;
+
 #if !defined(TESTING)
     coef = ADDR_COEF;
-    *coef++ = opcode(MACZ, 0, CH1, 0x1000);
-    *coef++ = opcode(SAVE, 9, 0, 0);
+    *coef++ = opcode(MACZ, 0, CH0, 0x1000);
+    //*coef++ = opcode(MAC,  0, CH1, 0x1000);
+    *coef++ = opcode(SAVE, shift, 0, 0);
 
-    *coef++ = opcode(MACZ, 0, CH3, 0x1000);
-    *coef++ = opcode(SAVE, 9, 0, 1);
+    *coef++ = opcode(MACZ, 0, CH2, 0x1000);
+    //*coef++ = opcode(MAC,  0, CH3, 0x1000);
+    *coef++ = opcode(SAVE, shift, 0, 1);
 
     *coef++ = halt();
     *coef++ = halt();
 #endif
 
     reset_engine();
+
+    const int bright = 4;
+
+    LED_IO[0]  = colour(bright, 255, 0, 0);
+    LED_IO[1]  = colour(bright, 128, 0, 0);
+    LED_IO[2]  = colour(bright, 0, 255, 0);
+    LED_IO[3]  = colour(bright, 0, 128, 0);
+    LED_IO[4]  = colour(bright, 0, 0, 255);
+    LED_IO[5]  = colour(bright, 0, 0, 128);
+    LED_IO[6]  = colour(bright, 128, 128, 128);
+    LED_IO[7]  = colour(bright, 255, 255, 255);
+    LED_IO[8]  = colour(bright, 255, 255, 0);
+    LED_IO[9]  = colour(bright, 0, 255, 255);
+    LED_IO[10] = colour(bright, 255, 0, 255);
+    LED_IO[11] = colour(bright, 128, 128, 0);
+    LED_IO[12] = colour(bright, 0, 128, 128);
+
+#if 0
+    while (true)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            ADDR_STAT[STAT_I2S_OFFSET] = i;
+            print("i=");
+            print_hex(i, 2);
+            print("\r\n");
+            timer_wait(30000000);
+        }
+    }
+#endif
 
 #if 0
     verbose = false;
@@ -962,7 +1003,7 @@ void engine()
 
     print("running ..\r\n");
 
-#if 1
+#if 0
 
     print("DMA test ...\r\n");
 
