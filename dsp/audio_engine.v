@@ -110,6 +110,7 @@ module audio_engine (
     i2s_clock #(.DIVIDER(I2S_DIVIDER), .BITS(I2S_BIT_WIDTH)) 
     i2s_out(
         .ck(i2s_clock),
+        .rst(wb_rst),
         .en(i2s_en),
         .sck(sck),
         .ws(ws),

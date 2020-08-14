@@ -12,6 +12,8 @@ module i2s_secondary
     output reg [5:0] frame_posn
 );
 
+    localparam S_MAX = (1 << WIDTH) - 1;
+
     initial frame_posn = 0;
     initial en = 0;
 
@@ -52,7 +54,9 @@ module i2s_secondary
             prescale <= 0;
             match <= prescale - 3;
         end else begin
-            prescale <= prescale + 1;
+            if (prescale != S_MAX) begin
+                prescale <= prescale + 1;
+            end
         end
 
     end
@@ -61,19 +65,54 @@ module i2s_secondary
     // which means we lead the sck by one clock period.
     wire start_sck;
     assign start_sck = prescale == match;
-    
+
     always @(posedge ck) begin
 
         en <= start_sck;
 
-        if (start_sck)
+        if (start_sck) begin
             frame_posn <= frame_posn + 1;
+        end
 
-        if (start_frame)
+        if (start_frame) begin
             frame_posn <= 0;
+        end
 
     end
 
 endmodule
 
+   /*
+    * Detect External I2S sync
+    */
+
+module i2s_detect
+#(parameter WIDTH=5)
+(
+    input wire ck,
+    input wire ext_en,
+    input wire gen_en,
+    output wire external
+);
+
+    localparam S_MAX = (1 << WIDTH) - 1;
+
+    reg [WIDTH-1:0] counter = S_MAX;
+
+    always @(posedge ck) begin
+
+        if (ext_en) begin
+            // Any signal on EXT indicates external sync
+            counter <= 0;
+        end else begin
+            if (gen_en && (counter < S_MAX)) begin
+                counter <= counter + 1;
+            end
+        end
+
+    end
+
+    assign external = counter != S_MAX;
+
+endmodule
 
