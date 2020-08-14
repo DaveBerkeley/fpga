@@ -801,7 +801,7 @@ void engine()
 
     coef = ADDR_COEF;
 
-    verbose = false;
+    verbose = true;
 
 #if defined(PULSE_TEST)
     #define TESTING
@@ -963,8 +963,11 @@ void engine()
     print("running ..\r\n");
 
 #if 1
+
+    print("DMA test ...\r\n");
+
 #define CHANS 4
-#define SAMPLES 256
+#define SAMPLES 1024
 
     static uint16_t dma[CHANS][SAMPLES];
 
@@ -976,7 +979,7 @@ void engine()
 
     memset(dma, 0xff, sizeof(dma));
 
-    dma_start();;
+    dma_start(1);
 
     while (true)
     {
@@ -987,8 +990,8 @@ void engine()
         //mem_dump(dma, sizeof(dma));
         //print("\r\n");
 
-        dma_stop();;
-        dma_start();
+        //dma_stop();;
+        //dma_start(0);
     }
 #endif
     

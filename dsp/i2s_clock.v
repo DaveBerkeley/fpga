@@ -1,6 +1,6 @@
 
 module i2s_clock
-# (parameter DIVIDER=12)
+# (parameter DIVIDER=12, BITS=$clog2(DIVIDER))
 (
     input wire ck,  // system clock
     output reg en,  // I2S enable
@@ -9,8 +9,7 @@ module i2s_clock
     output reg [5:0] frame_posn // 64 clock counter for complete L/R frame
 );
 
-    // Divide the 12MHz system clock down
-    localparam BITS = $clog2(DIVIDER);
+    // Divide the system clock down
     reg [BITS:0] prescale = 0;
 
     // 64 clock counter for complete L/R frame

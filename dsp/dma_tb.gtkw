@@ -1,10 +1,8 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Sat Aug  8 10:11:35 2020
+[*] Sat Aug  8 15:28:19 2020
 [*]
-[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Sat Aug  8 10:10:58 2020"
-[dumpfile_size] 274146
+[dumpfile] "(null)"
 [savefile] "/home/dave/Desktop/git/fpga/dsp/dma_tb.gtkw"
 [timestart] 111670000
 [size] 1697 832

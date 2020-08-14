@@ -29,6 +29,9 @@ VCONFIG = /tmp/$(PROJ)_config.vlt
 PACKAGE = sg48
 DEVICE = up5k
 
+PLL_MHZ = 30
+PLL_HZ = $(PLL_MHZ)000000
+
 PIN_DEF = ../icebreaker.pcf
 
 FILES  = pll.v
@@ -91,7 +94,7 @@ prog_firmware: firmware.bin
 all: prog_firmware prog
 
 pll.v : Makefile
-	icepll -o 30 -m -f $@
+	icepll -o $(PLL_MHZ) -m -f $@
 	# Change *_CORE macro to *_PAD macro
 	# See SiliconBlue ICE TM Technology Library Version 2.3
 	sed -i 's/SB_PLL40_CORE/SB_PLL40_PAD/g' $@
@@ -119,6 +122,6 @@ firmware.elf: $(CFILES) $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb dma_tb
+tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb
 
 #	FIN
