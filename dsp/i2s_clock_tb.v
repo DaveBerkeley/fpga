@@ -82,17 +82,18 @@ module tb ();
         tb_assert(!external);
 
         // Wait for a few frames
-        wait(ws);
-        wait(!ws);
-        wait(ws);
-        wait(!ws);
-        wait(ws);
-        wait(!ws);
+        for (i = 0; i < 6; i = i + 1) begin
+            wait(ws);
+            wait(!ws);
+        end
 
         tb_assert(external);
 
-        wait(ws);
-        wait(!ws);
+        // Wait for a few frames
+        for (i = 0; i < 6; i = i + 1) begin
+            wait(ws);
+            wait(!ws);
+        end
 
         // turn off EXT
         ext_rst <= 1;
@@ -102,16 +103,8 @@ module tb ();
         wait(!ws);
         wait(ws);
         wait(!ws);
-        wait(ws);
-        wait(!ws);
 
         tb_assert(!external);
-
-        // Wait for a few frames
-        wait(ws);
-        wait(!ws);
-        wait(ws);
-        wait(!ws);
 
         $display("done");
         $finish;

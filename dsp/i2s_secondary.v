@@ -114,6 +114,7 @@ module i2s_detect
     assign local_sof = local_en & (local_frame_posn == 0);
 
     reg [1:0] frames = 2'b11;
+    reg [1:0] good_frames = 0;
 
     always @(posedge ck) begin
 
@@ -130,9 +131,19 @@ module i2s_detect
             end
         end
 
+        if (local_sof) begin
+            if (frames == 0) begin
+                if (good_frames != 2'b11) begin
+                    good_frames <= good_frames + 1;
+                end
+            end else begin
+                good_frames <= 0;
+            end
+        end
+
     end
 
-    assign valid = frames != 2'b11;
+    assign valid = good_frames == 2'b11;
 
 endmodule
 
