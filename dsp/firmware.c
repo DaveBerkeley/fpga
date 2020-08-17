@@ -11,6 +11,15 @@
 #include "firmware.h"
 
     /*
+     *  sk9822 data format
+     */
+
+uint32_t colour(uint8_t bright, uint8_t r, uint8_t g, uint8_t b)
+{
+    return (bright << 24) + (b << 16) + (g << 8) + r;
+}
+
+    /*
      *
      */
 
@@ -30,6 +39,7 @@ void irq_handler(void)
 
     uint32_t irqs = irq_state();
 
+    // 0x01 is the timer irq
     if (irqs != 1)
     {
         print("\r\n");
@@ -45,13 +55,33 @@ void irq_handler(void)
         irq_ack(0x01); 
 
         static uint64_t s = 0x01000000;
-    
+ 
         s += 0x00200000;
         timer_set(s);
     
         static int i = 0;
         LEDS[0] = i;
         i += 1;
+
+        const uint8_t bright = 4;
+        int idx = i % 12;
+        int r = (i & 0x10) ? 255 : 0;
+        int g = (i & 0x20) ? 255 : 0;
+        int b = (i & 0x40) ? 255 : 0;
+
+        for (int j = 0; j < 12; j++)
+        {
+            if ((r + g + b) == 0)
+            {
+                LED_IO[j] = colour(bright, 32, 32, 32);
+                continue;
+            }
+            
+            if (j == idx)
+                LED_IO[j] = colour(bright, r, g, b);
+            else
+                LED_IO[j] = colour(0, 0, 0, 0);
+        }
     }
 }
 

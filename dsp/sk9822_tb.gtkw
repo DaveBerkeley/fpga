@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Aug 14 14:25:29 2020
+[*] Fri Aug 14 17:30:23 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Aug 14 14:24:04 2020"
-[dumpfile_size] 427788
+[dumpfile_mtime] "Fri Aug 14 14:41:35 2020"
+[dumpfile_size] 247693
 [savefile] "/home/dave/Desktop/git/fpga/dsp/sk9822_tb.gtkw"
-[timestart] 57188000
+[timestart] 0
 [size] 1730 629
 [pos] -1 -1
-*-20.000000 59180000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-26.173794 37716000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.sk9822_peripheral.
 [sst_width] 196

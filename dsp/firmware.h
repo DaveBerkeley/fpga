@@ -16,6 +16,9 @@
 
 #define TRACE() { print(__FILE__); print(" "); print_dec(__LINE__); print("\r\n"); }
 
+
+uint32_t colour(uint8_t bright, uint8_t r, uint8_t g, uint8_t b);
+
 #endif // __FIRMWARE_H__
 
 //  FIN

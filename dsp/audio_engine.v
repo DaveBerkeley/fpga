@@ -130,12 +130,13 @@ module audio_engine (
 
     // Divide the clock down to 2MHz
     // Gives 2e6/64 = 31250 Hz frame rate
-    localparam I2S_DIVIDER = 15;
+    localparam I2S_DIVIDER = 12;
     localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
     assign i2s_clock = ck;
 
     wire [5:0] frame_posn;
     wire i2s_en;
+    wire i2s_external;
 
     i2s_dual #(.DIVIDER(I2S_DIVIDER))
     i2s_dual(
@@ -146,9 +147,10 @@ module audio_engine (
         .en(i2s_en),
         .sck(sck),
         .ws(ws),
-        .frame_posn(frame_posn)
+        .frame_posn(frame_posn),
+        .external(i2s_external)
     );
-    
+
     wire start_of_frame;
     assign start_of_frame = ws & (frame_posn == 0);
 
@@ -613,7 +615,12 @@ module audio_engine (
     end
 
     wire [31:0] control_reg;
-    assign control_reg =  { { (32-(FRAME_W+1)){ 1'b0 } }, control_reg_frame, allow_audio_writes };
+    assign control_reg =  { 
+        { (32-(FRAME_W+2)){ 1'b0 } }, 
+        control_reg_frame, 
+        i2s_external, 
+        allow_audio_writes 
+    };
 
     function [31:0] sreg_rdt(input [2:0] s_addr);
 
@@ -638,10 +645,10 @@ module audio_engine (
 
     wire [31:0] dma_dbus_rdt;
     wire dma_dbus_ack;
-    wire block_done;
     wire xfer_done;
     wire [XFER_ADDR_W-1:0] xfer_adr;
     /* verilator lint_off UNUSED */
+    wire block_done;
     wire xfer_re;
     /* verilator lint_on UNUSED */
     wire xfer_match;
@@ -689,14 +696,14 @@ module audio_engine (
 
     //  Test output
 
-    assign test[0] = block_done;
-    assign test[1] = xfer_done;
-    assign test[2] = xfer_match;
-    assign test[3] = start_of_frame;
-    assign test[4] = dma_cyc;
-    assign test[5] = dma_ack;
-    assign test[6] = 0;
-    assign test[7] = 0;
+    assign test[0] = sck;
+    assign test[1] = ws;
+    assign test[2] = sd_in0;
+    assign test[3] = sd_in1;
+    assign test[4] = ext_sck; // sd_in2;
+    assign test[5] = ext_ws; // sd_in3;
+    assign test[6] = i2s_external;
+    assign test[7] = 0; // not working?
 
 endmodule
 

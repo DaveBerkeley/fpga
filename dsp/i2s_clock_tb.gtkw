@@ -1,59 +1,42 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Aug 14 09:55:29 2020
+[*] Mon Aug 17 10:35:46 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Aug 14 09:55:03 2020"
-[dumpfile_size] 391233
+[dumpfile_mtime] "Mon Aug 17 10:35:38 2020"
+[dumpfile_size] 590861
 [savefile] "/home/dave/Desktop/git/fpga/dsp/i2s_clock_tb.gtkw"
-[timestart] 0
-[size] 1731 695
+[timestart] 376340000
+[size] 1617 696
 [pos] -1 -1
-*-26.567619 258426000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.647114 357000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.i2s_dual.
 [sst_width] 196
-[signals_width] 190
+[signals_width] 198
 [sst_expanded] 1
 [sst_vpaned_height] 187
 @28
-tb.ck
-tb.rst
-tb.gen_en
-tb.gen_sck
-tb.gen_ws
-@22
-tb.gen_frame_posn[5:0]
-@200
--
-@28
+tb.i2s_dual.ck
 tb.ext_rst
-tb.ext_sck
-tb.ext_ws
+tb.i2s_dual.rst
+tb.i2s_dual.ext_sck
+tb.i2s_dual.ext_ws
+tb.i2s_dual.i2s_detect.ws_0
 @22
-tb.ext_frame_posn[5:0]
+tb.i2s_dual.i2s_detect.ext_frame_posn[5:0]
 @28
-tb.ext_en
-@22
-tb.ext_frame_posn[5:0]
-@200
--
-@22
-tb.sec_frame_posn[5:0]
-@28
-tb.sec_en
+tb.i2s_dual.i2s_detect.has_64_bits
 @29
+tb.i2s_dual.i2s_detect.had_64_bits
+@28
+tb.i2s_dual.i2s_detect.sof
+tb.i2s_dual.i2s_detect.ext_okay
+tb.i2s_dual.i2s_detect.local_sof
+tb.i2s_dual.i2s_detect.frames[1:0]
+tb.i2s_dual.local_sck
 tb.external
-@200
--
-@28
-tb.dual_sck
-tb.dual_ws
-@22
-tb.dual_frame_posn[5:0]
-@28
-tb.dual_en
-@22
-tb.i2s_dual.i2s_detect.counter[4:0]
+tb.i2s_dual.sck
+tb.i2s_dual.ws
 [pattern_trace] 1
 [pattern_trace] 0

@@ -29,7 +29,7 @@ VCONFIG = /tmp/$(PROJ)_config.vlt
 PACKAGE = sg48
 DEVICE = up5k
 
-PLL_MHZ = 30
+PLL_MHZ = 24
 PLL_HZ = $(PLL_MHZ)000000
 
 PIN_DEF = ../icebreaker.pcf

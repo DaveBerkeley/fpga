@@ -29,11 +29,11 @@ module i2s_secondary
 
     // find the start of the frame using delayed ws
     reg prev_ws = 0;
-    wire start_frame;
 
     // find a clock enable using delayed sck
     reg prev_sck = 0;
     wire ck_in;
+    wire start_frame;
 
     always @(posedge ck) begin
         prev_ws <= ws0;
@@ -90,29 +90,49 @@ module i2s_detect
 #(parameter WIDTH=5)
 (
     input wire ck,
-    input wire ext_en,
-    input wire gen_en,
-    output wire external
+    input wire ext_ws,
+    input wire [5:0] ext_frame_posn,
+    input wire local_en,
+    input wire [5:0] local_frame_posn,
+    output wire valid
 );
 
-    localparam S_MAX = (1 << WIDTH) - 1;
+    // need to realign external WS
+    reg ws = 0;
+    reg ws_0 = 0;
 
-    reg [WIDTH-1:0] counter = S_MAX;
+    pipe #(.LENGTH(4)) pipe (.ck(ck), .in(has_64_bits), .out(had_64_bits));
+
+    reg has_64_bits = 0;
+    wire had_64_bits;
+    wire sof;
+    wire local_sof;
+
+    assign sof = ws_0 & !ws;
+    wire ext_okay;
+    assign ext_okay = had_64_bits & sof;
+    assign local_sof = local_en & (local_frame_posn == 0);
+
+    reg [1:0] frames = 2'b11;
 
     always @(posedge ck) begin
 
-        if (ext_en) begin
-            // Any signal on EXT indicates external sync
-            counter <= 0;
-        end else begin
-            if (gen_en && (counter < S_MAX)) begin
-                counter <= counter + 1;
+        ws <= ext_ws;
+        ws_0 <= ws;
+
+        has_64_bits <= ext_frame_posn == 6'h3f;
+
+        if (ext_okay) begin
+            frames <= 0;
+        end else if (local_sof) begin
+            if (frames != 2'b11) begin
+                frames <= frames + 1;
             end
         end
 
     end
 
-    assign external = counter != S_MAX;
+    assign valid = frames != 2'b11;
 
 endmodule
 
@@ -121,7 +141,7 @@ endmodule
     */
 
 module i2s_dual
-#(parameter DIVIDER=16, WIDTH=$clog2(DIVIDER)+1)
+#(parameter DIVIDER=16, WIDTH=$clog2(DIVIDER)+1, DETECT=5)
 (
     input wire ck,
     input wire rst,
@@ -130,7 +150,8 @@ module i2s_dual
     output wire sck,
     output wire ws,
     output wire en,
-    output wire [5:0] frame_posn
+    output wire [5:0] frame_posn,
+    output wire external
 );
 
     // Local I2S clock generation
@@ -163,14 +184,15 @@ module i2s_dual
     );
 
     // Detect EXT sync
-    wire external;
 
-    i2s_detect #(.WIDTH(WIDTH))
+    i2s_detect #(.WIDTH(DETECT))
     i2s_detect(
         .ck(ck),
-        .ext_en(ext_en),
-        .gen_en(local_en),
-        .external(external)
+        .ext_ws(ext_ws),
+        .ext_frame_posn(ext_frame_posn),
+        .local_frame_posn(local_frame_posn),
+        .local_en(local_en),
+        .valid(external)
     );
 
     // Select external or local outputs

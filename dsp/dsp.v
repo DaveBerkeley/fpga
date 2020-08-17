@@ -17,11 +17,13 @@ module top(
     output wire FLASH_IO2,
     output wire FLASH_IO3,
 
-    output wire LED1,
-    output wire LED2,
-    output wire LED3,
-    output wire LED4,
-    output wire LED5,
+    output wire P2_1,
+    output wire P2_2,
+    output wire P2_3,
+    output wire P2_4,
+    output wire P2_7,
+    output wire P2_8,
+    output wire P2_9,
 
     // Test pins
     input wire P1A1,
@@ -46,7 +48,8 @@ module top(
     output wire P1B9
 );
 
-    parameter PLL_HZ = 30000000;
+    //parameter PLL_HZ = 30000000;
+    parameter PLL_HZ = 24000000;
 
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
@@ -584,10 +587,13 @@ module top(
     //  IO
 
     assign TX = tx;
-    assign LED1 = gpio_reg[0];
-    assign LED2 = gpio_reg[1];
-    assign LED3 = gpio_reg[2];
-    assign LED4 = gpio_reg[3];
-    assign LED5 = gpio_reg[4];
+
+    assign P2_1 = test[0];
+    assign P2_2 = test[1];
+    assign P2_3 = test[2];
+    assign P2_4 = test[3];
+    assign P2_7 = test[4];
+    assign P2_8 = test[5];
+    assign P2_9 = test[6];
 
 endmodule
