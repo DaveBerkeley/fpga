@@ -8,7 +8,7 @@ VERILATOR_SRC?=$(ADD_SRC)
 
 %.json: %.v $(ADD_SRC) $(ADD_DEPS)
 	verilator --top-module top $(ADD_VERILATOR) $< $(VERILATOR_SRC) /usr/share/yosys/ice40/cells_sim.v --lint-only -Wall 
-	yosys -ql $*.log $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 $(ADD_YOSYS) -top top -json $@' $< $(ADD_SRC)
+	yosys -ql $*.log $(MORE_YOSYS) $(if $(USE_ARACHNEPNR),-DUSE_ARACHNEPNR) -p 'synth_ice40 $(ADD_YOSYS) -top top -json $@' $< $(ADD_SRC)
 
 ifeq ($(USE_ARACHNEPNR),)
 %.asc: $(PIN_DEF) %.json

@@ -29,7 +29,16 @@ VCONFIG = /tmp/$(PROJ)_config.vlt
 PACKAGE = sg48
 DEVICE = up5k
 
-PLL_MHZ = 24
+DEFINES  = 
+#DEFINES += USE_SK9822
+#DEFINES += USE_DMA
+
+# -D<symbol> syntax common to yosys and gcc
+SHARED_DEFINES = $(DEFINES:%=-D %)
+MORE_YOSYS = $(SHARED_DEFINES)
+ADD_VERILATOR += $(DEFINES:%=+define+%)
+
+PLL_MHZ = 30
 PLL_HZ = $(PLL_MHZ)000000
 
 PIN_DEF = ../icebreaker.pcf
@@ -111,6 +120,7 @@ CFLAGS += -nostartfiles
 CFLAGS += -Wall -Werror
 CFLAGS += -O1
 CFLAGS += -I $(SOC)
+CFLAGS += $(SHARED_DEFINES)
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
 
 CFILES  = firmware.c
@@ -123,6 +133,6 @@ firmware.elf: $(CFILES) $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb sk9822_tb
+tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb sk9822_tb i2s_rx_tb
 
 #	FIN
