@@ -51,16 +51,40 @@ module sk9822_peripheral
     /* verilator lint_on UNUSED */
 
     assign ram_re = 1;
+
+    wire [3:0] write_adr;
+    assign write_adr = wb_dbus_adr[5:2];
+
+    wire [15:0] wr_hi_dat;
+    wire [15:0] wr_lo_dat;
+    wire [15:0] rd_hi_dat;
+    wire [15:0] rd_lo_dat;
+
+    assign wr_lo_dat = wb_dbus_dat[15:0];
+    assign wr_hi_dat = wb_dbus_dat[31:16];
+    assign ram_data[15:0]  = rd_lo_dat;
+    assign ram_data[31:16] = rd_hi_dat;
  
-    dpram #(.BITS(32), .SIZE(16))
-    dpram(   
+    dpram #(.BITS(16), .SIZE(16))
+    dpram_hi(   
         .ck(wb_clk),
         .we(ack & wb_dbus_we),
-        .waddr(wb_dbus_adr[5:2]),
-        .wdata(wb_dbus_dat),
+        .waddr(write_adr),
+        .wdata(wr_hi_dat),
         .re(ram_re),
         .raddr(ram_addr),
-        .rdata(ram_data)
+        .rdata(rd_hi_dat)
+    );
+
+    dpram #(.BITS(16), .SIZE(16))
+    dpram_lo(   
+        .ck(wb_clk),
+        .we(ack & wb_dbus_we),
+        .waddr(write_adr),
+        .wdata(wr_lo_dat),
+        .re(ram_re),
+        .raddr(ram_addr),
+        .rdata(rd_lo_dat)
     );
 
     //  The LED Clock is divided down from sys clock
