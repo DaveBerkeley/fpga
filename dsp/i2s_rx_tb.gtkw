@@ -1,0 +1,59 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Mon Aug 17 15:19:51 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Mon Aug 17 15:19:41 2020"
+[dumpfile_size] 293402
+[savefile] "/home/dave/Desktop/git/fpga/dsp/i2s_rx_tb.gtkw"
+[timestart] 0
+[size] 1620 605
+[pos] -1 -1
+*-27.198023 92820000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[sst_width] 196
+[signals_width] 150
+[sst_expanded] 1
+[sst_vpaned_height] 157
+@28
+tb.ck
+tb.rst
+@22
+tb.i2s_rx.frame_posn[5:0]
+@28
+tb.i2s_rx.sd
+tb.i2s_rx.sample
+@c00023
+tb.i2s_rx.shift[23:0]
+@29
+(0)tb.i2s_rx.shift[23:0]
+(1)tb.i2s_rx.shift[23:0]
+(2)tb.i2s_rx.shift[23:0]
+(3)tb.i2s_rx.shift[23:0]
+(4)tb.i2s_rx.shift[23:0]
+(5)tb.i2s_rx.shift[23:0]
+(6)tb.i2s_rx.shift[23:0]
+(7)tb.i2s_rx.shift[23:0]
+(8)tb.i2s_rx.shift[23:0]
+(9)tb.i2s_rx.shift[23:0]
+(10)tb.i2s_rx.shift[23:0]
+(11)tb.i2s_rx.shift[23:0]
+(12)tb.i2s_rx.shift[23:0]
+(13)tb.i2s_rx.shift[23:0]
+(14)tb.i2s_rx.shift[23:0]
+(15)tb.i2s_rx.shift[23:0]
+(16)tb.i2s_rx.shift[23:0]
+(17)tb.i2s_rx.shift[23:0]
+(18)tb.i2s_rx.shift[23:0]
+(19)tb.i2s_rx.shift[23:0]
+(20)tb.i2s_rx.shift[23:0]
+(21)tb.i2s_rx.shift[23:0]
+(22)tb.i2s_rx.shift[23:0]
+(23)tb.i2s_rx.shift[23:0]
+@1401201
+-group_end
+@22
+tb.i2s_rx.left[23:0]
+tb.i2s_rx.right[23:0]
+[pattern_trace] 1
+[pattern_trace] 0
