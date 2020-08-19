@@ -63,6 +63,7 @@ void irq_handler(void)
         LEDS[0] = i;
         i += 1;
 
+#if defined(USE_SK9822)
         const uint8_t bright = 4;
         int idx = i % 12;
         int r = (i & 0x10) ? 255 : 0;
@@ -82,6 +83,7 @@ void irq_handler(void)
             else
                 LED_IO[j] = colour(0, 0, 0, 0);
         }
+#endif // USE_SK9822
     }
 }
 

@@ -52,8 +52,10 @@ module audio_engine (
     output reg [3:0] dma_sel,
     output reg [31:0] dma_adr,
     output reg [31:0] dma_dat,
+    /* verilator lint_off UNUSED */
     input wire dma_ack,
     input wire [31:0] dma_rdt,
+    /* verilator lint_on UNUSED */
     // DMA status
     output wire dma_done,
     output wire dma_match,
@@ -130,8 +132,9 @@ module audio_engine (
 
     // Divide the clock down to 2MHz
     // Gives 2e6/64 = 31250 Hz frame rate
-    localparam I2S_DIVIDER = 12;
-    localparam I2S_BIT_WIDTH = $clog2(I2S_DIVIDER);
+    /* verilator lint_off WIDTH */
+    localparam [4:0] I2S_DIVIDER = CK_HZ / (64 * 31250);
+    /* verilator lint_on WIDTH */
     assign i2s_clock = ck;
 
     wire [5:0] frame_posn;
@@ -167,14 +170,18 @@ module audio_engine (
     assign write_data = writing ? mic_source(chan_addr) : 0;
     assign write_en = writing;
 
-    wire [15:0] mic_0;
-    wire [15:0] mic_1;
-    wire [15:0] mic_2;
-    wire [15:0] mic_3;
-    wire [15:0] mic_4;
-    wire [15:0] mic_5;
-    wire [15:0] mic_6;
-    wire [15:0] mic_7;
+    localparam MIC_W = 24;
+
+    /* verilator lint_off UNUSED */
+    wire [MIC_W-1:0] mic_0;
+    wire [MIC_W-1:0] mic_1;
+    wire [MIC_W-1:0] mic_2;
+    wire [MIC_W-1:0] mic_3;
+    wire [MIC_W-1:0] mic_4;
+    wire [MIC_W-1:0] mic_5;
+    wire [MIC_W-1:0] mic_6;
+    wire [MIC_W-1:0] mic_7;
+    /* verilator lint_on UNUSED */
 
     // Delay the I2S data input sample point from the start of the clock
     wire i2s_in_sample;
@@ -198,16 +205,16 @@ module audio_engine (
         .en(i2s_out_sample)
     );
 
-    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+    i2s_rx #(.BITS(MIC_W)) 
     rx_0(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
-    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+    i2s_rx #(.BITS(MIC_W))
     rx_1(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
-    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+    i2s_rx #(.BITS(MIC_W))
     rx_2(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
-    i2s_rx #(.WIDTH(I2S_BIT_WIDTH)) 
+    i2s_rx #(.BITS(MIC_W))
     rx_3(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
 
@@ -258,13 +265,28 @@ module audio_engine (
 
     endfunction
 
+    localparam MIC_SHIFT = 0;
+    localparam MIC_HI = MIC_W-(1+MIC_SHIFT);
+    localparam MIC_LO = MIC_W-(16+MIC_SHIFT);
+
     function [15:0] mic_source(input [(CHAN_W-1):0] chan);
  
         begin
-            mic_source = get_source(chan, mic_0, mic_1, mic_2, mic_3, mic_4, mic_5, mic_6, mic_7);
+            mic_source = get_source(chan,
+                mic_0[MIC_HI:MIC_LO],
+                mic_1[MIC_HI:MIC_LO],
+                mic_2[MIC_HI:MIC_LO],
+                mic_3[MIC_HI:MIC_LO],
+                mic_4[MIC_HI:MIC_LO],
+                mic_5[MIC_HI:MIC_LO],
+                mic_6[MIC_HI:MIC_LO],
+                mic_7[MIC_HI:MIC_LO]
+            );
         end
 
     endfunction
+
+    //  Write microphone data into DP_RAM
 
     always @(posedge ck) begin
         // Check that the host processor isn't in write mode
@@ -421,98 +443,12 @@ module audio_engine (
         end
     end
 
-    //  Measure peak audio level on inputs
-
-`ifdef XXXXXXXXXXXXX
-    wire spl_en;
-    wire decay_en;
-    wire [15:0] spl_0;
-    wire [15:0] spl_1;
-    wire [15:0] spl_2;
-    wire [15:0] spl_3;
-    wire [15:0] spl_4;
-    wire [15:0] spl_5;
-    wire [15:0] spl_6;
-    wire [15:0] spl_7;
-
-    assign spl_en = 1;// mic_x is updated once a frame
-    assign decay_en = frame[3] && start_of_frame;
-
-    spl #(.WIDTH(16))
-        spl0 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_0), .out(spl_0));
-    spl #(.WIDTH(16))
-        spl1 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_1), .out(spl_1));
-    spl #(.WIDTH(16))
-        spl2 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_2), .out(spl_2));
-    spl #(.WIDTH(16))
-        spl3 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_3), .out(spl_3));
-    spl #(.WIDTH(16))
-        spl4 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_4), .out(spl_4));
-    spl #(.WIDTH(16))
-        spl5 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_5), .out(spl_5));
-    spl #(.WIDTH(16))
-        spl6 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_6), .out(spl_6));
-    spl #(.WIDTH(16))
-        spl7 (.ck(ck), .rst(spl_reset), .peak_en(spl_en), .decay_en(decay_en), .in(mic_7), .out(spl_7));
- 
-    function [15:0] spl_src(input [(CHAN_W-1):0] chan);
-
-        begin
-            spl_src = get_source(chan, spl_0, spl_1, spl_2, spl_3, spl_4, spl_5, spl_6, spl_7);
-        end
-
-    endfunction
-    
-    wire spl_xfer_run;
-    wire [15:0] spl_xfer_data_in;
-    wire [15:0] spl_xfer_data_out;
-    wire [(CHAN_W-1):0] spl_xfer_addr;
-    /* verilator lint_off UNUSED */
-    wire spl_xfer_we;
-    wire spl_xfer_done;
-    wire spl_xfer_busy;
-    /* verilator lint_on UNUSED */
-
-    assign spl_xfer_run = seq_done;
-    assign spl_xfer_data_in = spl_src(spl_xfer_addr);
-
-    spl_xfer #(.WIDTH(16), .ADDR_W(CHAN_W))
-    spl_xfer (
-        .ck(ck),
-        .rst(reset),
-        .run(spl_xfer_run),
-        .data_in(spl_xfer_data_in),
-        .data_out(spl_xfer_data_out),
-        .addr(spl_xfer_addr),
-        .we(spl_xfer_we),
-        .done(spl_xfer_done),
-        .busy(spl_xfer_busy)
-    );
-
-    wire done;
-    assign done = spl_xfer_done;
-`else
-    wire spl_xfer_we;
-    assign spl_xfer_we = 0;
-    wire [CHAN_W-1:0] spl_xfer_addr;
-    assign spl_xfer_addr = 0;
-    wire [15:0] spl_xfer_data_out;
-    assign spl_xfer_data_out = 0;
-
     wire done;
     assign done = seq_done;
-    /* verilator lint_off UNUSED */
-    wire spl_xfer_done;
-    assign spl_xfer_done = 0;
-    wire spl_reset;
-    assign spl_reset = 0;
-    /* verilator lint_on UNUSED */
-`endif
 
     //  Write Results to DP_RAM.
     //
-    //  First the sequencer output is written to addr 0..7
-    //  Then the spl data is written to addr 8..15
+    //  Sequencer output is written to addr 0..7
 
     wire [CHAN_W:0] result_raddr;
 
@@ -524,9 +460,9 @@ module audio_engine (
     wire [15:0] result_wdata;
     wire result_we;
 
-    assign result_we = seq_we | spl_xfer_we;
-    assign result_waddr = spl_xfer_we ? { 1'b1, spl_xfer_addr } : { 1'b0, seq_wr_addr };
-    assign result_wdata = spl_xfer_we ? spl_xfer_data_out : seq_audio;
+    assign result_we = seq_we;
+    assign result_waddr = { 1'b0, seq_wr_addr };
+    assign result_wdata = seq_audio;
 
     chip_select #(.ADDR(ADDR_RESULT)) 
     cs_result(
@@ -640,6 +576,8 @@ module audio_engine (
 
     //  DMA Test
 
+`ifdef USE_DMA
+
     localparam XFER_ADDR_W = 3;
     localparam XFER_DATA_W = 16;
 
@@ -687,6 +625,24 @@ module audio_engine (
         .dma_ack(dma_ack),
         .dma_rdt(dma_rdt)
     );
+`else   // USE_DMA
+
+    initial begin
+        dma_cyc = 0;
+        dma_we = 0;
+        dma_sel = 0;
+        dma_dat = 0;
+        dma_adr = 0;
+    end
+
+    wire [31:0] dma_dbus_rdt;
+    wire dma_dbus_ack;
+    assign dma_dbus_rdt = 0;
+    assign dma_dbus_ack = 0;
+    assign dma_done = 0;
+    assign dma_match = 0;
+
+`endif // USE_DMA
     
     //  OR the ACK and RST signals together
 

@@ -989,6 +989,10 @@ void engine()
 
     print("running ..\r\n");
 
+#if defined(USE_SK9822)
+    print("Using SK9822\r\n");
+#endif
+
 #if 0
 
     print("DMA test ...\r\n");

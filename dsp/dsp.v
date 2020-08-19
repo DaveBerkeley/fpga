@@ -48,8 +48,8 @@ module top(
     output wire P1B9
 );
 
-    //parameter PLL_HZ = 30000000;
-    parameter PLL_HZ = 24000000;
+    parameter PLL_HZ = 30000000;
+    //parameter PLL_HZ = 24000000;
 
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
@@ -141,6 +141,7 @@ module top(
 
     //  DMA from DSP, connected to port B of ram_arb
 
+    /* verilator lint_off UNUSED */
     wire dma_cyc;
     wire dma_we;
     wire [3:0] dma_sel;
@@ -148,6 +149,7 @@ module top(
     wire [31:0] dma_dat;
     wire dma_ack;
     wire [31:0] dma_rdt;
+    /* verilator lint_on UNUSED */
 
     // Output Port X of ram_arb
     wire x_cyc;
@@ -157,6 +159,8 @@ module top(
     wire [31:0] x_dat;
     wire [31:0] x_rdt;
     wire x_ack;
+
+`ifdef USE_DMA
 
     ram_arb # (.WIDTH(32))
     ram_arb
@@ -184,6 +188,21 @@ module top(
         .x_ack(x_ack),
         .x_rdt(x_rdt)
     );
+
+`else   //  USE_DMA
+
+    assign ram_ack = x_ack;
+    assign ram_rdt = x_rdt;
+    assign dma_ack = 0;
+    assign dma_rdt = 0;
+    assign x_cyc = wb_dbus_cyc;
+    assign x_we = wb_dbus_we;
+    assign x_sel = wb_dbus_sel;
+    assign x_adr = wb_dbus_adr;
+    assign x_dat = wb_dbus_dat;
+    // ...
+
+`endif //   USE_DMA
 
     //  Dbus RAM
     
@@ -310,6 +329,8 @@ module top(
         .gpio(gpio_reg)
     );
 
+`ifdef USE_SK9822
+
     //  sk9822 LED driver
 
     /* verilator lint_off UNUSED */
@@ -330,6 +351,13 @@ module top(
         .led_ck(led_ck),
         .led_data(led_data)
     );
+
+`else
+
+    wire led_ack;
+    assign led_ack = 0;
+
+`endif  //  USE_SK9822
 
     //  SPI Flash interface
 
@@ -549,27 +577,21 @@ module top(
 
     //  Test pins
 
-    //assign P1A1 = test[0];
-    //assign P1A2 = test[1];
-    //assign P1A3 = test[2];
-    //assign P1A4 = test[3];
     assign sd_in2 = P1A1;
     assign sd_in3 = P1A2;
+
+`ifdef USE_SK9822
     assign P1A3 = led_ck;
     assign P1A4 = led_data;
-    //assign P1B1 = test[4];
-    //assign P1B2 = test[5];
-    //assign P1B3 = test[6];
-    assign P1B4 = test[7];
+`else
+    assign P1A3 = 0;
+    assign P1A4 = 0;
+`endif
 
-    //assign P1A1 = wb_dbus_cyc;
-    //assign P1A2 = wb_dbus_ack;
-    //assign P1A3 = wb_dbus_adr[0];
-    //assign P1A4 = wb_dbus_adr[1];
     assign P1B1 = sck;
     assign P1B2 = ws;
     assign P1B3 = sd_out;
-    //assign P1B4 = wb_clk;
+    assign P1B4 = 0;
 
     // I2S Audio Input
     assign P1A7  = sck;

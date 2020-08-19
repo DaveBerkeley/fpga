@@ -1,4 +1,6 @@
 
+#if defined(USE_DMA)
+
 #define DMA_STATUS_XFER_DONE  (1 << 0)
 #define DMA_STATUS_BLOCK_DONE (1 << 1)
 
@@ -12,5 +14,7 @@ void dma_set_blocks(uint32_t v);
 
 void dma_start(bool repeat);
 void dma_stop();
+
+#endif
 
 //  FIN

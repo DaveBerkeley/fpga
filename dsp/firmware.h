@@ -8,7 +8,10 @@
 
 #define LEDS    ((uint32_t volatile*) 0x40000000)
 #define flash   ((uint32_t volatile*) 0x70000000)
+
+#if defined(USE_SK9822)
 #define LED_IO  ((uint32_t volatile*) 0x90000000)
+#endif
 
     /*
      *

@@ -30,7 +30,7 @@ PACKAGE = sg48
 DEVICE = up5k
 
 DEFINES  = 
-#DEFINES += USE_SK9822
+DEFINES += USE_SK9822
 #DEFINES += USE_DMA
 
 # -D<symbol> syntax common to yosys and gcc
