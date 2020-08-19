@@ -57,7 +57,7 @@ FILES += accumulator.v
 FILES += multiplier.v
 FILES += twos_complement.v
 FILES += addr_adder.v
-#FILES += spl.v
+FILES += spl.v
 FILES += dma.v
 FILES += sk9822.v
 
@@ -133,6 +133,6 @@ firmware.elf: $(CFILES) $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb sk9822_tb i2s_rx_tb
+tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb sk9822_tb i2s_rx_tb spl_tb
 
 #	FIN

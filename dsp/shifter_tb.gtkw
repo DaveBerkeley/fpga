@@ -1,26 +1,63 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Aug  3 15:03:32 2020
+[*] Wed Aug 19 14:26:16 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Mon Aug  3 15:03:21 2020"
-[dumpfile_size] 142286
+[dumpfile_mtime] "Wed Aug 19 14:20:36 2020"
+[dumpfile_size] 3294247
 [savefile] "/home/dave/Desktop/git/fpga/dsp/shifter_tb.gtkw"
-[timestart] 0
-[size] 1905 598
+[timestart] 17200000
+[size] 1680 610
 [pos] -1 -1
-*-20.000000 125000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.000000 126000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.spl.
 [sst_width] 196
-[signals_width] 110
+[signals_width] 126
 [sst_expanded] 1
-[sst_vpaned_height] 155
+[sst_vpaned_height] 157
 @28
 tb.ck
-tb.en
 @22
-tb.in[39:0]
+tb.spl.in[15:0]
+@28
+tb.spl.peak_en
+tb.spl.decay_en
+@22
 tb.out[15:0]
+@28
+tb.level.ck
+@22
+tb.level.in[15:0]
+@28
+tb.level.ck
+tb.level.en
+@22
+tb.level.in[15:0]
+@c00022
+tb.level.shift[15:0]
+@28
+(0)tb.level.shift[15:0]
+(1)tb.level.shift[15:0]
+(2)tb.level.shift[15:0]
+(3)tb.level.shift[15:0]
+(4)tb.level.shift[15:0]
+(5)tb.level.shift[15:0]
+(6)tb.level.shift[15:0]
+(7)tb.level.shift[15:0]
+(8)tb.level.shift[15:0]
+(9)tb.level.shift[15:0]
+(10)tb.level.shift[15:0]
+(11)tb.level.shift[15:0]
+(12)tb.level.shift[15:0]
+(13)tb.level.shift[15:0]
+(14)tb.level.shift[15:0]
+(15)tb.level.shift[15:0]
+@1401200
+-group_end
+@28
+tb.level.ready
 @23
-tb.shift[4:0]
+tb.level.level[3:0]
 [pattern_trace] 1
 [pattern_trace] 0

@@ -42,51 +42,41 @@ module spl
 
 endmodule
 
-   /*
-    *
-    */
-
-module spl_xfer
-    #(parameter WIDTH=16, ADDR_W=3)
+module level 
+#(parameter IN_W=24, BITS = $clog2(IN_W))
 (
     input wire ck,
-    input wire rst,
-    input wire run,
-    input wire [(WIDTH-1):0] data_in,
-    output wire [(WIDTH-1):0] data_out,
-    output reg [(ADDR_W-1):0] addr = 0,
-    output wire we,
-    output reg done = 0,
-    output reg busy = 0
+    input wire en,
+    input wire [IN_W-1:0] in,
+    output wire [BITS-1:0] level,
+    output wire ready
 );
 
+    reg [IN_W-1:0] shift = 0;
+
+    reg [BITS-1:0] bits = 0;
+    reg busy = 0;
+
     always @(posedge ck) begin
-
-        if (rst) begin
-            addr <= 0;
-            done <= 0;
-            busy <= 0;
-        end
-
-        if (run & !done) begin
+        if (en) begin
+            shift <= in;
+            bits <= 0;
             busy <= 1;
-        end
+        end 
 
-        if (busy) begin
-
-            addr <= addr + 1;
-
-            if (addr == ((1 << ADDR_W) - 1)) begin
-                done <= 1;
+        if (busy && !en) begin
+            if (shift[IN_W-1] != shift[IN_W-2]) begin
+                // top bits differ, done
                 busy <= 0;
+            end else begin
+                bits <= bits + 1;
+                shift <= { shift[IN_W-1], shift[IN_W-2:0], !shift[IN_W-1] };
             end
-
         end
-
     end
 
-    assign data_out = busy ? data_in : 0;
-    assign we = busy;
+    assign level = bits;
+    assign ready = !busy;
 
 endmodule
 

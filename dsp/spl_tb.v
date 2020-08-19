@@ -2,6 +2,10 @@
 `default_nettype none
 `timescale 1ns / 100ps
 
+   /*
+    *
+    */
+
 module tb ();
 
     initial begin
@@ -22,7 +26,128 @@ module tb ();
 
     spl spl (.ck(ck), .rst(rst), .peak_en(peak_en), .decay_en(decay_en), .in(in), .out(out));
 
+    reg [15:0] level_in = 0;
+    reg level_en = 0;
+    wire [3:0] level_code;
+    wire ready;
+
+    level #(.IN_W(16)) level(.ck(ck), .en(level_en), .in(level_in), .level(level_code), .ready(ready));
+
     integer i;
+
+    task set_level(input [15:0] value);
+        begin
+            @(posedge ck);
+            level_en <= 1;
+            level_in <= value;
+            @(posedge ck);
+            level_en <= 0;
+            level_in <= 16'hZ;
+            @(posedge ck);
+            wait(ready);
+        end
+    endtask
+
+    //  Test level module
+    initial begin
+
+        set_level(16'b10zz_zzzz_zzzz_zzzz);
+        tb_assert(level_code == 0);
+
+        set_level(16'b110z_zzzz_zzzz_zzzz);
+        tb_assert(level_code == 1);
+
+        set_level(16'b1110_zzzz_zzzz_zzzz);
+        tb_assert(level_code == 2);
+
+        set_level(16'b1111_0zzz_zzzz_zzzz);
+        tb_assert(level_code == 3);
+
+        set_level(16'b1111_10zz_zzzz_zzzz);
+        tb_assert(level_code == 4);
+
+        set_level(16'b1111_110z_zzzz_zzzz);
+        tb_assert(level_code == 5);
+
+        set_level(16'b1111_1110_zzzz_zzzz);
+        tb_assert(level_code == 6);
+
+        set_level(16'b1111_1111_0zzz_zzzz);
+        tb_assert(level_code == 7);
+
+        set_level(16'b1111_1111_10zz_zzzz);
+        tb_assert(level_code == 8);
+
+        set_level(16'b1111_1111_110z_zzzz);
+        tb_assert(level_code == 9);
+
+        set_level(16'b1111_1111_1110_zzzz);
+        tb_assert(level_code == 10);
+
+        set_level(16'b1111_1111_1111_0zzz);
+        tb_assert(level_code == 11);
+
+        set_level(16'b1111_1111_1111_10zz);
+        tb_assert(level_code == 12);
+
+        set_level(16'b1111_1111_1111_110z);
+        tb_assert(level_code == 13);
+
+        set_level(16'b1111_1111_1111_1110);
+        tb_assert(level_code == 14);
+
+        set_level(16'b1111_1111_1111_1111);
+        tb_assert(level_code == 15);
+
+        set_level(16'b01zz_zzzz_zzzz_zzzz);
+        tb_assert(level_code == 0);
+
+        set_level(16'b001z_zzzz_zzzz_zzzz);
+        tb_assert(level_code == 1);
+
+        set_level(16'b0001_0zzz_zzzz_zzzz);
+        tb_assert(level_code == 2);
+
+        set_level(16'b0000_10zz_zzzz_zzzz);
+        tb_assert(level_code == 3);
+
+        set_level(16'b0000_01zz_zzzz_zzzz);
+        tb_assert(level_code == 4);
+
+        set_level(16'b0000_001z_zzzz_zzzz);
+        tb_assert(level_code == 5);
+
+        set_level(16'b0000_0001_zzzz_zzzz);
+        tb_assert(level_code == 6);
+
+        set_level(16'b0000_0000_1zzz_zzzz);
+        tb_assert(level_code == 7);
+
+        set_level(16'b0000_0000_01zz_zzzz);
+        tb_assert(level_code == 8);
+
+        set_level(16'b0000_0000_001z_zzzz);
+        tb_assert(level_code == 9);
+
+        set_level(16'b0000_0000_0001_zzzz);
+        tb_assert(level_code == 10);
+
+        set_level(16'b0000_0000_0000_1zzz);
+        tb_assert(level_code == 11);
+
+        set_level(16'b0000_0000_0000_01zz);
+        tb_assert(level_code == 12);
+
+        set_level(16'b0000_0000_0000_001z);
+        tb_assert(level_code == 13);
+
+        set_level(16'b0000_0000_0000_0001);
+        tb_assert(level_code == 14);
+
+        set_level(16'b0000_0000_0000_0000);
+        tb_assert(level_code == 15);
+
+    end
 
     //  Test spl module
 
@@ -127,119 +252,6 @@ module tb ();
         @(posedge ck);
         $finish;
     end
-
-    //  Test spl_xfer module
-
-    reg run = 0;
-    reg rst_2 = 0;
-    reg [15:0] data_in = 0;
-    wire [15:0] data_out;
-    wire [2:0] addr;
-    wire we;
-    wire done;
-    wire busy;
-
-    spl_xfer #(.WIDTH(16), .ADDR_W(3))
-    spl_xfer (
-        .ck(ck),
-        .rst(rst_2),
-        .run(run),
-        .data_in(data_in),
-        .data_out(data_out),
-        .addr(addr),
-        .we(we),
-        .done(done),
-        .busy(busy)
-    );
-
-    initial begin
-
-        rst_2 <= 1;
-        @(posedge ck);
-        @(posedge ck);
-
-        rst_2 <= 0;
-        @(posedge ck);
-        @(posedge ck);
-        tb_assert(!done);
-        tb_assert(!busy);
-        tb_assert(!we);
-
-        run <= 1;
-        data_in <= 16'h1234;
-        @(posedge ck);
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 0);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'habcd;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 1);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'hcafe;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 2);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'hface;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 3);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'h1111;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 4);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'h2222;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 5);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'h4444;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 6);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'h8888;
-        @(posedge ck);
-        tb_assert(data_out == data_in);
-        tb_assert(addr == 7);
-        tb_assert(!done);
-        tb_assert(busy);
-        tb_assert(we);
-
-        data_in <= 16'h1234;
-        @(posedge ck);
-        tb_assert(data_out == 0);
-        tb_assert(addr == 0);
-        tb_assert(done);
-        tb_assert(!busy);
-        tb_assert(!we);
-
-    end 
 
 endmodule
 
