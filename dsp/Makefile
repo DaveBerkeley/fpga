@@ -30,7 +30,7 @@ PACKAGE = sg48
 DEVICE = up5k
 
 DEFINES  = 
-DEFINES += USE_SK9822
+#DEFINES += USE_SK9822
 #DEFINES += USE_DMA
 
 # -D<symbol> syntax common to yosys and gcc
@@ -60,6 +60,7 @@ FILES += addr_adder.v
 FILES += spl.v
 FILES += dma.v
 FILES += sk9822.v
+FILES += agc.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
@@ -133,6 +134,6 @@ firmware.elf: $(CFILES) $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
 
-tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb sk9822_tb i2s_rx_tb spl_tb
+tb: dsp_tb pipe_tb shifter_tb dma_tb i2s_clock_tb sk9822_tb i2s_rx_tb spl_tb agc_tb
 
 #	FIN

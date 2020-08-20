@@ -1,0 +1,38 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Thu Aug 20 16:40:24 2020
+[*]
+[dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
+[dumpfile_mtime] "Thu Aug 20 16:22:30 2020"
+[dumpfile_size] 2723
+[savefile] "/home/dave/Desktop/git/fpga/dsp/agc_tb.gtkw"
+[timestart] 0
+[size] 1712 598
+[pos] -1 -1
+*-18.000000 563000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb.
+[treeopen] tb.agc.
+[sst_width] 196
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 155
+@28
+tb.ck
+tb.en
+tb.agc.src_addr[1:0]
+@22
+tb.in_data[23:0]
+@28
+tb.agc.find_max
+@22
+tb.agc.normal[23:0]
+tb.agc.max_in[23:0]
+@28
+tb.agc.level_en
+tb.agc.level_ready
+tb.agc.busy
+tb.done
+@23
+tb.agc.level[4:0]
+[pattern_trace] 1
+[pattern_trace] 0
