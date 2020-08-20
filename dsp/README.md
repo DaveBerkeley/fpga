@@ -78,5 +78,5 @@ allowing hundreds of calculations per audio frame.
 
 The development board I'm using is the [Icebreaker](https://1bitsquared.de/products/icebreaker).
 
-The host processor is currently Clifford Wolf's [picorv32](https://github.com/cliffordwolf/picorv32)
-but I aim to port it to Olof Kindgren's [SERV](https://github.com/olofk/serv).
+The host processor is Olof Kindgren's [SERV](https://github.com/olofk/serv).
+See my [XiP SoC](https://github.com/DaveBerkeley/serv_soc) based on it.
