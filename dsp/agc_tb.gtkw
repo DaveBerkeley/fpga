@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Thu Aug 20 16:40:24 2020
+[*] Fri Aug 21 10:52:50 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Thu Aug 20 16:22:30 2020"
-[dumpfile_size] 2723
+[dumpfile_mtime] "Fri Aug 21 10:52:15 2020"
+[dumpfile_size] 80256
 [savefile] "/home/dave/Desktop/git/fpga/dsp/agc_tb.gtkw"
 [timestart] 0
 [size] 1712 598
 [pos] -1 -1
-*-18.000000 563000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.792284 1806000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [treeopen] tb.agc.
 [sst_width] 196
@@ -18,21 +18,37 @@
 [sst_vpaned_height] 155
 @28
 tb.ck
-tb.en
-tb.agc.src_addr[1:0]
 @22
+tb.mic_0[23:0]
+tb.mic_1[23:0]
+tb.mic_2[23:0]
+tb.mic_3[23:0]
 tb.in_data[23:0]
 @28
+tb.en
+@29
+tb.agc.src_addr[1:0]
+@28
 tb.agc.find_max
+tb.agc.find_normal
 @22
 tb.agc.normal[23:0]
 tb.agc.max_in[23:0]
+tb.agc.level_mod.in[23:0]
 @28
 tb.agc.level_en
 tb.agc.level_ready
 tb.agc.busy
 tb.done
-@23
+@22
 tb.agc.level[4:0]
+tb.agc.level_mod.shift[23:0]
+@28
+tb.agc.gain_en
+tb.agc.gain_addr[1:0]
+@22
+tb.agc.gain_out[15:0]
+@28
+tb.agc.gain_ready
 [pattern_trace] 1
 [pattern_trace] 0
