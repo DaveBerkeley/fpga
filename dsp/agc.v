@@ -9,6 +9,8 @@ module agc
     output wire [CHAN_W-1:0] src_addr,
     input wire signed [IN_W-1:0] in_data,
     output wire [LEVEL_W-1:0] level,
+    output wire signed [OUT_W-1:0] out,
+    output wire out_we,
     output wire done
 );
 
@@ -47,7 +49,6 @@ module agc
     reg [1:0] address = 0;
 
     wire gain_ready;
-    wire [OUT_W-1:0] gain_out;
     wire [CHAN_W-1:0] gain_addr;
     reg gain_en = 0;
     reg gain_wait = 0;
@@ -58,13 +59,20 @@ module agc
     wire busy;
     assign busy = find_max | find_normal | find_level | find_gain;
 
-    gain #(.IN_W(IN_W), .OUT_W(OUT_W), .CHAN_W(CHAN_W))
-    gain (
+    reg [15:0] gain = 16'b111_11111_1111_1111;
+
+    wire [CHAN_W-1:0] out_addr;
+
+    gain #(.IN_W(IN_W), .OUT_W(OUT_W), .CHANS(CHANS))
+    gain_mod (
         .ck(ck),
         .en(gain_en),
+        .gain(gain),
         .addr(gain_addr),
         .in_data(in_data),
-        .out(gain_out),
+        .out_addr(out_addr),
+        .out_we(out_we),
+        .out_data(out),
         .done(gain_ready)
     );
  
@@ -124,41 +132,151 @@ module agc
     end
 
     assign done = !busy;
-    assign src_addr = (find_max ? address : 0) | gain_addr;
+    assign src_addr = (find_max ? address : 0) | (find_gain ? gain_addr : 0);
 
 endmodule
 
+   /*
+    *
+    */
+
+module shift
+#(parameter IN_W=24, OUT_W=16, SHIFT=IN_W-OUT_W, SHIFT_W=$clog2(SHIFT))
+(
+    input wire ck,
+    input wire [SHIFT_W-1:0] shift,
+    input wire [IN_W-1:0] in,
+    output wire [OUT_W-1:0] out
+);
+
+    wire [OUT_W-1:0] shifted;
+
+    genvar i;
+
+    generate
+
+        for (i = 0; i < OUT_W; i = i + 1) begin
+            assign shifted[OUT_W-(i+1)] = in[IN_W-(i+shift+1)];
+        end
+
+    endgenerate
+
+    assign out = shifted;
+
+endmodule
+
+   /*
+    *
+    */
+
 module gain
-#(parameter IN_W=24, OUT_W=16, CHAN_W=3)
+#(parameter GAIN_W=16, IN_W=24, OUT_W=16, CHANS=8, CHAN_W=$clog2(CHANS))
 (
     input wire ck,
     input wire en,
+    input wire [GAIN_W-1:0] gain,
     output reg [CHAN_W-1:0] addr,
     input wire signed [IN_W-1:0] in_data,
-    output reg [OUT_W-1:0] out,
-    output reg done
+    output wire signed [OUT_W-1:0] out_data,
+    output wire [CHAN_W-1:0] out_addr,
+    output wire out_we,
+    output wire done
 );
 
-    initial done = 0;
-    initial out = 0;
+    initial addr = 0;
 
-    assign addr = 0;
+    reg busy_start = 0;
 
-    reg delay = 0;
+    // Top bits of gain give the shift applied
+    localparam SHIFT = IN_W - OUT_W;
+    localparam SHIFT_W = $clog2(SHIFT);
+
+    wire [SHIFT_W-1:0] shift_by;
+    assign shift_by = (SHIFT-1) - gain[GAIN_W-1:GAIN_W-(SHIFT_W+1)];
+
+    wire [IN_W-1:0] shift_in;
+    wire [OUT_W-1:0] shift_out;
+
+    assign shift_in = busy_start ? in_data : 0;
+
+    shift #(.IN_W(IN_W), .OUT_W(OUT_W))
+    shifter (
+        .ck(ck),
+        .shift(shift_by),
+        .in(shift_in),
+        .out(shift_out)
+    );
+
+    wire in_neg;
+    assign in_neg = shift_out[OUT_W-1];
+    wire [OUT_W-1:0] mul_abs;
+
+    // Convert to unsigned, as 16x16 mul is unsigned
+    twos_complement #(.WIDTH(OUT_W))
+    inv_in(
+        .ck(ck), 
+        .inv(in_neg), 
+        .in(shift_out), 
+        .out(mul_abs)
+    );
+
+    // need gain range of 0.5 .. 1.0, so top bit always set
+    wire [15:0] mul_a;
+    wire [15:0] mul_b;
+    assign mul_a = { gain[12:0], 3'b0 };
+    assign mul_b = mul_abs;
+
+    wire [31:0] mul_out;
+
+    multiplier multipler(
+        .ck(ck),
+        .a(mul_a),
+        .b(mul_b),
+        .out(mul_out)
+    );
+
+    //  Now re-apply the sign of the input data
+    
+    wire [31:0] mul_signed;
+
+    wire neg_out;
+    pipe #(.LENGTH(2)) delay(.ck(ck), .in(in_neg), .out(neg_out));
+
+    // Convert to unsigned, as 16x16 mul is unsigned
+    twos_complement #(.WIDTH(32))
+    inv_out(
+        .ck(ck), 
+        .inv(neg_out), 
+        .in(mul_out), 
+        .out(mul_signed)
+    );
 
     always @(posedge ck) begin
 
         if (en) begin
-            done <= 0;
+            busy_start <= 1;
+            addr <= 0;
         end
 
-        delay <= en;
+        if (busy_start) begin
+            addr <= addr + 1;
 
-        if (delay) begin
-            done <= 1;
-        end
+            if (addr == (CHANS-1)) begin
+                busy_start <= 0;
+            end
+        end 
 
     end
+
+    pipe #(.LENGTH(3)) delay_addr [CHAN_W-1:0] (.ck(ck), .in(addr), .out(out_addr));
+
+    pipe #(.LENGTH(3)) delay_done (.ck(ck), .in(busy_start), .out(out_we));
+
+    assign out_data = mul_signed[31:16];
+
+    wire busy;
+    assign busy = busy_start | out_we;
+    assign done = !busy;
 
 endmodule
 

@@ -1,54 +1,45 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Fri Aug 21 10:52:50 2020
+[*] Mon Aug 24 17:36:00 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Fri Aug 21 10:52:15 2020"
-[dumpfile_size] 80256
+[dumpfile_mtime] "Mon Aug 24 13:15:03 2020"
+[dumpfile_size] 93291
 [savefile] "/home/dave/Desktop/git/fpga/dsp/agc_tb.gtkw"
 [timestart] 0
 [size] 1712 598
 [pos] -1 -1
-*-17.792284 1806000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-17.802307 969000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
-[treeopen] tb.agc.
+[treeopen] tb.agc.gain_mod.
+[treeopen] tb.gain.
 [sst_width] 196
-[signals_width] 142
+[signals_width] 182
 [sst_expanded] 1
 [sst_vpaned_height] 155
 @28
 tb.ck
-@22
-tb.mic_0[23:0]
-tb.mic_1[23:0]
-tb.mic_2[23:0]
-tb.mic_3[23:0]
-tb.in_data[23:0]
-@28
-tb.en
+tb.gain_en
 @29
-tb.agc.src_addr[1:0]
+tb.gain_done
 @28
-tb.agc.find_max
-tb.agc.find_normal
+tb.gain_addr[1:0]
 @22
-tb.agc.normal[23:0]
-tb.agc.max_in[23:0]
-tb.agc.level_mod.in[23:0]
+tb.gain_gain[15:0]
+tb.gain_in_data[23:0]
+tb.gain.mul_a[15:0]
+tb.gain.mul_b[15:0]
+tb.gain.mul_out[31:0]
 @28
-tb.agc.level_en
-tb.agc.level_ready
-tb.agc.busy
-tb.done
+tb.gain_out_addr[1:0]
 @22
-tb.agc.level[4:0]
-tb.agc.level_mod.shift[23:0]
+tb.gain_out_data[15:0]
 @28
-tb.agc.gain_en
-tb.agc.gain_addr[1:0]
+tb.gain_out_we
 @22
-tb.agc.gain_out[15:0]
-@28
-tb.agc.gain_ready
+tb.out_0[15:0]
+tb.out_1[15:0]
+tb.out_2[15:0]
+tb.out_3[15:0]
 [pattern_trace] 1
 [pattern_trace] 0
