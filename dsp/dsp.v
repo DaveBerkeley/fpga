@@ -5,47 +5,40 @@
     *
     */
 
-module top(
-    input wire CLK, 
-    output wire TX, 
+module dsp (
+    input wire ext_ck, 
+    output wire tx, 
 
     // XIP Flash
-    output wire FLASH_SCK,
-    output wire FLASH_SSB,
-    output wire FLASH_IO0,
-    input  wire FLASH_IO1,
-    output wire FLASH_IO2,
-    output wire FLASH_IO3,
+    output wire spi_sck,
+    output wire spi_cs,
+    output wire spi_mosi,
+    input  wire spi_miso,
 
-    output wire P2_1,
-    output wire P2_2,
-    output wire P2_3,
-    output wire P2_4,
-    output wire P2_7,
-    output wire P2_8,
-    output wire P2_9,
+    output wire [7:0] test,
 
-    // Test pins
-    input wire P1A1,
-    input wire P1A2,
-    output wire P1A3,
-    output wire P1A4,
+    // sk9822 drive
+    output wire led_ck,
+    output wire led_data,
 
-    // I2S Input
-    output wire P1A7,
-    output wire P1A8,
-    input wire P1A9,
-    input wire P1A10,
+    // I2S
+    output wire sck,
+    output wire ws,
+    // Mic in
+    input wire sd_in0,
+    input wire sd_in1,
+    input wire sd_in2,
+    input wire sd_in3,
     
     // I2S Output
-    output wire P1B1,
-    output wire P1B2,
-    output wire P1B3,
-    output wire P1B4,
+    output wire o_sck,
+    output wire o_ws,
+    output wire o_sd,
 
-    input wire P1B7,
-    input wire P1B8,
-    output wire P1B9
+    // External I2S sync input, SD output
+    input wire ext_sck,
+    input wire ext_ws,
+    output wire ext_sd
 );
 
     parameter PLL_HZ = 30000000;
@@ -72,7 +65,7 @@ module top(
     /* verilator lint_off UNUSED */
     wire locked;
     /* verilator lint_on UNUSED */
-    pll clock(.clock_in(CLK), .clock_out(pll_ck), .locked(locked));
+    pll clock(.clock_in(ext_ck), .clock_out(pll_ck), .locked(locked));
 
     // Conditonally slow the cpu clock down for development.
     generate
@@ -281,7 +274,6 @@ module top(
 
     wire [31:0] uart_rdt;
     wire uart_ack;
-    wire tx;
     /* verilator lint_off UNUSED */
     wire tx_busy;
     /* verilator lint_on UNUSED */
@@ -333,10 +325,6 @@ module top(
 
     //  sk9822 LED driver
 
-    /* verilator lint_off UNUSED */
-    wire led_ck;
-    wire led_data;
-    /* verilator lint_on UNUSED */
     wire led_ack;
 
     sk9822_peripheral #(.ADDR(LED_ADDR))
@@ -360,19 +348,6 @@ module top(
 `endif  //  USE_SK9822
 
     //  SPI Flash interface
-
-    wire spi_cs;
-    wire spi_sck;
-    wire spi_miso;
-    wire spi_mosi;
-
-    // connect to the flash chip
-    assign FLASH_SCK = spi_sck;
-    assign FLASH_SSB = spi_cs;
-    assign FLASH_IO0 = spi_mosi;
-    assign spi_miso = FLASH_IO1;
-    assign FLASH_IO2 = 1;
-    assign FLASH_IO3 = 1;
 
     // flash_read connection to ibus arb
     wire [31:0] f_adr;
@@ -458,31 +433,16 @@ module top(
 
     wire engine_ack;
     wire [31:0] engine_rdt;
-    wire sck; // I2S clock
-    wire ws;  // I2S word select
-    wire sd_out;  // I2S data out
-    wire sd_in0;  // I2S data in
-    wire sd_in1;  // I2S data in
-    /* verilator lint_off UNUSED */
-    wire sd_in2;  // I2S data in
-    wire sd_in3;  // I2S data in
-    wire [7:0] test;
-    /* verilator lint_on UNUSED */
-
-    // TODO : remove me
-    //assign sd_in0 = 0;
-    //assign sd_in1 = 0;
-    //assign sd_in2 = 0;
-    //assign sd_in3 = 0;
-
-    wire ext_sck;
-    wire ext_ws;
 
     /* verilator lint_off UNUSED */
     wire audio_ready;
-    /* verilator lint_off UNUSED */
+    /* verilator lint_on UNUSED */
     wire dma_done;
     wire dma_match;
+
+    assign o_sck = sck;
+    assign o_ws = ws;
+    assign ext_sd = o_sd;
 
     audio_engine #(.CK_HZ(CK_HZ)) audio_engine(
         .ck(ck),
@@ -507,7 +467,7 @@ module top(
 
         .sck(sck),
         .ws(ws),
-        .sd_out(sd_out),
+        .sd_out(o_sd),
         .sd_in0(sd_in0),
         .sd_in1(sd_in1),
         .sd_in2(sd_in2),
@@ -574,48 +534,5 @@ module top(
         .i_dbus_rdt(wb_dbus_rdt),
         .i_dbus_ack(wb_dbus_ack)
     );
-
-    //  Test pins
-
-    assign sd_in2 = P1A1;
-    assign sd_in3 = P1A2;
-
-`ifdef USE_SK9822
-    assign P1A3 = led_ck;
-    assign P1A4 = led_data;
-`else
-    assign P1A3 = 0;
-    assign P1A4 = 0;
-`endif
-
-    assign P1B1 = sck;
-    assign P1B2 = ws;
-    assign P1B3 = sd_out;
-    assign P1B4 = 0;
-
-    // I2S Audio Input
-    assign P1A7  = sck;
-    assign P1A8  = ws;
-    assign sd_in0 = P1A9;
-    assign sd_in1 = P1A10;
-
-    // I2S Output
-    //assign P1B7 = sck;
-    //assign P1B8 = ws;
-    assign ext_sck = P1B7;
-    assign ext_ws = P1B8;
-    assign P1B9 = sd_out;
-
-    //  IO
-
-    assign TX = tx;
-
-    assign P2_1 = test[0];
-    assign P2_2 = test[1];
-    assign P2_3 = test[2];
-    assign P2_4 = test[3];
-    assign P2_7 = test[4];
-    assign P2_8 = test[5];
-    assign P2_9 = test[6];
 
 endmodule

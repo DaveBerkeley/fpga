@@ -30,7 +30,7 @@ PACKAGE = sg48
 DEVICE = up5k
 
 DEFINES  = 
-#DEFINES += USE_SK9822
+DEFINES += USE_SK9822
 #DEFINES += USE_DMA
 
 # -D<symbol> syntax common to yosys and gcc
@@ -61,6 +61,7 @@ FILES += spl.v
 FILES += dma.v
 FILES += sk9822.v
 FILES += agc.v
+FILES += icebreaker.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
