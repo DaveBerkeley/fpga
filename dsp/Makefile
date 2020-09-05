@@ -61,7 +61,6 @@ FILES += spl.v
 FILES += dma.v
 FILES += sk9822.v
 FILES += agc.v
-FILES += icebreaker.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
@@ -78,6 +77,7 @@ FILES += $(SOC)/irq.v
 # Files using SB_* modules we don't want in sim
 HW_FILES  = $(SOC)/ice40up5k_spram.v
 HW_FILES += $(SOC)/ram.v
+HW_FILES += icebreaker.v
 
 # Serv CPU internals
 CPU_FILES  = $(CORE)/serv_rf_top.v
