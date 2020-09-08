@@ -8,15 +8,15 @@ module top (
     output wire b
 );
 
-    reg [25:0] divider = 0;
+    reg [28:0] divider = 0;
 
     always @(posedge clk) begin
         divider <= divider + 1;
     end
 
-    assign r = divider[20];
-    assign g = divider[21];
-    assign b = divider[22];
+    assign r = divider[24];
+    assign g = divider[25];
+    assign b = divider[26];
 
 endmodule
 

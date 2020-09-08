@@ -17,19 +17,21 @@ parameters = {
 }
 
 #tool = 'icarus'
-tool = 'yosys'
+#tool = 'yosys'
 tool = 'trellis'
 
 edam = {
     'files'        : files,
-    'name'         : 'blinky_project',
+    'name'         : 'blinky',
     'parameters'   : parameters,
     'toplevel'     : 'top',
     'tool_options' : {
-        'yosys' : { 'arch' : 'ecp5', },
+        'yosys' : { 
+            'arch' : 'ecp5', 
+        },
         'trellis' : { 
             # For Orange Crab
-            'nextpnr_options' : [ '--25k', '--package', 'CABGA381' ],
+            'nextpnr_options' : [ '--25k', '--package', 'CSFBGA285' ],
         },
     },
 }
