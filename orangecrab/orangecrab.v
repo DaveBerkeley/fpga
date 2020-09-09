@@ -3,6 +3,8 @@
 
 module top (
     input wire clk,
+    input wire btn,
+    //output wire reset,
     output wire r,
     output wire g,
     output wire b,
@@ -23,9 +25,9 @@ module top (
         divider <= divider + 1;
     end
 
-    assign r = divider[24];
-    assign g = divider[25];
-    assign b = divider[26];
+    assign r = btn; // divider[24];
+    assign g = 1; // divider[25];
+    assign b = 1; // divider[26];
 
     assign p5  = clk;
     assign p6  = divider[10];

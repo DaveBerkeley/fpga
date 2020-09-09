@@ -1,6 +1,6 @@
 
 BUILD = build
-PROJ  = blinky
+PROJ  = crab
 
 VCONFIG = /tmp/$(PROJ)_config.vlt
 
@@ -15,9 +15,11 @@ clean:
 FILES =
 FILES += orangecrab.v
 
-$(BUILD)/$(PROJ).bit: $(FILES) Makefile $(VCONFIG)
+LPF = orangecrab_r02.lpf
+
+$(BUILD)/$(PROJ).bit: $(FILES) Makefile $(VCONFIG) $(LPF)
 	verilator $(FILES) $(VCONFIG) --lint-only -Wall
-	./make.py $(FILES) --tool trellis --project $(PROJ) --lpf orangecrab_r02.lpf
+	./make.py $(FILES) --tool trellis --project $(PROJ) --lpf $(LPF)
 
 dfu: $(BUILD)/$(PROJ).bit
 	cp -a $(BUILD)/$(PROJ).bit $(BUILD)/$(PROJ).dfu
