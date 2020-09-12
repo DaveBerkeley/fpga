@@ -85,7 +85,7 @@ SIM_FILES += $(SOC)/sim.v
 
 ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE) $(SIM_FILES)
 
-all: $(BUILD)/firmware.bin $(BUILD)/$(PROJ).bit
+all: dfu prog done
 
 clean:
 	rm -rf pll.v $(BUILD) $(VCONFIG)
@@ -97,10 +97,23 @@ $(BUILD)/$(PROJ).bit: $(FILES) Makefile $(VCONFIG) $(LPF)
 	verilator --top-module top $(ADD_VERILATOR) $(FILES) --lint-only -Wall
 	./make.py $(FILES) $(HW_FILES) --tool trellis --project $(PROJ) --lpf $(LPF)
 
+# Orange Crab bootloader
+#USB_PID =  -v 1209 -p 5af0
+# HAD modified bootloader see https://github.com/DaveBerkeley/had2019-playground
+USB_PID =  -v 1d50 -p 614b
+
+done:
+	dfu-util -a 0 -e	
+
 dfu: $(BUILD)/$(PROJ).bit
 	cp -a $(BUILD)/$(PROJ).bit $(BUILD)/$(PROJ).dfu
-	dfu-suffix -v 1209 -p 5af0 -a $(BUILD)/$(PROJ).dfu
-	dfu-util -D $(BUILD)/$(PROJ).dfu
+	dfu-suffix $(USB_PID) -a $(BUILD)/$(PROJ).dfu
+	dfu-util -a 0 -D $(BUILD)/$(PROJ).dfu
+
+prog: $(BUILD)/firmware.bin
+	cp -a $^ $(BUILD)/firmware.dfu
+	dfu-suffix $(USB_PID) -a $(BUILD)/firmware.dfu
+	dfu-util -a 1 -D $(BUILD)/firmware.dfu 
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@
