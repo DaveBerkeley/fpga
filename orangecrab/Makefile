@@ -30,19 +30,19 @@ FILES += orangecrab.v
 DSP=../dsp
 
 FILES += $(DSP)/dsp.v
-FILES += $(DSP)/audio_engine.v
+#FILES += $(DSP)/audio_engine.v
 FILES += $(DSP)/dpram.v
-FILES += $(DSP)/i2s_rx.v
-FILES += $(DSP)/i2s_tx.v
-FILES += $(DSP)/i2s_clock.v
-FILES += $(DSP)/i2s_secondary.v
-FILES += $(DSP)/pipe.v
-FILES += $(DSP)/sequencer.v
-FILES += $(DSP)/multiplier.v
-FILES += $(DSP)/shifter.v
-FILES += $(DSP)/accumulator.v
-FILES += $(DSP)/addr_adder.v
-FILES += $(DSP)/twos_complement.v
+#FILES += $(DSP)/i2s_rx.v
+#FILES += $(DSP)/i2s_tx.v
+#FILES += $(DSP)/i2s_clock.v
+#FILES += $(DSP)/i2s_secondary.v
+#FILES += $(DSP)/pipe.v
+#FILES += $(DSP)/sequencer.v
+#FILES += $(DSP)/multiplier.v
+#FILES += $(DSP)/shifter.v
+#FILES += $(DSP)/accumulator.v
+#FILES += $(DSP)/addr_adder.v
+#FILES += $(DSP)/twos_complement.v
 
 # Serv SoC Files
 FILES += $(SOC)/reset.v
@@ -73,6 +73,7 @@ CPU_FILES += $(CORE)/serv_ctrl.v
 CPU_FILES += $(CORE)/serv_alu.v
 CPU_FILES += $(CORE)/serv_shift.v
 CPU_FILES += $(CORE)/serv_csr.v
+CPU_FILES += $(CORE)/serv_immdec.v
 
 FILES += $(CPU_FILES)
 
@@ -88,10 +89,7 @@ ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE) $(SIM_FILES)
 all: dfu prog done
 
 clean:
-	rm -rf pll.v $(BUILD) $(VCONFIG)
-
-pll.v: Makefile
-	icepll -o 30 -m -f pll.v
+	rm -rf $(BUILD) $(VCONFIG)
 
 $(BUILD)/$(PROJ).bit: $(FILES) Makefile $(VCONFIG) $(LPF)
 	verilator --top-module top $(ADD_VERILATOR) $(FILES) --lint-only -Wall

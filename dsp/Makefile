@@ -32,6 +32,7 @@ DEVICE = up5k
 DEFINES  = 
 DEFINES += USE_SK9822
 #DEFINES += USE_DMA
+DEFINES += USE_AUDIO_ENGINE
 
 # -D<symbol> syntax common to yosys and gcc
 SHARED_DEFINES = $(DEFINES:%=-D %)
@@ -93,6 +94,7 @@ CPU_FILES += $(CORE)/serv_ctrl.v
 CPU_FILES += $(CORE)/serv_alu.v
 CPU_FILES += $(CORE)/serv_shift.v
 CPU_FILES += $(CORE)/serv_csr.v
+CPU_FILES += $(CORE)/serv_immdec.v
 
 ADD_SRC   += $(CPU_FILES) $(FILES) $(HW_FILES)
 TB_SRC     = $(CPU_FILES) $(FILES)

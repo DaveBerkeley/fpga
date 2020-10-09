@@ -15,11 +15,12 @@ module dsp (
     output wire spi_mosi,
     input  wire spi_miso,
 
-    output wire [7:0] test,
-
     // sk9822 drive
     output wire led_ck,
     output wire led_data,
+
+    /* verilator lint_off UNUSED */
+    output wire [7:0] test,
 
     // I2S
     output wire sck,
@@ -39,6 +40,8 @@ module dsp (
     input wire ext_sck,
     input wire ext_ws,
     output wire ext_sd
+    /* verilator lint_on UNUSED */
+
 );
 
     parameter PLL_HZ = 30000000;
@@ -87,7 +90,7 @@ module dsp (
     wire reset_req;
     wire rst;
 
-    reset #(.LENGTH(80)) reset(.ck(ck), .rst_req(reset_req), .rst(rst));
+    reset #(.LENGTH(80)) reset_(.ck(ck), .rst_req(reset_req), .rst(rst));
 
     // Continually Reset the cpu (for development)
 
@@ -433,6 +436,12 @@ module dsp (
         .busy(arb_busy)
     );
 
+   /*
+    *   Audio Engine
+    */
+
+`ifdef USE_AUDIO_ENGINE
+
     wire engine_ack;
     wire [31:0] engine_rdt;
 
@@ -481,6 +490,29 @@ module dsp (
         .ready(audio_ready),
         .test(test)
     );
+
+`else
+
+    wire dma_match;
+    wire dma_done;
+    wire engine_ack;
+    wire [31:0] engine_rdt;
+
+    assign engine_ack = 0;
+    assign engine_rdt = 0;
+    assign dma_done = 0;
+    assign dma_match = 0;
+
+    // Outputs all driven lo
+    assign test = 0;
+    assign sck = 0;
+    assign ws = 0;
+    assign o_sck = 0;
+    assign o_ws = 0;
+    assign o_sd = 0;
+    assign ext_sd = 0;
+
+`endif
 
     //  Interrupt controller
 

@@ -6,4 +6,6 @@ lint_off -file "${SERV}/rtl/serv_top.v"
 lint_off -file "${SERV}/rtl/serv_mem_if.v"
 lint_off -file "${SERV}/rtl/serv_ctrl.v"
 lint_off -file "${SERV}/rtl/serv_alu.v"
+lint_off -file "${SERV}/rtl/serv_decode.v"
+lint_off -file "${SERV}/rtl/serv_immdec.v"
 lint_off -rule DECLFILENAME

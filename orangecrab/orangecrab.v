@@ -3,7 +3,9 @@
 
 module top (
     input wire clk,
+    /* verilator lint_off UNUSED */
     input wire btn,
+    /* verilator lint_on UNUSED */
     //output wire reset,
     output wire r,
     output wire g,
@@ -41,7 +43,7 @@ module top (
     wire spi_sck;
     wire spi_cs;
     wire spi_mosi;
-    reg spi_miso = 0;
+    wire spi_miso;
 
     wire [7:0] test;
 
@@ -69,7 +71,7 @@ module top (
     wire ext_sd;
     /* verilator lint_on UNUSED */
 
-    dsp dsp (
+    dsp #(.PLL_HZ(24000000)) dsp (
         .ext_ck(ext_ck),
         .tx(tx),
         .spi_sck(spi_sck),
@@ -93,20 +95,26 @@ module top (
         .ext_sd(ext_sd)
     );
 
-    assign r = btn; // divider[24];
+    assign r = divider[24];
     assign g = divider[25];
     assign b = divider[26];
+    //assign r = reset;
+    //assign g = reset;
+    //assign b = reset;
 
-    assign p0  = led_ck;
-    assign p1  = led_data;
+    assign p0  = 0;
+    assign p1  = 0;
+
     assign p5  = spi_sck;
     assign p6  = spi_cs;
     assign p9  = spi_mosi;
 
-    assign p10 = test[0];
-    assign p11 = test[1];
-    assign p12 = test[2];
-    assign p13 = tx;
+    assign p10 = divider[7];
+    assign p11 = o_ws;
+    assign p12 = 0;
+    assign p13 = 0;
+
+    assign spi_miso = btn;
 
 endmodule
 
@@ -120,7 +128,15 @@ module pll(
     output wire locked
 );
 
-    assign clock_out = clock_in;
+    // divide down the 48Mhz
+
+    reg divide = 0;
+
+    always @(posedge clock_in) begin
+        divide <= !divide;
+    end
+
+    assign clock_out = divide;
     assign locked = 1;
 
 endmodule

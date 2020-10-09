@@ -14,7 +14,7 @@ module sp_ram
     output wire [31:0] rdata
 );
 
-    parameter WORDS = 32768;
+    parameter WORDS = 8 * 1024; // 32768;
 
     reg [31:0] mem [0:(WORDS-1)];
 
