@@ -1,6 +1,6 @@
 
 module i2s_rx
-    #(parameter BITS=16)
+    #(parameter BITS=16, CLOCKS=64)
    (input wire ck,
     input wire sample, // sample the data in here
     input wire [5:0] frame_posn,
@@ -17,8 +17,15 @@ module i2s_rx
     // shift the microphone data into N-bit shift register. 
     reg [BITS-1:0] shift = 0;
 
-    parameter EOW_LEFT = 1 + BITS;
-    parameter EOW_RIGHT = EOW_LEFT + 32;
+    wire [5:0] EOW_LEFT;
+    wire [5:0] EOW_RIGHT;
+    wire [5:0] POSN_MASK;
+    wire [5:0] frame;
+
+    assign POSN_MASK = 6'((1 << $clog2(CLOCKS)) - 1);
+    assign EOW_LEFT = POSN_MASK & (1 + BITS);
+    assign EOW_RIGHT = POSN_MASK & 6'(1 + BITS + (CLOCKS / 2));
+    assign frame = frame_posn & POSN_MASK;
 
     always @(posedge ck) begin
 
@@ -26,11 +33,11 @@ module i2s_rx
 
             shift <= { shift[BITS-2:0], sd };
 
-            if (frame_posn == EOW_LEFT) begin
+            if (frame == EOW_LEFT) begin
                 left <= shift;
             end
 
-            if (frame_posn == (EOW_RIGHT)) begin
+            if (frame == EOW_RIGHT) begin
                 right <= shift;
             end
 

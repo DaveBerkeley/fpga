@@ -138,6 +138,80 @@ module tb ();
         $finish;
     end
 
+    reg [31:0] tx_shift_32 = 0;
+    wire [15:0] left_32;
+    wire [15:0] right_32;
+    wire sd_32;
+    assign sd_32 = tx_shift_32[31];
+
+    always @(posedge ck) begin
+
+        if (rst) begin
+            tx_shift_32 <= 0;
+        end else begin
+            if (frame_en) begin
+                tx_shift_32 <= { tx_shift_32[30:0], 1'b0 };
+            end
+        end
+
+    end
+
+    i2s_rx #(.BITS(16), .CLOCKS(32))
+    i2s_rx_32 (
+        .ck(ck),
+        .sample(sample),
+        .frame_posn(frame_posn),
+        .sd(sd_32),
+        .left(left_32),
+        .right(right_32)
+    );
+
+    task send_32(input [15:0] l, input [15:0] r);
+
+        begin
+            wait((frame_posn == 1) && tx_en);
+            tx_shift_32 <= { l, r };
+            wait(frame_posn == 2);
+        end
+
+    endtask
+
+    wire [4:0] frame;
+    assign frame = frame_posn[4:0];
+
+    initial begin
+
+        $display("start i2s 32-bit rx tests");
+
+        wait(!rst);
+        @(posedge ck);
+
+        send_32(16'hface, 16'h1234);
+        wait(frame == 18);
+        tb_assert(left_32 == 16'hface);
+        wait(frame == 2);
+        tb_assert(right_32 == 16'h1234);
+
+        send_32(16'hffff, 16'h0000);
+        wait(frame == 18);
+        tb_assert(left_32 == 16'hffff);
+        wait(frame == 2);
+        tb_assert(right_32 == 16'h0000);
+
+        send_32(16'h0000, 16'hffff);
+        wait(frame == 18);
+        tb_assert(left_32 == 16'h0000);
+        wait(frame == 2);
+        tb_assert(right_32 == 16'hffff);
+
+        send_32(16'haaaa, 16'h5555);
+        wait(frame == 18);
+        tb_assert(left_32 == 16'haaaa);
+        wait(frame == 2);
+        tb_assert(right_32 == 16'h5555);
+    end
+
+
 endmodule
     
 
