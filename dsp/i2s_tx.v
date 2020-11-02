@@ -11,9 +11,21 @@ module i2s_tx
 
     reg [15:0] shift = 0;
     wire [5:0] MASK;
+    wire [5:0] midpoint;
     wire [5:0] frame;
 
-    assign MASK = 6'((1 << $clog2(CLOCKS)) - 1);
+    generate
+        if (CLOCKS==64) begin
+            assign MASK = 6'b111111;
+            assign midpoint = 32;
+        end
+        if (CLOCKS==32) begin
+            assign MASK = 6'b011111;
+            assign midpoint = 16;
+        end
+    endgenerate
+
+    //assign MASK = 6'b011111; // 6'((1 << $clog2(CLOCKS)) - 1);
     assign frame = frame_posn & MASK;
 
     always @(posedge ck) begin
@@ -23,7 +35,7 @@ module i2s_tx
 
             if (frame == 0) begin
                 shift <= left;
-            end else if (frame == 6'(CLOCKS/2)) begin
+            end else if (frame == midpoint) begin
                 shift <= right;
             end else begin
                 shift <= shift << 1;

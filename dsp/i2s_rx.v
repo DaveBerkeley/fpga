@@ -19,13 +19,24 @@ module i2s_rx
 
     wire [5:0] EOW_LEFT;
     wire [5:0] EOW_RIGHT;
-    wire [5:0] POSN_MASK;
+    wire [5:0] MASK;
     wire [5:0] frame;
+    wire [5:0] midpoint;
 
-    assign POSN_MASK = 6'((1 << $clog2(CLOCKS)) - 1);
-    assign EOW_LEFT = POSN_MASK & (1 + BITS);
-    assign EOW_RIGHT = POSN_MASK & 6'(1 + BITS + (CLOCKS / 2));
-    assign frame = frame_posn & POSN_MASK;
+    generate
+        if (CLOCKS==64) begin
+            assign MASK = 6'b111111;
+            assign midpoint = 32;
+        end
+        if (CLOCKS==32) begin
+            assign MASK = 6'b011111;
+            assign midpoint = 16;
+        end
+    endgenerate
+
+    assign EOW_LEFT = MASK & (1 + BITS);
+    assign EOW_RIGHT = MASK & (1 + BITS + midpoint);
+    assign frame = frame_posn & MASK;
 
     always @(posedge ck) begin
 

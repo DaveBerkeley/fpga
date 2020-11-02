@@ -1,14 +1,14 @@
 [*]
 [*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
-[*] Mon Nov  2 09:44:10 2020
+[*] Mon Nov  2 16:50:32 2020
 [*]
 [dumpfile] "/home/dave/Desktop/git/fpga/dsp/dsp.vcd"
-[dumpfile_mtime] "Mon Nov  2 09:43:48 2020"
-[dumpfile_size] 332710
+[dumpfile_mtime] "Mon Nov  2 16:49:40 2020"
+[dumpfile_size] 367714
 [savefile] "/home/dave/Desktop/git/fpga/dsp/i2s_rx_tb.gtkw"
 [timestart] 0
-[size] 1620 605
-[pos] -1 -1
+[size] 1725 605
+[pos] -106 231
 *-26.198023 24240000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] tb.
 [sst_width] 196
@@ -63,9 +63,8 @@ tb.right_32[15:0]
 tb.tx_shift_32[31:0]
 @28
 tb.sd_32
-@23
-tb.i2s_rx_32.POSN_MASK[5:0]
-@22
-tb.i2s_rx_16.POSN_MASK[5:0]
+tb.tx_hw.sd
+@29
+tb.tx_hw_32.sd
 [pattern_trace] 1
 [pattern_trace] 0
