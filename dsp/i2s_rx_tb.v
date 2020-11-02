@@ -211,6 +211,260 @@ module tb ();
         tb_assert(right_32 == 16'h5555);
     end
 
+    reg [15:0] left_tx = 0;
+    reg [15:0] right_tx = 0;
+    wire tx;
+
+    i2s_tx #(.CLOCKS(64))
+        tx_hw (.ck(ck),
+        .en(sample),
+        .frame_posn(frame_posn),
+        .left(left_tx),
+        .right(right_tx),
+        .sd(tx)
+    );
+
+    task wait_sample(input signal);
+
+        begin
+            @(posedge ck);
+            wait(sample);
+            @(posedge ck);
+            wait(!sample);
+            @(posedge ck);
+        end
+
+    endtask
+
+    integer i;
+
+    initial begin
+
+        $display("start i2s tx tests");
+
+        left_tx <= 16'h1234;
+        right_tx <= 16'habcd;
+
+        wait(!rst);
+        @(posedge ck);
+
+        // wait for start of next frame
+        wait(frame_posn == 'h0);
+        @(posedge ck);
+        wait(frame_posn == 'h1);
+        @(posedge ck);
+        // wait for start of next frame
+        wait(frame_posn == 'h0);
+        // first slot is end of prev frame
+        wait_sample(sample);
+
+        // check the tx bits
+        // 1
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        // 2
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        // 3
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        // 4
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+
+        // The 64-version now has 16-bits of zeros
+        for (i = 0; i < 16; i = i + 1) begin
+            wait_sample(sample);
+            tb_assert(tx == 1'b0);
+        end
+
+        // A
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        // B
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        // C
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        // D
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx == 1'b1);
+
+        // The 64-version now has 16-bits of zeros
+        for (i = 0; i < 16; i = i + 1) begin
+            wait_sample(sample);
+            tb_assert(tx == 1'b0);
+        end
+
+    end
+
+    reg [15:0] left_tx_32 = 0;
+    reg [15:0] right_tx_32 = 0;
+    wire tx_32;
+
+    i2s_tx #(.CLOCKS(32))
+        tx_hw_32 (.ck(ck),
+        .en(sample),
+        .frame_posn(frame_posn),
+        .left(left_tx_32),
+        .right(right_tx_32),
+        .sd(tx_32)
+    );
+
+    initial begin
+
+        $display("start i2s tx 32 tests");
+
+        left_tx_32 <= 16'hdead;
+        right_tx_32 <= 16'hface;
+
+        wait(!rst);
+        @(posedge ck);
+
+        // wait for start of next frame
+        wait(frame_posn == 'h0);
+        @(posedge ck);
+        wait(frame_posn == 'h1);
+        @(posedge ck);
+        // wait for start of next frame
+        wait(frame_posn == 'h0);
+        // first slot is end of prev frame
+        wait_sample(sample);
+
+        // D
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        // E
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        // A
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        // D
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        // F
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        // A
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        // C
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        // E
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+
+        // start again ...
+        // D
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b0);
+        wait_sample(sample);
+        tb_assert(tx_32 == 1'b1);
+
+    end
 
 endmodule
     
