@@ -33,13 +33,15 @@ DEFINES  =
 DEFINES += USE_SK9822
 #DEFINES += USE_DMA
 DEFINES += USE_AUDIO_ENGINE
+DEFINES += MAKE_HIFI
+#DEFINES += MAKE_DSP
 
 # -D<symbol> syntax common to yosys and gcc
 SHARED_DEFINES = $(DEFINES:%=-D %)
 MORE_YOSYS = $(SHARED_DEFINES)
 ADD_VERILATOR += $(DEFINES:%=+define+%)
 
-PLL_MHZ = 30
+PLL_MHZ = 24
 PLL_HZ = $(PLL_MHZ)000000
 
 PIN_DEF = ../icebreaker.pcf

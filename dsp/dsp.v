@@ -34,7 +34,8 @@ module dsp (
     // I2S Output
     output wire o_sck,
     output wire o_ws,
-    output wire o_sd,
+    output wire o_sd0,
+    output wire o_sd1,
 
     // External I2S sync input, SD output
     input wire ext_sck,
@@ -44,8 +45,8 @@ module dsp (
 
 );
 
-    parameter PLL_HZ = 30000000;
-    //parameter PLL_HZ = 24000000;
+    //parameter PLL_HZ = 30000000;
+    parameter PLL_HZ = 24000000;
 
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
@@ -453,7 +454,7 @@ module dsp (
 
     assign o_sck = sck;
     assign o_ws = ws;
-    assign ext_sd = o_sd;
+    assign ext_sd = o_sd0;
 
     audio_engine #(.CK_HZ(CK_HZ)) audio_engine(
         .ck(ck),
@@ -478,7 +479,8 @@ module dsp (
 
         .sck(sck),
         .ws(ws),
-        .sd_out(o_sd),
+        .sd_out0(o_sd0),
+        .sd_out1(o_sd1),
         .sd_in0(sd_in0),
         .sd_in1(sd_in1),
         .sd_in2(sd_in2),

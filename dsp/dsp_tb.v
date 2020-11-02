@@ -93,7 +93,7 @@ module tb ();
         .rdt(wb_dbus_rdt),
         .sck(sck), 
         .ws(ws),
-        .sd_out(sd_out), 
+        .sd_out0(sd_out), 
         .sd_in0(sd_gen),
         .ready(engine_ready),
         .test(test)

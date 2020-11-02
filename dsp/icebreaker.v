@@ -46,7 +46,8 @@ module top (
 
     input wire P1B7,
     input wire P1B8,
-    output wire P1B9
+    output wire P1B9,
+    output wire P1B10
 );
 
     /* verilator lint_off UNUSED */
@@ -96,7 +97,8 @@ module top (
         // I2S output
         .o_sck(P1B1),
         .o_ws(P1B2),
-        .o_sd(P1B9),
+        .o_sd0(P1B9),
+        .o_sd1(P1B10),
 
         // Test pins
         .test(test_out)

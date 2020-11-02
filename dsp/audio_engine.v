@@ -63,7 +63,8 @@ module audio_engine (
     //  I2S interface
     output wire sck,    // I2S clock
     output wire ws,     // I2S word select
-    output wire sd_out, // I2S data out
+    output wire sd_out0, // I2S data out
+    output wire sd_out1, // I2S data out
     input wire sd_in0,  // I2S data in
     input wire sd_in1,  // I2S data in
     input wire sd_in2,  // I2S data in
@@ -205,31 +206,49 @@ module audio_engine (
         .en(i2s_out_sample)
     );
 
-    i2s_rx #(.BITS(MIC_W)) 
+    `ifdef MAKE_HIFI
+        localparam I2S_BITS = 32;
+    `endif
+    `ifdef MAKE_DSP
+        localparam I2S_BITS = 64;
+    `endif
+
+    i2s_rx #(.BITS(MIC_W), .CLOCKS(I2S_BITS)) 
     rx_0(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in0), .left(mic_0), .right(mic_1));
-    i2s_rx #(.BITS(MIC_W))
+    i2s_rx #(.BITS(MIC_W), .CLOCKS(I2S_BITS))
     rx_1(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in1), .left(mic_2), .right(mic_3));
-    i2s_rx #(.BITS(MIC_W))
+    i2s_rx #(.BITS(MIC_W), .CLOCKS(I2S_BITS))
     rx_2(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in2), .left(mic_4), .right(mic_5));
-    i2s_rx #(.BITS(MIC_W))
+    i2s_rx #(.BITS(MIC_W), .CLOCKS(I2S_BITS))
     rx_3(.ck(ck), .sample(i2s_in_sample), 
             .frame_posn(frame_posn), .sd(sd_in3), .left(mic_6), .right(mic_7));
 
     //  I2S Output
 
-    reg [15:0] left = 0;
-    reg [15:0] right = 0;
+    reg [15:0] left_0 = 0;
+    reg [15:0] right_0 = 0;
+    reg [15:0] left_1 = 0;
+    reg [15:0] right_1 = 0;
 
-    i2s_tx tx(
+    i2s_tx #(.CLOCKS(I2S_BITS)) tx_0(
         .ck(ck),
         .en(i2s_out_sample),
         .frame_posn(frame_posn),
-        .left(left),
-        .right(right),
-        .sd(sd_out)
+        .left(left_0),
+        .right(right_0),
+        .sd(sd_out0)
+    );
+
+    i2s_tx #(.CLOCKS(I2S_BITS)) tx_1(
+        .ck(ck),
+        .en(i2s_out_sample),
+        .frame_posn(frame_posn),
+        .left(left_1),
+        .right(right_1),
+        .sd(sd_out1)
     );
 
     //  Write Input data to the Audio RAM
@@ -426,19 +445,20 @@ module audio_engine (
 
     //  write sequencer output to the left & right output registers
 
-    localparam LEFT_CHAN  = 0;
-    localparam RIGHT_CHAN = 1;
+    localparam LCHAN_0 = 0;
+    localparam RCHAN_0 = 1;
+    localparam LCHAN_1 = 2;
+    localparam RCHAN_1 = 3;
 
     always @(posedge ck) begin
         if (seq_we) begin
 
-            if (seq_wr_addr[0] == LEFT_CHAN) begin
-                left <= seq_audio;
-            end
-
-            if (seq_wr_addr[0] == RIGHT_CHAN) begin
-                right <= seq_audio;
-            end
+            case (seq_wr_addr[1:0])
+                LCHAN_0 :   left_0  <= seq_audio;
+                RCHAN_0 :   right_0 <= seq_audio;
+                LCHAN_1 :   left_1  <= seq_audio;
+                RCHAN_1 :   right_1 <= seq_audio;
+            endcase
 
         end
     end
