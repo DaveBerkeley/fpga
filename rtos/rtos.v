@@ -5,7 +5,7 @@
     *
     */
 
-module dsp (
+module rtos (
     input wire ext_ck, 
     output wire tx, 
 
@@ -31,11 +31,10 @@ module dsp (
     // Run code from this location in memory (Flash)
     localparam RESET_PC   = 32'h0010_0000;
 
-    localparam RUN_SLOW = 0;        // Divide the CPU clock down for development
     localparam RESET_LOOP = 0;      // Repeatedly reset the CPU
     localparam TIMER_ENABLED = 1;   // Hardware Timer
 
-    localparam CK_HZ = RUN_SLOW ? (PLL_HZ/16) : PLL_HZ;
+    localparam CK_HZ = PLL_HZ;
 
     // PLL
     wire pll_ck;
@@ -44,21 +43,8 @@ module dsp (
     /* verilator lint_on UNUSED */
     pll clock(.clock_in(ext_ck), .clock_out(pll_ck), .locked(locked));
 
-    // Conditonally slow the cpu clock down for development.
-    generate
-        wire ck;
-        if (RUN_SLOW) begin
-            reg [3:0] scale = 0;
-
-            always @(posedge pll_ck) begin
-                scale <= scale + 1;
-            end
-
-        assign ck = scale[3];
-        end else begin
-            assign ck = pll_ck;
-        end
-    endgenerate
+    wire ck;
+    assign ck = pll_ck;
 
     // Reset generator
     wire reset_req;
@@ -70,7 +56,7 @@ module dsp (
 
     generate 
         if (RESET_LOOP) begin
-            reg [(RUN_SLOW ? 21 : 24):0] reseter = 0;
+            reg [24:0] reseter = 0;
 
             always @(posedge ck) begin
                 reseter <= reseter + 1;
@@ -404,6 +390,6 @@ module dsp (
         .i_dbus_ack(wb_dbus_ack)
     );
 
-    assign test = 0;
+    assign test = gpio_reg;
 
 endmodule

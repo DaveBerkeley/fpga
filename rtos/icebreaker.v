@@ -18,6 +18,7 @@ module top (
     output wire FLASH_IO2,
     output wire FLASH_IO3,
 
+    // Test Port
     output wire P2_1,
     output wire P2_2,
     output wire P2_3,
@@ -25,29 +26,6 @@ module top (
     output wire P2_7,
     output wire P2_8,
     output wire P2_9
-
-    // Test pins
-    //input wire P1A1,
-    //input wire P1A2,
-    //output wire P1A3,
-    //output wire P1A4,
-
-    // I2S Input
-    //output wire P1A7,
-    //output wire P1A8,
-    //input wire P1A9,
-    //input wire P1A10,
-    
-    // I2S Output
-    //output wire P1B1,
-    //output wire P1B2,
-    //output wire P1B3,
-    //output wire P1B4,
-
-    //input wire P1B7,
-    //input wire P1B8,
-    //output wire P1B9,
-    //output wire P1B10
 );
 
     /* verilator lint_off UNUSED */
@@ -65,9 +43,7 @@ module top (
     assign FLASH_IO2 = 1;
     assign FLASH_IO3 = 1;
 
-    //assign P1B4 = 0;
-
-    dsp dsp(
+    rtos rtos(
         .ext_ck(CLK),
 
         .tx(TX),

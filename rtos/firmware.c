@@ -11,15 +11,6 @@
 #include "firmware.h"
 
     /*
-     *  sk9822 data format
-     */
-
-uint32_t colour(uint8_t bright, uint8_t r, uint8_t g, uint8_t b)
-{
-    return (bright << 24) + (b << 16) + (g << 8) + r;
-}
-
-    /*
      *
      */
 
@@ -62,28 +53,6 @@ void irq_handler(void)
         static int i = 0;
         LEDS[0] = i;
         i += 1;
-
-#if defined(USE_SK9822)
-        const uint8_t bright = 4;
-        int idx = i % 12;
-        int r = (i & 0x10) ? 255 : 0;
-        int g = (i & 0x20) ? 255 : 0;
-        int b = (i & 0x40) ? 255 : 0;
-
-        for (int j = 0; j < 12; j++)
-        {
-            if ((r + g + b) == 0)
-            {
-                LED_IO[j] = colour(bright, 32, 32, 32);
-                continue;
-            }
-            
-            if (j == idx)
-                LED_IO[j] = colour(bright, r, g, b);
-            else
-                LED_IO[j] = colour(0, 0, 0, 0);
-        }
-#endif // USE_SK9822
     }
 }
 
@@ -147,17 +116,14 @@ void main()
     timer_set(0x01000000);
 
     irq_set_enable(0x01); // timer irq
-    //irq_set_enable(0x02); // audio_ready irq
 
     // This write_mie() instruction does not work!
     write_mie(0x08);
     write_mstatus(0x8);
     write_mtvec((uint32_t) irq_handler);
- 
-    //print("Run audio engine\r\n");
 
-    //engine();
-
-    //print("Engine started ...\r\n");
-
+    //  TODO : main()
+    while (true) {
+        ;
+    }
 }
