@@ -46,7 +46,8 @@ module dsp (
 );
 
     //parameter PLL_HZ = 30000000;
-    parameter PLL_HZ = 24000000;
+    //parameter PLL_HZ = 24000000;
+    parameter PLL_HZ = 26250000;
 
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;

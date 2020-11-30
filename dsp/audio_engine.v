@@ -134,7 +134,10 @@ module audio_engine (
     // Divide the clock down to 2MHz
     // Gives 2e6/64 = 31250 Hz frame rate
     /* verilator lint_off WIDTH */
-    localparam [4:0] I2S_DIVIDER = CK_HZ / (64 * 31250);
+    //localparam [4:0] I2S_DIVIDER = CK_HZ / (64 * 31250);
+`ifdef MAKE_HIFI
+    localparam [5:0] I2S_DIVIDER = 20; // CK_HZ / (32 * 41100);
+`endif
     /* verilator lint_on WIDTH */
     assign i2s_clock = ck;
 
