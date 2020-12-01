@@ -56,6 +56,7 @@ SECTIONS {
         . = ALIGN(4);
         _sheap = .;
         _eheap = _sstack;
+        __freertos_irq_stack_top = _sstack;
     } >RAM
 
 }

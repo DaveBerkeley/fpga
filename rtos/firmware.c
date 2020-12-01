@@ -16,6 +16,11 @@
 
 extern "C" void irq_handler(void)__attribute__((interrupt));;
 
+extern "C" void external_interrupt_handler( uint32_t cause )
+{
+    //  TODO
+}
+
 void irq_handler(void)
 {
     // check for timer interrupt
@@ -27,6 +32,10 @@ void irq_handler(void)
         TRACE();
         return;
     }
+
+    //external_interrupt_handler(cause);
+
+    // TODO : move into RTOS ...
 
     uint32_t irqs = irq_state();
 
@@ -95,7 +104,7 @@ void show_section(const char* text, uint32_t *start, uint32_t *end)
 
 extern void engine();
 
-void main()
+int main()
 {
     *LEDS = 0;
 
@@ -126,4 +135,6 @@ void main()
     while (true) {
         ;
     }
+
+    return 0;
 }

@@ -15,7 +15,8 @@ CORE=$(SERV)/rtl
 
 PROJ = rtos
 ADD_SRC = 
-ADD_CLEAN = pll.v firmware.elf firmware.bin firmware.hex $(PROJ).bin *_tb $(VCONFIG)
+ADD_CLEAN =  pll.v firmware.elf firmware.bin firmware.hex $(PROJ).bin *_tb
+ADD_CLEAN += build/rtos/* build/port/* build/rtos.a build/obj/* build/soc/* 
 ADD_YOSYS = -dsp
 ADD_VERILATOR = $(VCONFIG) +incdir+$(CORE)
 ADD_DEPS = pll.v $(VCONFIG)
@@ -30,10 +31,6 @@ PACKAGE = sg48
 DEVICE = up5k
 
 DEFINES  = 
-#DEFINES += USE_SK9822
-#DEFINES += USE_DMA
-#DEFINES += USE_AUDIO_ENGINE
-#DEFINES += MAKE_HIFI
 #DEFINES += MAKE_DSP
 
 # -D<symbol> syntax common to yosys and gcc
@@ -41,8 +38,8 @@ SHARED_DEFINES = $(DEFINES:%=-D %)
 MORE_YOSYS = $(SHARED_DEFINES)
 ADD_VERILATOR += $(DEFINES:%=+define+%)
 
-PLL_MHZ = 30.0
-PLL_HZ = 30000000
+PLL_MHZ = 25.0
+PLL_HZ = 25000000
 
 PIN_DEF = ../icebreaker.pcf
 
@@ -85,7 +82,6 @@ CPU_FILES += $(CORE)/serv_immdec.v
 ADD_SRC   += $(CPU_FILES) $(FILES) $(HW_FILES)
 TB_SRC     = $(CPU_FILES) $(FILES)
 
-
 include ../main.mk
 
 prog_firmware: firmware.bin
@@ -100,25 +96,97 @@ pll.v : Makefile
 	sed -i 's/SB_PLL40_CORE/SB_PLL40_PAD/g' $@
 	sed -i 's/.REFERENCECLK/.PACKAGEPIN/g' $@
 
+#
+#
+
 firmware.bin: firmware.elf
 	$(CROSS)objcopy -S -O binary $^ $@
 
+C_ARCH = -march=rv32i
+
 CFLAGS  = -DICEBREAKER
-CFLAGS += -march=rv32i
-CFLAGS += -ffreestanding
-CFLAGS += -nostartfiles
+CFLAGS += $(C_ARCH)
 CFLAGS += -Wall -Werror
 CFLAGS += -O1
 CFLAGS += -I $(SOC)
 CFLAGS += $(SHARED_DEFINES)
 LFLAGS = -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug 
+LFLAGS += -ffreestanding
+LFLAGS += -nostartfiles
 
-CFILES  = firmware.c
-#CFILES += engine.c
-#CFILES += dma.c
+CFILES = firmware.c
 
-firmware.elf: $(CFILES) $(SOC)/start.s $(SOC)/soc.c Makefile icebreaker_sections.lds
-	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ $(SOC)/start.s $(SOC)/soc.c $(CFILES)
+# Add FreeRTOS files
+PORT = portable/GCC/RISC-V
+
+# FreeRTOS Files
+RTOS_FILES = 
+RTOS_FILES += $(FREERTOS)/tasks.c
+RTOS_FILES += $(FREERTOS)/list.c
+
+# SoC Port Files
+RTOS_PORT =
+RTOS_PORT += $(PORT)/stub.c
+RTOS_PORT += $(PORT)/port.c
+
+RCFLAGS = $(C_ARCH) -Wall -Werror -O1
+RCFLAGS += -I $(PORT)
+RCFLAGS += -I .
+RCFLAGS += -I $(FREERTOS)/include/
+RCFLAGS += -I $(SOC)
+
+build:
+	mkdir -p build/rtos
+	mkdir -p build/port
+	mkdir -p build/obj
+	mkdir -p build/soc
+
+RTOS_SRC =  $(notdir $(RTOS_FILES))
+RTOS_OBJ =  $(RTOS_SRC:%.c=build/rtos/%.o)
+RTOS_OBJ += build/port/portASM.o
+
+RTOS_PORT_SRC = $(notdir $(RTOS_PORT))
+RTOS_PORT_OBJ = $(RTOS_PORT_SRC:%.c=build/port/%.o)
+
+build/rtos/%.o : 
+	$(CROSS)gcc $(RCFLAGS) -o build/rtos/$(notdir $@) -c $(FREERTOS)/$(*F).c
+
+build/port/%.o : $(RTOS_PORT)
+	$(CROSS)gcc $(RCFLAGS) -o build/port/$(notdir $@) -c $(PORT)/$(*F).c
+
+build/port/portASM.o: $(PORT)/portASM.S
+	$(CROSS)gcc $(RCFLAGS) -o build/port/$(notdir $@) -c $<
+
+#	Free RTOS Library
+
+build/rtos.a: $(RTOS_OBJ) $(RTOS_PORT_OBJ) Makefile
+	$(CROSS)ar rcs $@ $(RTOS_OBJ) $(RTOS_PORT_OBJ)
+
+#	SoC code
+
+SOC_FILES =
+SOC_FILES += $(SOC)/soc.c
+SOC_SRC = $(notdir $(SOC_FILES))
+SOC_OBJ = $(SOC_SRC:%.c=build/soc/%.o)
+
+build/soc/%.o: $(SOC_FILES)
+	$(CROSS)g++ $(CFLAGS) -o build/soc/$(notdir $@) -c $<
+
+build/soc/start.o: $(SOC)/start.s
+	$(CROSS)g++ $(CFLAGS) -o build/soc/$(notdir $@) -c $<
+
+#	C Source
+
+OBJ = $(CFILES:%.c=build/obj/%.o)
+	
+build/obj/%.o: $(CFILES)
+	$(CROSS)g++ $(CFLAGS) -o build/obj/$(notdir $@) -c $<
+
+#
+#
+
+firmware.elf: build $(OBJ) $(SOC_OBJ) build/soc/start.o Makefile icebreaker_sections.lds build/rtos.a
+	$(CROSS)g++ $(CFLAGS) $(LFLAGS) -o $@ build/soc/start.o $(SOC_OBJ) $(OBJ) -L build/rtos.a
 
 $(VCONFIG): config.vlt
 	envsubst < $^ > $@

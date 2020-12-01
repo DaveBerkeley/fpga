@@ -19,7 +19,7 @@ module rtos (
     output wire [7:0] test
 );
 
-    parameter PLL_HZ = 30000000;
+    parameter PLL_HZ = 25000000;
 
     // Device addresses (addr[31:24])
     localparam GPIO_ADDR  = 8'h40;
